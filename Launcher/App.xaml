@@ -1,0 +1,21 @@
+<Application x:Class="Launcher.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:Launcher.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Default theme: Light -->
+                <ResourceDictionary Source="/Assets/Fluent.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters available at app scope (needed for MainWindow Icon binding) -->
+            <converters:FilePathToImageSourceConverter x:Key="FilePathToImageSourceConverter" />
+            <converters:StringToBrushConverter x:Key="StringToBrushConverter" />
+            <converters:NullOrEmptyToFalseConverter x:Key="NullOrEmptyToFalseConverter" />
+            <converters:ObjectTypeConverter x:Key="ObjectTypeConverter" />
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

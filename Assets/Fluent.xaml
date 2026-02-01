@@ -1,0 +1,276 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         POSHWIZARD FLUENT DESIGN THEME v2.0
+         Enhanced with accent colors, shadows, spacing system, and visual depth
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    
+    <!-- ═══ PRIMARY ACCENT COLORS ═══ -->
+    <Color x:Key="PrimaryColor">#0078D4</Color>          <!-- Microsoft Blue -->
+    <Color x:Key="PrimaryDarkColor">#005A9E</Color>      <!-- Hover state -->
+    <Color x:Key="PrimaryDarkerColor">#004578</Color>    <!-- Pressed state -->
+    <Color x:Key="PrimaryLightColor">#4A9EE0</Color>     <!-- Light variant -->
+    
+    <!-- ═══ SEMANTIC COLORS ═══ -->
+    <Color x:Key="SuccessColor">#107C10</Color>          <!-- Green -->
+    <Color x:Key="WarningColor">#FFB900</Color>          <!-- Amber -->
+    <Color x:Key="ErrorColor">#E81123</Color>            <!-- Red -->
+    <Color x:Key="InfoColor">#0078D4</Color>             <!-- Blue -->
+    
+    <!-- ═══ NEUTRAL PALETTE ═══ -->
+    <Color x:Key="Gray900">#0E1629</Color>               <!-- Darkest text -->
+    <Color x:Key="Gray800">#1F2937</Color>               <!-- Dark surfaces -->
+    <Color x:Key="Gray700">#334155</Color>               <!-- Body text -->
+    <Color x:Key="Gray600">#475569</Color>               <!-- Secondary text -->
+    <Color x:Key="Gray500">#64748B</Color>               <!-- Disabled text -->
+    <Color x:Key="Gray400">#94A3B8</Color>               <!-- Borders -->
+    <Color x:Key="Gray300">#CBD5E1</Color>               <!-- Light borders -->
+    <Color x:Key="Gray200">#E2E8F0</Color>               <!-- Dividers -->
+    <Color x:Key="Gray100">#F1F5F9</Color>               <!-- Subtle bg -->
+    <Color x:Key="Gray50">#F8FAFC</Color>                <!-- White tint -->
+    
+    <!-- ═══ SPACING SYSTEM (8px grid) ═══ -->
+    <system:Double x:Key="SpacingXs">4</system:Double>
+    <system:Double x:Key="SpacingSm">8</system:Double>
+    <system:Double x:Key="SpacingMd">16</system:Double>
+    <system:Double x:Key="SpacingLg">24</system:Double>
+    <system:Double x:Key="SpacingXl">32</system:Double>
+    <system:Double x:Key="Spacing2Xl">48</system:Double>
+    
+    <!-- ═══ TYPOGRAPHY SCALE ═══ -->
+    <system:Double x:Key="FontSizeBase">12</system:Double>
+    <system:Double x:Key="FontSizeCaption">11</system:Double>
+    <system:Double x:Key="FontSizeSmall">12</system:Double>
+    <system:Double x:Key="FontSizeBody">14</system:Double>
+    <system:Double x:Key="FontSizeLabel">13</system:Double>
+    <system:Double x:Key="FontSizeButton">14</system:Double>
+    <system:Double x:Key="FontSizeSubheading">16</system:Double>
+    <system:Double x:Key="FontSizeHeading">20</system:Double>
+    <system:Double x:Key="FontSizeTitle">24</system:Double>
+    <system:Double x:Key="FontSizeHero">28</system:Double>
+    <system:Double x:Key="FontSizeMonospace">12</system:Double>
+
+    <!-- ═══ ACCENT BRUSHES ═══ -->
+    <SolidColorBrush x:Key="SystemAccentColorBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}"/>
+    <SolidColorBrush x:Key="PrimaryDarkerBrush" Color="{StaticResource PrimaryDarkerColor}"/>
+    <SolidColorBrush x:Key="PrimaryLightBrush" Color="{StaticResource PrimaryLightColor}"/>
+    
+    <!-- ═══ SEMANTIC BRUSHES ═══ -->
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
+
+    <!-- ═══ SURFACE & BACKGROUND BRUSHES ═══ -->
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="#E8ECF0"/>
+    <SolidColorBrush x:Key="ContentBackgroundBrush" Color="#F0F3F6"/>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ChartBackgroundBrush" Color="#F8F9FA"/>
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#F0F3F6"/>
+    
+    <!-- ═══ SIDEBAR THEME (Dark) ═══ -->
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="#1A202C"/>
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="SidebarHighlightBrush" Color="{StaticResource PrimaryColor}"/>
+    
+    <!-- ═══ BORDER & DIVIDER BRUSHES ═══ -->
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource Gray300}"/>
+    <SolidColorBrush x:Key="BorderLightBrush" Color="{StaticResource Gray200}"/>
+    <SolidColorBrush x:Key="DividerBrush" Color="{StaticResource Gray200}"/>
+    
+    <!-- ═══ TEXT BRUSHES ═══ -->
+    <SolidColorBrush x:Key="HeadingForegroundBrush" Color="{StaticResource Gray900}"/>
+    <SolidColorBrush x:Key="BodyForegroundBrush" Color="{StaticResource Gray700}"/>
+    <SolidColorBrush x:Key="SecondaryForegroundBrush" Color="{StaticResource Gray600}"/>
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Gray600}"/>
+    <SolidColorBrush x:Key="DisabledForegroundBrush" Color="{StaticResource Gray500}"/>
+    
+    <!-- ═══ INPUT CONTROL BRUSHES ═══ -->
+    <SolidColorBrush x:Key="TextBoxBackgroundBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextBoxDisabledBackgroundBrush" Color="{StaticResource Gray100}"/>
+    <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{StaticResource PrimaryColor}"/>
+    
+    <!-- ═══ BUTTON BRUSHES (Primary Action) ═══ -->
+    <SolidColorBrush x:Key="ButtonBackgroundBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonHoverBrush" Color="{StaticResource PrimaryDarkColor}"/>
+    <SolidColorBrush x:Key="ButtonPressedBrush" Color="{StaticResource PrimaryDarkerColor}"/>
+    <SolidColorBrush x:Key="ButtonDisabledBrush" Color="{StaticResource Gray400}"/>
+    
+    <!-- ═══ ICON BUTTON BRUSHES (Subtle) ═══ -->
+    <SolidColorBrush x:Key="IconButtonHoverBrush" Color="#10000000"/>
+    <SolidColorBrush x:Key="IconButtonCheckedBrush" Color="#20000000"/>
+    
+    <!-- ═══ TITLE BAR BRUSHES ═══ -->
+    <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="TitleBarTextBrush" Color="{StaticResource Gray900}"/>
+    <SolidColorBrush x:Key="TitleBarBorderBrush" Color="{StaticResource Gray300}"/>
+    <SolidColorBrush x:Key="TitleBarButtonHoverBrush" Color="#E0E0E0"/>
+    <SolidColorBrush x:Key="TitleBarButtonPressedBrush" Color="#CCCCCC"/>
+    
+    <!-- ═══ DIALOG TITLE BAR BRUSHES ═══ -->
+    <SolidColorBrush x:Key="DialogTitleBarBrush" Color="{StaticResource Gray200}"/>
+    <SolidColorBrush x:Key="DialogTitleBarForegroundBrush" Color="{StaticResource Gray900}"/>
+    <SolidColorBrush x:Key="DialogTitleBarHoverBrush" Color="{StaticResource Gray300}"/>
+    
+    <!-- ═══ SHADOW EFFECTS (Elevation) ═══ -->
+    <DropShadowEffect x:Key="ShadowDepth1" 
+                      Color="#40000000" 
+                      Direction="270" 
+                      ShadowDepth="1" 
+                      BlurRadius="4" 
+                      Opacity="0.2"/>
+    
+    <DropShadowEffect x:Key="ShadowDepth2" 
+                      Color="#40000000" 
+                      Direction="270" 
+                      ShadowDepth="2" 
+                      BlurRadius="8" 
+                      Opacity="0.25"/>
+    
+    <DropShadowEffect x:Key="ShadowDepth3" 
+                      Color="#40000000" 
+                      Direction="270" 
+                      ShadowDepth="4" 
+                      BlurRadius="12" 
+                      Opacity="0.3"/>
+    
+    <DropShadowEffect x:Key="ShadowDepth4" 
+                      Color="#40000000" 
+                      Direction="270" 
+                      ShadowDepth="8" 
+                      BlurRadius="16" 
+                      Opacity="0.35"/>
+    
+    <!-- ═══ ACCENT GLOW EFFECT ═══ -->
+    <DropShadowEffect x:Key="AccentGlow" 
+                      Color="{StaticResource PrimaryColor}" 
+                      Direction="270" 
+                      ShadowDepth="0" 
+                      BlurRadius="12" 
+                      Opacity="0.4"/>
+    
+    <!-- ═══ CONVERTERS ═══ -->
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════════
+         WORKFLOW VIEW SPECIFIC STYLES
+         Enhanced styling for task lists, progress bars, and workflow cards
+         ═══════════════════════════════════════════════════════════════════════════ -->
+    
+    <!-- ═══ WORKFLOW COLOR PALETTE (Light Theme) ═══ -->
+    <!-- Task card backgrounds with subtle elevation -->
+    <SolidColorBrush x:Key="WorkflowCardBackgroundBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="WorkflowCardBorderBrush" Color="#E1E1E1"/>
+    
+    <!-- Alternating task row backgrounds for visual hierarchy -->
+    <SolidColorBrush x:Key="TaskAlternateBackgroundBrush" Color="#F9F9F9"/>
+    <SolidColorBrush x:Key="TaskHoverBackgroundBrush" Color="#F3F4F6"/>
+    
+    <!-- Progress bar colors - stronger contrast for light theme -->
+    <SolidColorBrush x:Key="ProgressBackgroundBrush" Color="#E1E1E1"/>
+    <SolidColorBrush x:Key="ProgressForegroundBrush" Color="#0078D4"/>
+    
+    <!-- Active task accent (left border indicator) -->
+    <SolidColorBrush x:Key="TaskActiveAccentBrush" Color="#0078D4"/>
+    <SolidColorBrush x:Key="TaskSuccessAccentBrush" Color="#107C10"/>
+    <SolidColorBrush x:Key="TaskErrorAccentBrush" Color="#E81123"/>
+    <SolidColorBrush x:Key="TaskPendingAccentBrush" Color="#94A3B8"/>
+    
+    <!-- Timeline connector colors -->
+    <SolidColorBrush x:Key="TimelineConnectorBrush" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="TimelineCircleBackgroundBrush" Color="#FFFFFF"/>
+    
+    <!-- Title text for workflow view -->
+    <SolidColorBrush x:Key="TitleForegroundBrush" Color="#0E1629"/>
+    
+    <!-- ═══ WORKFLOW CARD SHADOW (Light Theme Elevation) ═══ -->
+    <!-- Subtle shadow to give cards depth in light theme -->
+    <DropShadowEffect x:Key="WorkflowCardShadow" 
+                      Color="#000000" 
+                      Direction="270" 
+                      ShadowDepth="2" 
+                      BlurRadius="8" 
+                      Opacity="0.12"/>
+    
+    <!-- Elevated shadow for hover/active states -->
+    <DropShadowEffect x:Key="WorkflowCardShadowHover" 
+                      Color="#000000" 
+                      Direction="270" 
+                      ShadowDepth="4" 
+                      BlurRadius="12" 
+                      Opacity="0.18"/>
+    
+    <!-- Progress bar glow effect -->
+    <DropShadowEffect x:Key="ProgressGlowEffect" 
+                      Color="#0078D4" 
+                      Direction="0" 
+                      ShadowDepth="0" 
+                      BlurRadius="8" 
+                      Opacity="0.4"/>
+    
+    <!-- ═══ WORKFLOW TASK CARD STYLE ═══ -->
+    <!-- Style for task cards with elevation and proper spacing -->
+    <Style x:Key="WorkflowTaskCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource WorkflowCardBackgroundBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource WorkflowCardBorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="Margin" Value="8,4,0,8"/>
+        <Setter Property="Effect" Value="{StaticResource WorkflowCardShadow}"/>
+    </Style>
+    
+    <!-- ═══ WORKFLOW PROGRESS BAR STYLE ═══ -->
+    <!-- Custom progress bar with rounded corners and better visibility -->
+    <Style x:Key="WorkflowProgressBarStyle" TargetType="Border">
+        <Setter Property="Height" Value="6"/>
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Background" Value="{StaticResource ProgressBackgroundBrush}"/>
+    </Style>
+    
+    <!-- Progress bar fill with optional glow -->
+    <Style x:Key="WorkflowProgressFillStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="3"/>
+        <Setter Property="Background" Value="{StaticResource ProgressForegroundBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    
+    <!-- ═══ OVERALL PROGRESS BAR STYLE (Prominent) ═══ -->
+    <!-- Larger, more prominent progress bar for overall workflow progress -->
+    <Style x:Key="WorkflowOverallProgressStyle" TargetType="Border">
+        <Setter Property="Height" Value="8"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Background" Value="{StaticResource ProgressBackgroundBrush}"/>
+    </Style>
+    
+    <!-- ═══ TASK STATUS ICON CIRCLE STYLE ═══ -->
+    <!-- Timeline status indicator circles -->
+    <Style x:Key="TaskStatusCircleStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="StrokeThickness" Value="2"/>
+        <Setter Property="Fill" Value="{StaticResource TimelineCircleBackgroundBrush}"/>
+    </Style>
+    
+    <!-- ═══ OUTPUT LOG PANEL STYLE ═══ -->
+    <!-- Console-style output area within task cards -->
+    <SolidColorBrush x:Key="OutputLogBackgroundBrush" Color="#F8F9FA"/>
+    <SolidColorBrush x:Key="OutputLogBorderBrush" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="OutputLogTextBrush" Color="#334155"/>
+    
+    <!-- ═══ APPROVAL GATE STYLING ═══ -->
+    <!-- Approval pending state colors -->
+    <SolidColorBrush x:Key="ApprovalPendingBackgroundBrush" Color="#FEF3C7"/>
+    <SolidColorBrush x:Key="ApprovalPendingBorderBrush" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="ApprovalPendingTextBrush" Color="#92400E"/>
+    
+    <!-- ═══ REBOOT PENDING BANNER (Light Theme) ═══ -->
+    <SolidColorBrush x:Key="RebootBannerBackgroundBrush" Color="#FEF3C7"/>
+    <SolidColorBrush x:Key="RebootBannerBorderBrush" Color="#F59E0B"/>
+    <SolidColorBrush x:Key="RebootBannerIconBrush" Color="#D97706"/>
+    <SolidColorBrush x:Key="RebootBannerTextBrush" Color="#92400E"/>
+</ResourceDictionary> 

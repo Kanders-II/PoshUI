@@ -1,0 +1,83 @@
+#!/bin/sh
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                        Git Pre-Commit Hook                                   ║
+# ║  Runs basic validation before allowing commit                               ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+echo ""
+echo "╔═══════════════════════════════════════════════════════════════╗"
+echo "║  Running Pre-Commit Validation...                             ║"
+echo "╚═══════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Run PowerShell validation script
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "
+    \$ErrorActionPreference = 'Stop'
+    
+    # Test 1: Validate module manifest
+    Write-Host '→ Validating module manifest...' -ForegroundColor Cyan
+    try {
+        \$manifest = Test-ModuleManifest -Path '.\PoshWizard\PoshWizard.psd1' -ErrorAction Stop
+        Write-Host '  ✅ Module manifest valid (v' -NoNewline -ForegroundColor Green
+        Write-Host \$manifest.Version -NoNewline -ForegroundColor White
+        Write-Host ')' -ForegroundColor Green
+    } catch {
+        Write-Host '  ❌ Module manifest invalid!' -ForegroundColor Red
+        Write-Host \"  Error: \$_\" -ForegroundColor Red
+        exit 1
+    }
+    
+    # Test 2: Check for syntax errors in changed PowerShell files
+    Write-Host '→ Checking PowerShell syntax...' -ForegroundColor Cyan
+    \$changedFiles = git diff --cached --name-only --diff-filter=ACM | Where-Object { \$_ -match '\.ps1\$|\.psm1\$' }
+    
+    if (\$changedFiles) {
+        \$errorCount = 0
+        foreach (\$file in \$changedFiles) {
+            if (Test-Path \$file) {
+                \$errors = \$null
+                [void][System.Management.Automation.Language.Parser]::ParseFile(\$file, [ref]\$null, [ref]\$errors)
+                if (\$errors) {
+                    \$errorCount++
+                    Write-Host \"  ❌ Syntax error in \$file\" -ForegroundColor Red
+                    \$errors | ForEach-Object { Write-Host \"     \$(\$_.Message)\" -ForegroundColor Yellow }
+                }
+            }
+        }
+        
+        if (\$errorCount -eq 0) {
+            Write-Host \"  ✅ All PowerShell files have valid syntax\" -ForegroundColor Green
+        } else {
+            Write-Host \"  ❌ Found syntax errors in \$errorCount file(s)\" -ForegroundColor Red
+            exit 1
+        }
+    } else {
+        Write-Host '  ℹ️  No PowerShell files changed' -ForegroundColor Gray
+    }
+    
+    # Test 3: Verify IntelliSense module loads
+    Write-Host '→ Testing IntelliSense module...' -ForegroundColor Cyan
+    try {
+        Import-Module .\PoshWizard\PoshWizard.IntelliSense.psm1 -Force -ErrorAction Stop
+        Write-Host '  ✅ IntelliSense module loads correctly' -ForegroundColor Green
+        Remove-Module PoshWizard.IntelliSense -Force
+    } catch {
+        Write-Host '  ❌ IntelliSense module has errors!' -ForegroundColor Red
+        Write-Host \"  Error: \$_\" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host ''
+    Write-Host '✅ Pre-commit validation passed!' -ForegroundColor Green
+    Write-Host ''
+"
+
+# Check PowerShell exit code
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Commit blocked due to validation errors"
+    echo ""
+    exit 1
+fi
+
+exit 0

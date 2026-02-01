@@ -1,0 +1,228 @@
+<Window x:Class="Launcher.Views.MessageDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding Title}" 
+        SizeToContent="Height"
+        Width="420"
+        MaxWidth="500"
+        MaxHeight="450"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent">
+    
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" 
+                      ResizeBorderThickness="0"
+                      GlassFrameThickness="0"
+                      CornerRadius="8"/>
+    </WindowChrome.WindowChrome>
+    
+    <Window.Resources>
+        <!-- Window Control Button Style -->
+        <Style x:Key="WindowControlButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource DialogTitleBarForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="0,7,0,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#E81123"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#F1707A"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- Primary Button Style -->
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D4"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="MinWidth" Value="90"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#1084D8"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="#006CBD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Secondary Button Style -->
+        <Style x:Key="DialogSecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ButtonBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="MinWidth" Value="90"/>
+            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="BtnBorder"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource ButtonHoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="BtnBorder" Property="Background" Value="{DynamicResource ButtonPressedBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <!-- Outer border with shadow effect for visibility -->
+    <Border Margin="8" 
+            Background="{DynamicResource ContentBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="8">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="10" 
+                              ShadowDepth="2" 
+                              Opacity="0.3" 
+                              Color="Black"/>
+        </Border.Effect>
+        
+        <Grid ClipToBounds="True">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>    <!-- Custom Title Bar -->
+                <RowDefinition Height="*"/>     <!-- Content -->
+            </Grid.RowDefinitions>
+            
+            <!-- Custom Title Bar - Theme aware -->
+            <Border Grid.Row="0" CornerRadius="7,7,0,0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    Background="{DynamicResource DialogTitleBarBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Window Title -->
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding Title}" 
+                           Foreground="{DynamicResource DialogTitleBarForegroundBrush}" 
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Margin="12,0,0,0"/>
+                
+                <!-- Close Button -->
+                <Button Grid.Column="1" 
+                        Click="CloseButton_Click" 
+                        Style="{StaticResource WindowControlButtonStyle}" 
+                        Content="&#xE8BB;" 
+                        ToolTip="Close"
+                        WindowChrome.IsHitTestVisibleInChrome="True"/>
+            </Grid>
+            </Border>
+            
+            <!-- Dialog Content -->
+            <Grid Grid.Row="1" Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*" MaxHeight="280"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Icon and Title -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+            <!-- Warning Icon (Yellow) -->
+            <Border x:Name="WarningIcon" Width="40" Height="40" CornerRadius="20" Background="#FFF4CE" Margin="0,0,16,0" Visibility="Collapsed">
+                <TextBlock Text="&#xE7BA;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#9D5D00" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <!-- Error Icon (Red) -->
+            <Border x:Name="ErrorIcon" Width="40" Height="40" CornerRadius="20" Background="#FDE7E9" Margin="0,0,16,0" Visibility="Collapsed">
+                <TextBlock Text="&#xEA39;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#C42B1C" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <!-- Info Icon (Blue) -->
+            <Border x:Name="InfoIcon" Width="40" Height="40" CornerRadius="20" Background="#D4E5F7" Margin="0,0,16,0" Visibility="Collapsed">
+                <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#0078D4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <!-- Question Icon (Blue) -->
+            <Border x:Name="QuestionIcon" Width="40" Height="40" CornerRadius="20" Background="#D4E5F7" Margin="0,0,16,0" Visibility="Collapsed">
+                <TextBlock Text="&#xE9CE;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#0078D4" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            
+            <TextBlock x:Name="TitleText" 
+                       Text="{Binding Title}"
+                       FontSize="18" 
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource BodyForegroundBrush}"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"/>
+        </StackPanel>
+        
+        <!-- Message -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,24">
+            <TextBlock x:Name="MessageText"
+                       Text="{Binding Message}"
+                       FontSize="14"
+                       Foreground="{DynamicResource BodyForegroundBrush}"
+                       TextWrapping="Wrap"/>
+        </ScrollViewer>
+        
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button x:Name="SecondaryButton"
+                    Content="Cancel"
+                    Style="{StaticResource DialogSecondaryButtonStyle}"
+                    Click="SecondaryButton_Click"
+                    Margin="0,0,8,0"
+                    Visibility="Collapsed"/>
+            <Button x:Name="PrimaryButton"
+                    Content="OK"
+                    Style="{StaticResource DialogPrimaryButtonStyle}"
+                    Click="PrimaryButton_Click"
+                    IsDefault="True"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

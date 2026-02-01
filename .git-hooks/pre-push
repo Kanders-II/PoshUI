@@ -1,0 +1,31 @@
+#!/bin/sh
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║                        Git Pre-Push Hook                                     ║
+# ║  Runs full build and test pipeline before allowing push                     ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+echo ""
+echo "╔═══════════════════════════════════════════════════════════════╗"
+echo "║  Running Pre-Push Pipeline...                                 ║"
+echo "╚═══════════════════════════════════════════════════════════════╝"
+echo ""
+
+# Run the full CI/CD pipeline
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\Build-And-Test.ps1"
+
+# Check exit code
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Push blocked - Pipeline failed!"
+    echo ""
+    echo "To skip this check (not recommended), use:"
+    echo "  git push --no-verify"
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "✅ All checks passed - Proceeding with push"
+echo ""
+
+exit 0

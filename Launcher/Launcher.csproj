@@ -1,0 +1,129 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- Target .NET Framework 4.8 -->
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>7.3</LangVersion> <!-- C# 7.3 is compatible with .NET Framework 4.8 -->
+    <RootNamespace>Launcher</RootNamespace>
+    <AssemblyName>PoshUI</AssemblyName>
+     <!-- Flatten output path: place outputs directly under bin/Debug or bin/Release (no net48 folder) -->
+     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+     <!-- PlatformTarget AnyCPU is default for SDK-style but can be specified if needed -->
+     <!-- <PlatformTarget>AnyCPU</PlatformTarget> -->
+     <!-- RuntimeIdentifiers typically not needed for AnyCPU .NET Framework builds -->
+
+    <!-- Assembly Metadata -->
+    <AssemblyTitle>PoshUI</AssemblyTitle>
+    <Product>PoshUI</Product>
+    <Description>WPF application for creating interactive UI frontends for PowerShell scripts with modern Windows 11 UI (Legacy .NET 4.8 version)</Description>
+    <Company>A Solution IT LLC</Company>
+    <Authors>A Solution IT LLC</Authors>
+    <Copyright>Copyright 2025 A Solution IT LLC. All rights reserved.</Copyright>
+    <Version>1.0.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+
+    <!-- Package/Repository Information -->
+    <PackageProjectUrl>https://github.com/asolutionit/PoshUI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/asolutionit/PoshUI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>PowerShell;UI;WPF;GUI;Windows;ModernUI</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <OutputPath>..\PoshUI\bin\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>..\PoshUI\bin\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Reference the GAC version of System.Management.Automation for WinPS 5.1 -->
+    <Reference Include="System.Management.Automation">
+      <!-- HintPath for the assembly typically used by Windows PowerShell 5.1 -->
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\System.Management.Automation\v4.0_3.0.0.0__31bf3856ad364e35\System.Management.Automation.dll</HintPath>
+      <Private>False</Private> <!-- Do not copy local, assume it's in GAC -->
+    </Reference>
+
+    <!-- Other standard framework references (System, System.Data, System.Xml, WindowsBase, PresentationCore, PresentationFramework, System.Xaml)
+         are typically included automatically by the SDK when targeting .NET Framework and UseWPF=true.
+         If any build errors occur related to missing framework assemblies, they can be added explicitly:
+    -->
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="WindowsFormsIntegration" />
+  </ItemGroup>
+
+
+  <!-- Link-in theme dictionaries from solution-level Assets folder as WPF resources -->
+  <ItemGroup>
+    <Page Include="..\Assets\Fluent.xaml">
+      <Link>Assets\Fluent.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="..\Assets\DarkTheme.xaml">
+      <Link>Assets\DarkTheme.xaml</Link>
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+   <!-- SDK automatically includes App.xaml as ApplicationDefinition -->
+   <!-- <ItemGroup>
+     <ApplicationDefinition Include="App.xaml" />
+   </ItemGroup> -->
+
+  <!-- SDK automatically includes .cs files, so explicit Compile items are usually not needed -->
+  <!-- <ItemGroup>
+    <Compile Include="Converters\BooleanConverters.cs" />
+  </ItemGroup> -->
+
+  <!-- ItemGroup for Files to Copy -->
+   <ItemGroup>
+    <!-- <None Include="..\Scripts\RunWizard.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None> -->
+    <!-- <None Include="..\Scripts\SampleInstall.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None> -->
+    <!-- <None Include="..\Scripts\test_choices.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None> -->
+  </ItemGroup>
+
+  <!-- Ensure app.config is copied to output -->
+  <ItemGroup>
+    <None Update="app.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Logging uses built-in System.Diagnostics.TraceSource (no third-party packages) -->
+  <ItemGroup>
+    <Reference Include="System.Diagnostics.TraceSource" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <!-- After build, move all artifacts except the exe, exe.config, and logs into a bin subfolder -->
+  <Target Name="RearrangeOutput" AfterTargets="Build">
+    <PropertyGroup>
+      <OutDir>$(OutputPath)</OutDir>
+      <InnerBin>$(OutDir)bin\</InnerBin>
+    </PropertyGroup>
+    <MakeDir Directories="$(InnerBin)" />
+    <ItemGroup>
+      <FilesToMove Include="$(OutDir)*.*"
+                   Exclude="$(OutDir)$(AssemblyName).exe;$(OutDir)$(AssemblyName).exe.config;$(OutDir)logs\**" />
+    </ItemGroup>
+    <Move SourceFiles="@(FilesToMove)" DestinationFolder="$(InnerBin)" />
+  </Target>
+
+</Project>

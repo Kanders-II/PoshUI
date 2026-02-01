@@ -1,0 +1,25 @@
+{
+  "name": "poshui-docs",
+  "version": "1.0.0",
+  "description": "PoshUI Documentation",
+  "main": "index.md",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview"
+  },
+  "keywords": [
+    "powershell",
+    "ui",
+    "documentation",
+    "vitepress"
+  ],
+  "author": "A Solution IT LLC",
+  "license": "MIT",
+  "devDependencies": {
+    "vitepress": "^1.6.4"
+  },
+  "directories": {
+    "example": "examples"
+  }
+}
