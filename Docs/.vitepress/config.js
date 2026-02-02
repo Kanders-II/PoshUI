@@ -2,6 +2,7 @@ export default {
   title: 'PoshUI',
   description: 'Build beautiful PowerShell wizards and dashboards',
   base: '/PoshUI/',
+  appearance: 'dark',
   vite: {
     server: {
       host: '0.0.0.0',
@@ -11,7 +12,6 @@ export default {
   themeConfig: {
     logo: '/logo.png',
     siteTitle: false,
-    appearance: 'dark',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Get Started', link: '/get-started' },
