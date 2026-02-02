@@ -1,6 +1,10 @@
 <div align="center">
 
-![PoshUI Logo](Images/Color%20logo%20-%20no%20background.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Images/Color%20logo%20-%20no%20background.png">
+  <source media="(prefers-color-scheme: light)" srcset="Images/Color%20logo%20with%20background.png">
+  <img alt="PoshUI Logo" src="Images/Color%20logo%20-%20no%20background.png">
+</picture>
 
 
 
