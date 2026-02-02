@@ -11,6 +11,7 @@ export default {
   themeConfig: {
     logo: '/logo.png',
     siteTitle: false,
+    appearance: 'dark',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Get Started', link: '/get-started' },
