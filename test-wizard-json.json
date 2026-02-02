@@ -1,0 +1,11 @@
+{
+  "LogLevel": "Info",
+  "DefaultTemplate": "Wizard",
+  "AutoCleanupHours": 24,
+  "AutoCleanupEnabled": true,
+  "DefaultTheme": "Dark",
+  "DefaultGridColumns": 3,
+  "EnableTelemetry": false,
+  "EnableEventHistory": false,
+  "LogPath": "C:\\Users\\mrand\\AppData\\Local\\Temp\\PoshUI\\Logs"
+}
