@@ -904,12 +904,19 @@ namespace Launcher.Services
                                              .Replace("``t", "\t")
                                              .Replace("`n", "\n")
                                              .Replace("`r", "\r")
-                                             .Replace("`t", "\t");
+                                             .Replace("`t", "\t")
+                                             .Replace("''", "'");  // Un-escape PowerShell single quotes
 
                                         if (c.StartsWith("@'", StringComparison.Ordinal) && c.EndsWith("'@", StringComparison.Ordinal) && c.Length >= 4)
                                         {
                                             c = c.Substring(2, c.Length - 4);
                                         }
+                                    }
+                                    
+                                    // Also un-escape title
+                                    if (!string.IsNullOrEmpty(t))
+                                    {
+                                        t = t.Replace("''", "'");
                                     }
 
                                     cardTitle = t;
