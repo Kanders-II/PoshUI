@@ -40,17 +40,77 @@ Add-UIScriptCard -Step 'Tools' -Name 'ResetIIS' -Title 'Restart IIS' `
 
 ## Parameter Discovery
 
-PoshUI's execution engine examines the `param()` block of your `ScriptBlock` or `ScriptPath` and maps PowerShell types to UI controls:
+PoshUI's execution engine uses **PowerShell AST (Abstract Syntax Tree) parsing** to automatically discover parameters from your script files or script blocks. When you point a ScriptCard to a `.ps1` file or provide a `ScriptBlock`, PoshUI:
 
-| PowerShell Type / Attribute | UI Control |
-|----------------------------|------------|
-| `[string]` | TextBox |
-| `[bool]` / `[switch]` | Toggle Switch |
-| `[int]` / `[double]` | Numeric Spinner |
-| `[DateTime]` | Date Picker |
-| `[ValidateSet()]` | Dropdown Menu |
-| `[WizardFilePath()]` | TextBox with File Browse button |
-| `[WizardFolderPath()]` | TextBox with Folder Browse button |
+1. **Parses the script** using PowerShell's AST parser
+2. **Extracts the `param()` block** and analyzes each parameter
+3. **Reads parameter attributes** like `[Parameter(Mandatory)]`, `[ValidateSet()]`, etc.
+4. **Generates UI controls** automatically based on the parameter types and attributes
+5. **Creates a parameter dialog** that users interact with before script execution
+
+This means you can take **any existing PowerShell script** with a `param()` block and turn it into a clickable tool without modifying the script itself.
+
+### How It Works
+
+When a user clicks a ScriptCard:
+1. The parameter dialog opens with auto-generated controls
+2. User fills in values using the appropriate UI controls
+3. PoshUI validates the input based on your parameter attributes
+4. The script executes with the user-provided values
+5. Real-time output appears in an embedded console
+
+### Parameter Type Mapping
+
+PoshUI maps PowerShell parameter types and attributes to UI controls:
+
+| PowerShell Type / Attribute | UI Control | Notes |
+|----------------------------|------------|-------|
+| `[string]` | TextBox | Single-line text input |
+| `[bool]` / `[switch]` | Toggle Switch | On/Off control |
+| `[int]` / `[double]` | Numeric Spinner | With increment/decrement buttons |
+| `[DateTime]` | Date Picker | Calendar control |
+| `[ValidateSet('A','B','C')]` | Dropdown Menu | Populated with ValidateSet values |
+| `[WizardFilePath()]` | TextBox with Browse | Opens file picker dialog |
+| `[WizardFolderPath()]` | TextBox with Browse | Opens folder picker dialog |
+| `[Parameter(Mandatory)]` | Required field | Red asterisk indicator |
+
+### External Script File Example
+
+You can point to any existing PowerShell script file:
+
+```powershell
+# Create a script file: Get-UserInfo.ps1
+param(
+    [Parameter(Mandatory)]
+    [string]$Username,
+    
+    [ValidateSet('Active','Disabled','All')]
+    [string]$Status = 'Active',
+    
+    [switch]$IncludeGroups
+)
+
+Get-ADUser -Identity $Username -Properties * | 
+    Select-Object Name, EmailAddress, Enabled, LastLogonDate
+
+if ($IncludeGroups) {
+    Get-ADPrincipalGroupMembership -Identity $Username
+}
+```
+
+Then add it as a ScriptCard:
+
+```powershell
+Add-UIScriptCard -Step 'Tools' -Name 'GetUser' -Title 'Get User Info' `
+    -Description 'Retrieve Active Directory user information' `
+    -Icon '&#xE77B;' `
+    -ScriptPath "$PSScriptRoot\Scripts\Get-UserInfo.ps1"
+```
+
+When clicked, PoshUI automatically generates:
+- A **required text box** for `$Username` (marked with red asterisk)
+- A **dropdown** for `$Status` with options: Active, Disabled, All (default: Active)
+- A **toggle switch** for `$IncludeGroups` (default: Off)
 
 ### Example with Parameters
 
