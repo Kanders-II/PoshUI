@@ -200,7 +200,7 @@ Add-UIMetricCard -Step 'Dashboard' -Name 'CPU' -Title 'CPU' -Verbose
 - Single executable distribution
 
 **Enterprise Ready:**
-- Works in restricted environments (WinPE, air-gapped systems)
+- Works in restricted environments (air-gapped systems)
 - No internet connection required
 - No third-party dependencies
 - Compatible with SCCM/MECM task sequences

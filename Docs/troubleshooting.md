@@ -199,7 +199,6 @@ Get-ChildItem -Path 'D:\PoshUI' -Recurse | Unblock-File
 $PSVersionTable.PSVersion
 
 # PoshUI requires Windows PowerShell 5.1
-# If using PowerShell 7+, use the .NET 8 version instead
 ```
 
 ---

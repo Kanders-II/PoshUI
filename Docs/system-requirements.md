@@ -8,7 +8,6 @@ PoshUI requires a 64-bit (x64) version of Windows:
 
 - **Client**: Windows 10, Windows 11
 - **Server**: Windows Server 2016, 2019, 2022
-- **WinPE**: Supported (requires .NET Framework 4.8 component)
 
 ## Software Requirements
 
@@ -21,11 +20,7 @@ PoshUI requires a 64-bit (x64) version of Windows:
 
 - **Requirement**: Windows PowerShell 5.1
 - **Edition**: Desktop
-- **Note**: PoshUI targets the native PowerShell version included with Windows. 
-
-::: info
-For PowerShell 7.4+ and .NET 8 environments, use the modern version of PoshUI available at [github.com/asolutionit/PoshUI](https://github.com/asolutionit/PoshUI).
-:::
+- **Note**: PoshUI targets the native PowerShell version included with Windows.
 
 ## Hardware Requirements
 

@@ -85,6 +85,7 @@ export default {
         items: [
           { text: 'Architecture', link: '/platform/architecture' },
           { text: 'Module Structure', link: '/platform/module-structure' },
+          { text: 'Security', link: '/platform/security' },
           { text: 'Logging', link: '/platform/logging' },
           { text: 'Theming', link: '/platform/theming' },
           { text: 'Validation', link: '/platform/validation' }
