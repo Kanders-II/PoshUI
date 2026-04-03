@@ -62,7 +62,7 @@ Add-UIStep -Name 'Config' -Title 'Configuration' `
 
 ### PNG Icons on Carousel Slides
 
-Carousel banners support per-slide PNG icons via the `IconPath` property in the slide hashtable. The icon appears to the left of the slide title and subtitle.
+Carousel banners support per-slide PNG icons via the `IconPath` property in the slide hashtable. The icon appears beside the slide title and subtitle (default position: `Right`).
 
 ```powershell
 $carouselItems = @(

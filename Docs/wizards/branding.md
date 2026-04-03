@@ -18,11 +18,13 @@ Set-UIBranding -WindowTitle "Cloud Provisioning" `
 | Parameter | Description |
 |-----------|-------------|
 | `-WindowTitle` | The title displayed in the window title bar. |
+| `-WindowTitleIcon` | Path to a PNG/ICO image for the window title bar icon. |
 | `-SidebarHeaderText` | Large text shown at the top of the sidebar. |
-| `-SidebarHeaderIcon` | Segoe MDL2 icon glyph for the header. |
+| `-SidebarHeaderIcon` | Segoe MDL2 icon glyph or file path for the sidebar header. |
 | `-SidebarHeaderIconOrientation` | Position of the icon relative to text (`Left`, `Right`, `Top`, `Bottom`). |
 | `-ShowSidebarHeaderIcon` | Boolean to toggle icon visibility. |
 | `-Theme` | Visual style: `Auto` (follows Windows), `Light`, or `Dark`. |
+| `-DisableAnimations` | Switch to disable all UI transition animations. |
 | `-AllowCancel` | Whether the user can close the wizard via the 'X' or Cancel button. |
 
 ## UI Theming
@@ -82,7 +84,7 @@ Set-UITheme -Light @{
 
 Users can toggle between themes at runtime using the **sun/moon button** in the title bar. Custom colors persist across toggles.
 
-See [Custom Themes](../platform/custom-themes.md) for the full list of 22 color slots.
+See [Custom Themes](../platform/custom-themes.md) for the full list of 24 color slots.
 
 ## Window Management
 

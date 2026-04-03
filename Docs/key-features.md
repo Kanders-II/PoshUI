@@ -156,7 +156,7 @@ PoshUI features native Windows 11-style theming with automatic dark mode support
 - **Dark Theme** - Modern dark theme with deep charcoal backgrounds
 - **Theme Toggle** *(v1.3.0)* - Sun/moon button in title bar lets users switch themes at runtime
 - **Dual-Mode Custom Themes** *(v1.3.0)* - Define independent color palettes for light and dark modes
-- **22 Color Slots** - Override any combination of background, sidebar, accent, text, and input colors
+- **24 Color Slots** - Override any combination of background, sidebar, accent, text, input, and typography settings
 - **Consistent Styling** - All controls follow Windows 11 design language
 
 ```powershell
@@ -213,7 +213,7 @@ $carouselItems = @(
         IconPath = 'C:\Icons\stopwatch_3d.png'
     }
 )
-Add-UIBanner -Step 'Overview' -CarouselSlides $carouselItems -AutoRotate $true
+Add-UIBanner -Step 'Overview' -Title 'Dashboard' -CarouselSlides $carouselItems -AutoRotate $true
 ```
 
 PNG icons fall back to glyph icons automatically if the file path is invalid.

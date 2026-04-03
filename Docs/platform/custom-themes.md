@@ -50,10 +50,14 @@ Show-PoshUIDashboard
 - Custom colors persist across toggles
 - Only specify the slots you want to change; unspecified slots use built-in defaults
 
-### Available Color Slots (22 total)
+### Available Color Slots (24 total)
 
 | Slot | Description | Light Default | Dark Default |
 |------|-------------|---------------|--------------|
+| `AccentColor` | Primary accent color | `#0078D4` | `#0078D4` |
+| `AccentDark` | Accent hover state (auto-derived if omitted) | `#005A9E` | `#005A9E` |
+| `AccentDarker` | Accent pressed state (auto-derived if omitted) | `#004578` | `#004578` |
+| `AccentLight` | Light accent variant (auto-derived if omitted) | `#4A9EE0` | `#4A9EE0` |
 | `Background` | Outermost window background | `#E8ECF0` | `#1E1E2E` |
 | `ContentBackground` | Main content area | `#F0F3F6` | `#252535` |
 | `CardBackground` | Card surfaces | `#FFFFFF` | `#2D2D3D` |
@@ -62,7 +66,6 @@ Show-PoshUIDashboard
 | `SidebarHighlight` | Active sidebar highlight | `#4A9EE0` | `#4A9EE0` |
 | `TextPrimary` | Primary text | `#1A202C` | `#E8ECF0` |
 | `TextSecondary` | Secondary text | `#4A5568` | `#A0AEC0` |
-| `AccentColor` | Primary accent color | `#0078D4` | `#0078D4` |
 | `ButtonBackground` | Button fill | `#0078D4` | `#0078D4` |
 | `ButtonForeground` | Button text | `#FFFFFF` | `#FFFFFF` |
 | `InputBackground` | Input field background | `#FFFFFF` | `#2D2D3D` |
@@ -73,34 +76,16 @@ Show-PoshUIDashboard
 | `SuccessColor` | Success indicators | `#107C10` | `#4CAF50` |
 | `WarningColor` | Warning indicators | `#FFB900` | `#FF9800` |
 | `ErrorColor` | Error indicators | `#E81123` | `#F44336` |
-| `HeadingForeground` | Heading text | `#1A202C` | `#E8ECF0` |
-| `BodyForeground` | Body text | `#4A5568` | `#CBD5E0` |
-| `SecondaryForeground` | Secondary text | `#718096` | `#A0AEC0` |
+| `FontFamily` | Global font family name | `Segoe UI` | `Segoe UI` |
+| `CornerRadius` | Control corner radius in pixels | `8` | `8` |
 
-## Advanced: XAML Theme Files
+## Advanced: XAML Theme Resources
 
-For full control over WPF resources, you can use custom XAML theme files.
+For full control over WPF resources, you can reference the internal resource keys that PoshUI uses. This is for advanced users who understand WPF ResourceDictionary concepts.
 
-### Quick Start
-
-1. Copy the theme template from `PoshUI\Templates\CustomTheme-Template.xaml`
-2. Edit the colors to match your brand
-3. Apply it in your script:
-
-```powershell
-Set-UIBranding -ThemeFile "C:\Themes\MyBrand.xaml"
-```
-
-### How It Works
-
-When you specify a `-ThemeFile`, PoshUI:
-
-1. Loads the built-in Light theme as a base
-2. Parses your custom XAML file as a `ResourceDictionary`
-3. Overlays your custom resources on top of the base theme
-4. Any keys you define override the defaults; keys you omit use the built-in values
-
-This means you only need to include the resources you want to change.
+::: warning
+The recommended approach for most users is the `Set-UITheme` hashtable method described above. XAML resource keys are documented here for reference only.
+:::
 
 ### Using the Template
 
@@ -193,14 +178,17 @@ For the complete list of all resource keys, see the template file at `PoshUI\Tem
 
 ## Combining with Theme Mode
 
-`-ThemeFile` takes precedence over `-Theme`. If both are specified, the custom file is used:
+`Set-UITheme` works alongside `Set-UIBranding -Theme`. The base theme (Light/Dark/Auto) is set via branding, and color overrides are layered on top:
 
 ```powershell
-# ThemeFile wins - the custom file is applied
-Set-UIBranding -Theme "Dark" -ThemeFile "C:\Themes\MyBrand.xaml"
+# Set base theme
+Set-UIBranding -Theme "Dark"
+
+# Layer custom colors on top
+Set-UITheme -Dark @{ AccentColor = '#00BFA5'; SidebarBackground = '#0A1A18' }
 ```
 
-If you only want a custom theme without specifying a file, use the built-in modes:
+Built-in theme modes:
 
 ```powershell
 Set-UIBranding -Theme "Dark"   # Built-in dark theme
@@ -211,12 +199,6 @@ Set-UIBranding -Theme "Auto"   # Follow Windows system setting
 ## Disabling Animations
 
 PoshUI includes smooth transition animations for step navigation, sidebar collapse, and dialog open/close. You can disable these for accessibility or performance:
-
-```powershell
-Set-UIBranding -ThemeFile "C:\Themes\MyBrand.xaml" -DisableAnimations
-```
-
-Or with a built-in theme:
 
 ```powershell
 Set-UIBranding -Theme "Dark" -DisableAnimations

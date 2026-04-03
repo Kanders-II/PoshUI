@@ -7,8 +7,8 @@
     <Color x:Key="AccentColor">#FF0078D4</Color>
     <Color x:Key="BorderColor">#FF404040</Color>
 
-    <!-- Font sizes (normal scale) -->
-    <system:Double x:Key="FontSizeBase">12</system:Double>
+    <!-- Font sizes (refreshed scale) -->
+    <system:Double x:Key="FontSizeBase">13</system:Double>
     <system:Double x:Key="FontSizeBody">14</system:Double>
     <system:Double x:Key="FontSizeSmall">12</system:Double>
     <system:Double x:Key="FontSizeLabel">13</system:Double>
@@ -71,7 +71,7 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4">
+                            CornerRadius="6">
                         <ContentPresenter HorizontalAlignment="Center" 
                                         VerticalAlignment="Center"/>
                     </Border>
@@ -96,7 +96,7 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="1"
-                            CornerRadius="4">
+                            CornerRadius="6">
                         <ScrollViewer x:Name="PART_ContentHost"/>
                     </Border>
                 </ControlTemplate>
@@ -127,7 +127,7 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="4"
+                            CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter/>
                     </Border>
@@ -210,8 +210,8 @@
         <Setter Property="Background" Value="{StaticResource WorkflowCardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource WorkflowCardBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="6"/>
-        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="20,14"/>
         <Setter Property="Margin" Value="8,4,0,8"/>
         <Setter Property="Effect" Value="{StaticResource WorkflowCardShadow}"/>
     </Style>
