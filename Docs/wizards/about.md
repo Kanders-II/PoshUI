@@ -4,6 +4,10 @@ Wizards in PoshUI are designed for step-by-step data collection and guided workf
 
 ![Wizard Dark Theme](../images/visualization/Wizard_Dark_.png)
 
+Full-color PNG emoji icons on every UI element *(v1.3.0)*:
+
+![Wizard with Emoji Icons](../images/visualization/Wizard_EmojiIcons_Dark.png)
+
 ## Key Features
 
 - **Step-by-Step Navigation**: Guide users through a sequence of pages.
@@ -12,6 +16,9 @@ Wizards in PoshUI are designed for step-by-step data collection and guided workf
 - **Validation**: Ensure data integrity with built-in validation patterns and mandatory fields.
 - **Dynamic Content**: Refresh controls based on user input (cascading dropdowns).
 - **Custom Branding**: Personalize the wizard with your own titles, icons, and sidebar text.
+- **PNG Icon Support** *(v1.3.0)*: Full-color PNG/ICO icons on steps, cards, banners, and carousel slides.
+- **Dual-Mode Custom Themes** *(v1.3.0)*: Independent light/dark color palettes with runtime toggle.
+- **Theme Toggle** *(v1.3.0)*: Sun/moon button in the title bar for instant theme switching.
 
 ## When to Use Wizards
 

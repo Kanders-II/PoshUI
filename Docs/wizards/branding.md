@@ -40,16 +40,49 @@ Set-UIBranding -Theme "Dark"
 
 ## Custom Icons
 
-Throughout the wizard, you can use **Segoe MDL2 Assets**. These are the same icons used by Windows itself, ensuring a professional and consistent appearance.
+Throughout the wizard, you can use **Segoe MDL2 Assets** glyphs or **full-color PNG images** *(v1.3.0)*.
+
+### Glyph Icons (Built-in)
+Segoe MDL2 Assets are the same icons used by Windows itself, ensuring a professional and consistent appearance.
+
+### PNG Icons *(v1.3.0)*
+Use the `-IconPath` parameter for full-color PNG or ICO images instead of monochrome glyphs:
+
+```powershell
+# PNG icon on a step
+Add-UIStep -Name 'Config' -Title 'Configuration' -IconPath 'C:\Icons\gear_3d.png'
+
+# PNG branding logo
+Set-UIBranding -SidebarHeaderIcon 'C:\Icons\company_logo.png'
+```
 
 Icons can be applied to:
-- Steps (shown in the sidebar)
-- Branding header
-- Information cards
+- Steps (shown in the sidebar) - via `-Icon` (glyph) or `-IconPath` (PNG)
+- Branding header - via `-SidebarHeaderIcon` (accepts glyph or file path)
+- Information cards - via `-IconPath`
+- Banners and carousel slides - via `-IconPath`
 
 ::: tip
-See the [Icons Reference](../configuration/icons.md) for common glyph codes.
+See the [Icons Reference](../configuration/icons.md) for glyph codes and PNG icon details.
 :::
+
+## Dual-Mode Custom Themes *(v1.3.0)*
+
+Define independent color palettes for light and dark modes using `Set-UITheme`:
+
+```powershell
+Set-UITheme -Light @{
+    AccentColor       = '#E91E63'
+    SidebarBackground = '#880E4F'
+} -Dark @{
+    AccentColor       = '#00BFA5'
+    SidebarBackground = '#0A1A18'
+}
+```
+
+Users can toggle between themes at runtime using the **sun/moon button** in the title bar. Custom colors persist across toggles.
+
+See [Custom Themes](../platform/custom-themes.md) for the full list of 22 color slots.
 
 ## Window Management
 

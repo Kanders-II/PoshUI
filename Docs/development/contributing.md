@@ -5,7 +5,7 @@ Thank you for your interest in contributing to PoshUI! We welcome contributions 
 ## How Can I Contribute?
 
 ### Reporting Bugs
-If you find a bug, please check the [existing issues](https://github.com/asolutionit/PoshUI/issues) to see if it has already been reported. If not, open a new issue and include:
+If you find a bug, please check the [existing issues](https://github.com/Kanders-II/PoshUI/issues) to see if it has already been reported. If not, open a new issue and include:
 - A clear, descriptive title.
 - Steps to reproduce the problem.
 - Expected vs. actual behavior.

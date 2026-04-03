@@ -72,5 +72,5 @@ Add-UIDropdown -Choices $choices ...
 ## Need Help?
 
 If you encounter issues during your migration, please reach out to us:
-- **GitHub Issues**: [Report a bug](https://github.com/asolutionit/PoshUI/issues)
-- **Discussions**: [Ask a question](https://github.com/asolutionit/PoshUI/discussions)
+- **GitHub Issues**: [Report a bug](https://github.com/Kanders-II/PoshUI/issues)
+- **Discussions**: [Ask a question](https://github.com/Kanders-II/PoshUI/discussions)

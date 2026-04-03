@@ -8,7 +8,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/asolutionit/PoshUI/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -39,17 +39,19 @@ PoshUI provides three independent modules, each designed for a specific use case
 **Step-by-step guided interfaces** for configuration, deployment, and setup tasks.  
 Perfect for collecting user input with validation, then executing your automation logic.
 
-![Wizard Example](Docs/images/visualization/Wizard_Dark_1.png)
+**Full-color PNG emoji icons** in sidebar navigation, banners, and cards *(v1.3.0)*:
+
+![Wizard Emoji Icons](Docs/images/visualization/Wizard_EmojiIcons_Dark.png)
 
 ### PoshUI.Dashboard
 **Real-time monitoring interfaces** with metrics, charts, and interactive tools.  
 Build card-based dashboards that display KPIs, visualize data, and turn scripts into clickable tools.
 
-![Dashboard Example](Docs/images/visualization/Dashboard_Charts_Light_1.png)
+![Dashboard Example](Docs/images/visualization/Dashboard_ComputerMaintenance_Dark.png)
 
-**ScriptCards** turn PowerShell scripts into clickable tools for end users:
+**ScriptCards** turn PowerShell scripts into clickable tools for end users — with PNG icons:
 
-![ScriptCard Example](Docs/images/visualization/ScriptCard_Dark_2.png)
+![ScriptCard Example](Docs/images/visualization/Dashboard_ScriptCards_Dark.png)
 
 ### PoshUI.Workflow
 **Multi-step automation** with progress tracking and reboot/resume capabilities.  
@@ -69,7 +71,7 @@ Orchestrate complex processes like server deployments, software installations, a
 - Windows PowerShell 5.1 (included with Windows)
 
 **Download:**
-1. Download the latest release from [GitHub Releases](https://github.com/asolutionit/PoshUI/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/Kanders-II/PoshUI/releases)
 2. Extract and unblock files: `Get-ChildItem -Recurse | Unblock-File`
 
 ### Simple Example
@@ -105,6 +107,9 @@ Show-PoshUIWizard -ScriptBody {
 - **Dynamic Controls** - Cascading dropdowns with scriptblock data sources
 - **Workflow Automation** - Multi-task execution with progress tracking and reboot/resume
 - **Light/Dark Themes** - Auto-detect system theme or force Light/Dark mode
+- **Theme Toggle** - Sun/moon button in title bar to switch themes at runtime *(v1.3.0)*
+- **Dual-Mode Custom Themes** - Define independent color palettes for light and dark modes *(v1.3.0)*
+- **PNG Icon Support** - Full-color PNG/ICO icons on steps, cards, banners, and branding *(v1.3.0)*
 - **Live Execution Console** - Real-time output display during script execution
 - **CMTrace Logging** - Enterprise-ready audit trails
 - **Zero Dependencies** - No third-party libraries or NuGet packages
@@ -113,7 +118,7 @@ Show-PoshUIWizard -ScriptBody {
 
 ## Documentation
 
-**Full documentation:** [https://asolutionit.github.io/PoshUI](https://asolutionit.github.io/PoshUI)
+**Full documentation:** [https://kanders-ii.github.io/PoshUI](https://kanders-ii.github.io/PoshUI)
 
 The complete documentation includes:
 - **Cmdlet Reference** - All PowerShell cmdlets with examples
@@ -123,28 +128,26 @@ The complete documentation includes:
 
 ---
 
-## Examples
-
-The repository includes complete working examples:
-
-- **Demo-AllControls.ps1** - Showcase of all 12+ control types
-- **Demo-HyperV-CreateVM.ps1** - Production-ready VM creation wizard
-- **Demo-Dashboard.ps1** - Live system monitoring dashboard
-- **Demo-DynamicControls.ps1** - Cascading dropdowns and dynamic data
-- **Demo-Workflow.ps1** - Multi-step automation with reboot/resume
-
-Run any demo directly: `.\Demo-AllControls.ps1`
-
----
-
 ## Contributing
 
 PoshUI is my contribution to the PowerShell community. Contributions, feedback, and suggestions from others are welcome!
 
 **How to contribute:**
-- Report bugs or request features via [GitHub Issues](https://github.com/asolutionit/PoshUI/issues)
+- Report bugs or request features via [GitHub Issues](https://github.com/Kanders-II/PoshUI/issues)
 - Submit pull requests for improvements
 - Share your use cases and examples
+
+---
+
+## Icon Attributions
+
+### Icons8
+
+Some example scripts in this project use icons provided by [Icons8](https://icons8.com). Icons8 icons are used under their [licensing terms](https://icons8.com/license). If you use these icons in your own projects, please provide appropriate attribution to Icons8.
+
+### Microsoft Fluent Emoji
+
+Some example scripts use 3D emoji icons from the [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) repository. Fluent Emoji is published by Microsoft under the [MIT License](https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE). These high-quality 3D rendered PNG icons are ideal for use with PoshUI's `-IconPath` parameter.
 
 ---
 
@@ -152,4 +155,4 @@ PoshUI is my contribution to the PowerShell community. Contributions, feedback, 
 
 MIT License - See [LICENSE](LICENSE) file for details.
 
-**Maintained by [A Solution IT LLC](https://asolutionit.com)**
+**Maintained by [Kanders-II](https://github.com/Kanders-II)**

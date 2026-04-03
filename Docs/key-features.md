@@ -154,14 +154,71 @@ PoshUI features native Windows 11-style theming with automatic dark mode support
 - **Auto Theme** - Automatically detects Windows system theme
 - **Light Theme** - High-contrast light theme with white backgrounds
 - **Dark Theme** - Modern dark theme with deep charcoal backgrounds
+- **Theme Toggle** *(v1.3.0)* - Sun/moon button in title bar lets users switch themes at runtime
+- **Dual-Mode Custom Themes** *(v1.3.0)* - Define independent color palettes for light and dark modes
+- **22 Color Slots** - Override any combination of background, sidebar, accent, text, and input colors
 - **Consistent Styling** - All controls follow Windows 11 design language
 
 ```powershell
+# Built-in themes
 Show-PoshUIWizard -Theme 'Auto'  # Follows system theme
-Show-PoshUIDashboard -Theme 'Dark'  # Force dark mode
+
+# Custom dual-mode themes (v1.3.0)
+Set-UITheme -Light @{
+    AccentColor       = '#E91E63'
+    SidebarBackground = '#880E4F'
+} -Dark @{
+    AccentColor       = '#00BFA5'
+    SidebarBackground = '#0A1A18'
+}
 ```
 
 [Learn more about Theming →](./platform/theming.md)
+
+---
+
+## PNG Icons *(v1.3.0)*
+
+Use full-color PNG or ICO images instead of monochrome glyphs for a richer visual experience:
+
+![Wizard with Emoji PNG Icons](./images/visualization/Wizard_EmojiIcons_Dark.png)
+
+- **Sidebar steps** - Colorful icons in the navigation sidebar
+- **Metric cards** - Branded icons on KPI displays
+- **Info cards** - Visual context on informational cards
+- **Banners** - Overlay images on hero sections
+- **Carousel slides** - Per-slide PNG icons in carousel banners (Wizard, Dashboard, Workflow)
+- **Branding** - Full-color logos in sidebar header and title bar
+
+```powershell
+# PNG icon on a wizard/dashboard step
+Add-UIStep -Name 'Config' -Title 'Configuration' -IconPath 'C:\Icons\gear_3d.png'
+
+# PNG icon on a metric card
+Add-UIMetricCard -Step 'Overview' -Name 'CPU' -Title 'CPU' -Value 75 -Unit '%' `
+    -IconPath 'C:\Icons\cpu_3d.png'
+
+# PNG icons on carousel slides
+$carouselItems = @(
+    @{
+        Title = 'Performance Dashboard'
+        Subtitle = 'Real-time system monitoring'
+        BackgroundColor = '#1B3A57'
+        IconPath = 'C:\Icons\graph_3d.png'
+    },
+    @{
+        Title = 'Gauge Controls'
+        Subtitle = 'Radial gauges show metrics at a glance'
+        BackgroundColor = '#DC2626'
+        IconPath = 'C:\Icons\stopwatch_3d.png'
+    }
+)
+Add-UIBanner -Step 'Overview' -CarouselSlides $carouselItems -AutoRotate $true
+```
+
+PNG icons fall back to glyph icons automatically if the file path is invalid.
+
+[Learn more about Icons →](./configuration/icons.md)
 
 ---
 
@@ -219,4 +276,4 @@ Ready to build your first PoshUI interface?
 ---
 
 **License:** MIT License  
-**Repository:** [github.com/asolutionit/PoshUI](https://github.com/asolutionit/PoshUI)
+**Repository:** [github.com/Kanders-II/PoshUI](https://github.com/Kanders-II/PoshUI)

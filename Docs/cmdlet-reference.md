@@ -59,6 +59,7 @@ Adds a page (step) to the wizard. Users navigate through steps using Next/Back b
 
 ```powershell
 Add-UIStep -Name "Config" -Title "Configuration" -Icon "&#xE713;"
+Add-UIStep -Name "Config" -Title "Configuration" -IconPath "C:\Icons\gear_3d.png"
 ```
 
 | Parameter | Type | Required | Description |
@@ -67,6 +68,7 @@ Add-UIStep -Name "Config" -Title "Configuration" -Icon "&#xE713;"
 | `-Title` | String | Yes | Display text shown in sidebar and step header. |
 | `-Description` | String | No | Subtitle text shown below the title. |
 | `-Icon` | String | No | Segoe MDL2 icon glyph (e.g., `'&#xE713;'` for Settings). |
+| `-IconPath` | String | No | Path to PNG/ICO image file for full-color sidebar icon. *(v1.3.0)* |
 | `-Order` | Int | No | Display order. Lower numbers appear first. Auto-assigned if omitted. |
 | `-Type` | String | No | Step type: `Wizard` (default), `Dashboard`, `Workflow`. |
 | `-Skippable` | Switch | No | Allow users to skip this step. |
@@ -84,11 +86,40 @@ Set-UIBranding -WindowTitle "Contoso Setup" -AccentColor "#0078D4"
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `-WindowTitle` | String | No | Override the window title bar text. |
+| `-WindowTitleIcon` | String | No | PNG/ICO file path or Segoe MDL2 glyph for the title bar icon. |
 | `-SidebarHeaderText` | String | No | Branding text in sidebar header. |
-| `-SidebarHeaderIcon` | String | No | Icon for sidebar header. |
-| `-LogoPath` | String | No | Path to logo image file for sidebar. |
+| `-SidebarHeaderIcon` | String | No | Glyph or PNG/ICO file path for sidebar header icon. *(PNG support v1.3.0)* |
+| `-SidebarHeaderIconOrientation` | String | No | Icon position relative to text: `Left`, `Right`, `Top`, `Bottom`. |
 | `-Theme` | String | No | Theme override: `Auto`, `Light`, `Dark`. |
+| `-ThemeFile` | String | No | Path to custom XAML theme file. |
+| `-DisableAnimations` | Switch | No | Disable UI transition animations. |
 | `-AllowCancel` | Boolean | No | Enable/disable close button. |
+
+---
+
+### Set-UITheme *(v1.3.0)*
+
+Defines independent color palettes for light and dark modes. Available in all modules (Wizard, Dashboard, Workflow).
+
+```powershell
+Set-UITheme -Light @{
+    AccentColor       = '#E91E63'
+    SidebarBackground = '#880E4F'
+} -Dark @{
+    AccentColor       = '#00BFA5'
+    SidebarBackground = '#0A1A18'
+}
+```
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `-Light` | Hashtable | No | Color slot overrides for light mode. |
+| `-Dark` | Hashtable | No | Color slot overrides for dark mode. |
+| `-Theme` | Hashtable | No | Single palette applied to both modes (legacy). |
+
+**Color Slots:** `Background`, `ContentBackground`, `CardBackground`, `SidebarBackground`, `SidebarText`, `SidebarHighlight`, `TextPrimary`, `TextSecondary`, `AccentColor`, `ButtonBackground`, `ButtonForeground`, `InputBackground`, `InputBorder`, `BorderColor`, `TitleBarBackground`, `TitleBarText`, `SuccessColor`, `WarningColor`, `ErrorColor`, `HeadingForeground`, `BodyForeground`, `SecondaryForeground`
+
+Only specify the slots you want to override. Unspecified slots use the built-in theme defaults. See [Custom Themes](./platform/custom-themes.md) for details.
 
 ---
 
@@ -503,6 +534,7 @@ Add-UIMetricCard -Step "Dashboard" -Name "CPU" -Title "CPU Usage" `
 | `-MinValue` | Double | No | Progress bar minimum. Default: `0`. |
 | `-MaxValue` | Double | No | Progress bar maximum. Default: `100`. |
 | `-Icon` | String | No | Segoe MDL2 icon glyph (e.g., `'&#xE7C4;'`). |
+| `-IconPath` | String | No | Path to PNG/ICO image file for full-color card icon. *(v1.3.0)* |
 | `-Category` | String | No | Category for filtering. Default: `"General"`. |
 | `-RefreshScript` | ScriptBlock | No | Custom refresh logic. Automatically set if `-Value` is a ScriptBlock. |
 

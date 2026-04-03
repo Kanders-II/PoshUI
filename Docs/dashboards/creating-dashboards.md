@@ -40,10 +40,31 @@ The `New-PoshUIDashboard` cmdlet creates the context for your dashboard.
 Dashboards use the same `Add-UIStep` cmdlet as wizards, but they must be set to `-Type Dashboard`.
 
 ```powershell
+# Glyph icon
 Add-UIStep -Name 'Network' -Title 'Network Stats' -Type Dashboard -Icon '&#xE968;'
+
+# PNG icon (v1.3.0)
+Add-UIStep -Name 'Network' -Title 'Network Stats' -Type Dashboard `
+    -IconPath 'C:\Icons\globe_3d.png'
 ```
 
 Each step in a dashboard represents a separate "page" or "view" that users can switch between using the sidebar.
+
+## Custom Themes *(v1.3.0)*
+
+Dashboards support dual-mode custom themes with a runtime light/dark toggle:
+
+```powershell
+Set-UITheme -Light @{
+    AccentColor       = '#E91E63'
+    SidebarBackground = '#880E4F'
+} -Dark @{
+    AccentColor       = '#00BFA5'
+    SidebarBackground = '#0A1A18'
+}
+```
+
+See [Custom Themes](../platform/custom-themes.md) for the full list of color slots.
 
 ## Grid Layout
 

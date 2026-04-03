@@ -41,6 +41,13 @@ Each carousel slide is a hashtable with the following properties:
 | `BackgroundImagePath` | String | No | `''` | Path to background image file |
 | `BackgroundImageOpacity` | Double | No | `0.3` | Image opacity (0.0 to 1.0). Use `1.0` for fully visible images |
 | `BackgroundImageStretch` | String | No | `Uniform` | Image stretch mode: `Uniform` (centered), `UniformToFill` (fills banner), `Fill`, `None` |
+| `IconPath` | String | No | `''` | Path to PNG/ICO icon file displayed beside slide text *(v1.3.0)* |
+| `IconSize` | Integer | No | `64` | Icon width/height in pixels *(v1.3.0)* |
+| `IconColor` | String | No | `#40FFFFFF` | Tint color for glyph icons *(v1.3.0)* |
+| `IconPosition` | String | No | `Right` | Icon position: `Left` or `Right` *(v1.3.0)* |
+| `TitleFontSize` | String | No | `32` | Title font size in pixels |
+| `SubtitleFontSize` | String | No | `16` | Subtitle font size in pixels |
+| `TitleFontWeight` | String | No | `Bold` | Title font weight |
 | `LinkUrl` | String | No | `''` | URL to open when slide is clicked |
 | `Clickable` | Boolean | No | `$false` | Enable/disable clickability |
 
@@ -54,7 +61,7 @@ $carouselItems = @(
         Title = 'Welcome'
         Subtitle = 'Get started with PoshUI'
         BackgroundColor = '#0078D4'
-        LinkUrl = 'https://github.com/ASolutionIT/PoshUI'
+        LinkUrl = 'https://github.com/Kanders-II/PoshUI'
         Clickable = $true
     },
     @{
@@ -70,6 +77,42 @@ Add-UIBanner -Step "Welcome" `
     -CarouselItems $carouselItems `
     -AutoRotate $true `
     -RotateInterval 5000 `
+    -Height 180
+```
+
+### Carousel with PNG Icons (Dashboard) *(v1.3.0)*
+
+```powershell
+$iconBase = Join-Path $PSScriptRoot 'Assets\Icons'
+
+$carouselSlides = @(
+    @{
+        Title = 'Performance Dashboard'
+        Subtitle = 'Real-time system monitoring with visual indicators'
+        BackgroundColor = '#1B3A57'
+        IconPath = (Join-Path $iconBase 'icons8-graph-100.png')
+        LinkUrl = 'https://kanders-ii.github.io/PoshUI/'
+        Clickable = $true
+    },
+    @{
+        Title = 'Gauge Controls'
+        Subtitle = 'Radial gauges show metrics at a glance'
+        BackgroundColor = '#DC2626'
+        IconPath = (Join-Path $iconBase 'icons8-stopwatch-100.png')
+    },
+    @{
+        Title = 'Sparkline Charts'
+        Subtitle = 'Compact trend visualization in cards'
+        BackgroundColor = '#4A5568'
+        IconPath = (Join-Path $iconBase 'icons8-stocks-growth-100.png')
+    }
+)
+
+Add-UIBanner -Step "PerformanceMetrics" -Name "PerfBanner" `
+    -Title "Performance Metrics" `
+    -CarouselSlides $carouselSlides `
+    -AutoRotate $true `
+    -RotateInterval 4000 `
     -Height 180
 ```
 

@@ -4,7 +4,7 @@ PoshUI is a portable module suite. It does not require a traditional installer a
 
 ## Download
 
-You can download the latest version of PoshUI from the [GitHub Releases](https://github.com/asolutionit/PoshUI/releases) page.
+You can download the latest version of PoshUI from the [GitHub Releases](https://github.com/Kanders-II/PoshUI/releases) page.
 
 1. Download the `PoshUI.zip` file.
 2. Right-click the ZIP file and select **Properties**.
@@ -24,7 +24,7 @@ If you prefer to build PoshUI yourself, you can do so using Visual Studio or the
 
 1. Clone the repository:
    ```powershell
-   git clone https://github.com/asolutionit/PoshUI.git
+   git clone https://github.com/Kanders-II/PoshUI.git
    ```
 2. Open `UIFramework.sln` in Visual Studio.
 3. Set the build configuration to **Release**.
