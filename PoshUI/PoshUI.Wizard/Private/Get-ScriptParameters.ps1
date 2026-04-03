@@ -319,7 +319,7 @@ function Get-ScriptParameters {
                 }
                 
                 $parameters += $paramInfo
-                Write-Verbose "  → Type: $($paramInfo.Type), Mandatory: $($paramInfo.Mandatory), Default: $($paramInfo.Default)"
+                Write-Verbose "  -> Type: $($paramInfo.Type), Mandatory: $($paramInfo.Mandatory), Default: $($paramInfo.Default)"
             }
             
             return $parameters

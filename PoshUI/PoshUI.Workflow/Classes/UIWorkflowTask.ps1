@@ -15,6 +15,7 @@ class UIWorkflowTask {
     [string]$Description
     [int]$Order
     [string]$Icon
+    [string]$IconPath
     [scriptblock]$ScriptBlock
     [string]$ScriptPath
     [hashtable]$Arguments
@@ -129,6 +130,7 @@ class UIWorkflowTask {
             Description = $this.Description
             Order = $this.Order
             Icon = $this.Icon
+            IconPath = $this.IconPath
             ScriptPath = $this.ScriptPath
             Arguments = $this.Arguments
             TaskType = $this.TaskType.ToString()

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System;
@@ -43,6 +43,9 @@ namespace Launcher.ViewModels
         private string _refreshScript;
         private bool _isRefreshing;
         private bool _hasData;
+        private System.Windows.Media.Brush _accentBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
+
+        public System.Windows.Media.Brush AccentBrush { get => _accentBrush; set { _accentBrush = value; OnPropertyChanged(nameof(AccentBrush)); } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -115,6 +118,23 @@ namespace Launcher.ViewModels
                 {
                     _icon = value;
                     OnPropertyChanged(nameof(Icon));
+                }
+            }
+        }
+
+        private string _iconPath = string.Empty;
+        /// <summary>
+        /// Icon path for PNG images
+        /// </summary>
+        public string IconPath
+        {
+            get => _iconPath;
+            set
+            {
+                if (_iconPath != value)
+                {
+                    _iconPath = value;
+                    OnPropertyChanged(nameof(IconPath));
                 }
             }
         }

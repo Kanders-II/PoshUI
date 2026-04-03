@@ -1,4 +1,4 @@
-﻿function Add-UIScriptCard {
+function Add-UIScriptCard {
     <#
     .SYNOPSIS
     Adds an executable script card to a UI step in CardGrid view mode.
@@ -23,7 +23,7 @@
     .PARAMETER Icon
     Optional icon to display on the card. Can be:
     - Segoe MDL2 icon glyph in format '&#xE1D3;' (e.g., '&#xE77B;' for User)
-    - Emoji characters (e.g., 'ðŸ–¥ï¸', 'ðŸ“', 'âš™ï¸')
+    - Emoji characters (e.g., fire, clipboard, warning icons)
     
     .PARAMETER ScriptPath
     Path to a .ps1 file to execute. Parameters are auto-discovered from the script's param block.
@@ -92,6 +92,9 @@
         
         [Parameter()]
         [string]$Icon,
+        
+        [Parameter()]
+        [string]$IconPath,
         
         [Parameter(Mandatory = $true, ParameterSetName = 'ScriptPath')]
         [ValidateScript({ Test-Path $_ -PathType Leaf })]
@@ -170,7 +173,7 @@
             foreach ($param in $discoveredParams) {
                 $controlDef = Convert-ParameterToControl -ParameterInfo $param -DefaultOverrides $DefaultParameters
                 $parameterControls += $controlDef
-                Write-Verbose "  Parameter: $($param.Name) â†’ $($param.Type) control"
+                Write-Verbose "  Parameter: $($param.Name) -> $($param.Type) control"
             }
             
             # Create the control
@@ -182,6 +185,10 @@
             
             if ($Icon) {
                 $control.SetProperty('Icon', $Icon)
+            }
+            
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
             
             if ($Category) {

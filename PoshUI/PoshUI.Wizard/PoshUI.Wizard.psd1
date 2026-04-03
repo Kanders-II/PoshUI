@@ -2,9 +2,9 @@
     RootModule = 'PoshUI.Wizard.psm1'
     ModuleVersion = '1.0.0'
     GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567891'
-    Author = 'A Solution IT LLC'
-    CompanyName = 'A Solution IT LLC'
-    Copyright = '(c) 2025 A Solution IT LLC. All rights reserved.'
+    Author = 'Kanders-II'
+    CompanyName = 'Kanders-II'
+    Copyright = '(c) 2025 Kanders-II. All rights reserved.'
     Description = 'PoshUI.Wizard - PowerShell module for creating interactive wizard UIs with input controls. Part of PoshUI suite.'
 
     PowerShellVersion = '5.1'
@@ -16,6 +16,7 @@
         # Core functions
         'New-PoshUIWizard',
         'Show-PoshUIWizard',
+        'Get-PoshUIWizard',
 
         # Step management
         'Add-UIStep',
@@ -59,6 +60,7 @@
     AliasesToExport = @(
         'New-PoshWizard',
         'Show-PoshWizard',
+        'Get-PoshWizard',
         'Add-WizardStep',
         'Add-WizardTextBox',
         'Add-WizardPassword',

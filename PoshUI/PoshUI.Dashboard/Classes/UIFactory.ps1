@@ -10,7 +10,7 @@ with proper initialization and validation. Supports extensibility through
 registered custom types.
 
 .NOTES
-Company: A Solution IT LLC
+Company: Kanders-II
 Version: 2.0.0
 #>
 

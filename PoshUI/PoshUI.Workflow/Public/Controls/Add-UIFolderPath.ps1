@@ -60,7 +60,10 @@
         [switch]$Mandatory,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -83,7 +86,10 @@
             $control.Default = $Default
             $control.Mandatory = $Mandatory.IsPresent
             $control.HelpText = $HelpText
-            
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
+
             $wizardStep.AddControl($control)
             
             Write-Verbose "Successfully added folder path selector: $Name"

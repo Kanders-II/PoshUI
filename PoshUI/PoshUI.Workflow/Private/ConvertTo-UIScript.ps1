@@ -59,6 +59,39 @@ function ConvertTo-UIScript {
             
             foreach ($key in $Definition.Branding.Keys) {
                 $value = $Definition.Branding[$key]
+
+                # Special handling for ThemeOverrides hashtables - serialize to JSON
+                if ($key -eq 'ThemeOverrides') {
+                    if ($value -is [hashtable] -and $value.Count -gt 0) {
+                        $themeJson = $value | ConvertTo-Json -Compress
+                        $themeJson = $themeJson.Replace("'", "''")
+                        $brandingParts += "ThemeOverridesJson = '$themeJson'"
+                        $addedKeys[$key] = $true
+                        Write-Verbose "Added ThemeOverridesJson to branding attribute"
+                        continue
+                    }
+                }
+                if ($key -eq 'ThemeOverridesLight') {
+                    if ($value -is [hashtable] -and $value.Count -gt 0) {
+                        $themeJson = $value | ConvertTo-Json -Compress
+                        $themeJson = $themeJson.Replace("'", "''")
+                        $brandingParts += "ThemeOverridesLightJson = '$themeJson'"
+                        $addedKeys[$key] = $true
+                        Write-Verbose "Added ThemeOverridesLightJson to branding attribute"
+                        continue
+                    }
+                }
+                if ($key -eq 'ThemeOverridesDark') {
+                    if ($value -is [hashtable] -and $value.Count -gt 0) {
+                        $themeJson = $value | ConvertTo-Json -Compress
+                        $themeJson = $themeJson.Replace("'", "''")
+                        $brandingParts += "ThemeOverridesDarkJson = '$themeJson'"
+                        $addedKeys[$key] = $true
+                        Write-Verbose "Added ThemeOverridesDarkJson to branding attribute"
+                        continue
+                    }
+                }
+
                 if ([string]::IsNullOrEmpty($value)) {
                     continue
                 }
@@ -204,6 +237,7 @@ function Convert-UIWorkflowStep {
         
         if ($task.Description) { $taskData.Description = $task.Description }
         if ($task.Icon) { $taskData.Icon = $task.Icon }
+        if ($task.IconPath) { $taskData.IconPath = $task.IconPath }
         if ($task.ScriptPath) { $taskData.ScriptPath = $task.ScriptPath }
         if ($task.ScriptBlock) {
             # Store script block as string
@@ -490,6 +524,12 @@ function Convert-UIControl {
     $detailsAttribute = "[WizardParameterDetails(Label='$($Control.Label)'"
     if ($Control.Width -gt 0) {
         $detailsAttribute += ", ControlWidth=$($Control.Width)"
+    }
+    # Add IconPath if present
+    $iconPath = $Control.GetPropertyOrDefault('IconPath', $null)
+    if ($iconPath) {
+        $escapedIconPath = $iconPath -replace "'", "''"
+        $detailsAttribute += ", IconPath='$escapedIconPath'"
     }
     $detailsAttribute += ")]"
     $lines += "    $detailsAttribute"

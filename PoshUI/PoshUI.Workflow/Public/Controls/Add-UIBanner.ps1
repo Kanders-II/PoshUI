@@ -35,7 +35,7 @@ function Add-UIBanner {
     Preset style for the banner: Default, Gradient, Image, Minimal, Hero, Accent.
     This simplifies banner creation for common use cases (80% of scenarios).
     - Default: Standard banner with theme colors
-    - Gradient: Blue gradient background (135° angle)
+    - Gradient: Blue gradient background (135 deg angle)
     - Image: Larger banner optimized for background images
     - Minimal: Compact banner with no shadow
     - Hero: Large centered banner for landing pages
@@ -247,7 +247,11 @@ function Add-UIBanner {
         [string]$LinkUrl,
 
         [Parameter()]
-        [switch]$Clickable
+        [switch]$Clickable,
+
+        [Parameter()]
+        [ValidateSet('', 'Info', 'Success', 'Warning', 'Error')]
+        [string]$Style
     )
 
     begin {
@@ -358,6 +362,7 @@ function Add-UIBanner {
             if ($PSBoundParameters.ContainsKey('GradientAngle')) { $control.SetProperty('GradientAngle', $GradientAngle) }
             if ($PSBoundParameters.ContainsKey('LinkUrl')) { $control.SetProperty('LinkUrl', $LinkUrl) }
             $control.SetProperty('Clickable', $Clickable.IsPresent)
+            if ($PSBoundParameters.ContainsKey('Style')) { $control.SetProperty('Style', $Style) }
 
             # Add control to step
             $wizardStep.AddControl($control)

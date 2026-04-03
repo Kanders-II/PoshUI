@@ -35,6 +35,9 @@ function Add-UIChartCard {
     .PARAMETER Icon
     Optional icon glyph (e.g., '&#xE7C4;').
     
+    .PARAMETER IconPath
+    Optional path to a PNG icon file. If both Icon and IconPath are specified, IconPath takes precedence.
+    
     .PARAMETER Category
     Category for grouping/filtering cards.
     
@@ -78,7 +81,7 @@ function Add-UIChartCard {
         [string]$Description,
         
         [Parameter()]
-        [ValidateSet('Line', 'Bar', 'Area', 'Pie')]
+        [ValidateSet('Line', 'Bar', 'Area', 'Pie', 'Donut')]
         [string]$ChartType = "Line",
         
         [Parameter(Mandatory = $true)]
@@ -92,6 +95,9 @@ function Add-UIChartCard {
         
         [Parameter()]
         [string]$Icon,
+        
+        [Parameter()]
+        [string]$IconPath,
         
         [Parameter()]
         [string]$Category = "General",
@@ -130,7 +136,10 @@ function Add-UIChartCard {
             $control.SetProperty('CardDescription', $Description)
             $control.SetProperty('Category', $Category)
             
-            if ($Icon) {
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
+            elseif ($Icon) {
                 $control.SetProperty('Icon', $Icon)
             }
             

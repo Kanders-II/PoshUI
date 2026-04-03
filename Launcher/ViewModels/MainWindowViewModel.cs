@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.Generic;
@@ -49,6 +49,7 @@ namespace Launcher.ViewModels
         private string _sidebarHeaderIconPath;
         private string _sidebarHeaderIconGlyph;
         private string _sidebarHeaderIconOrientation = "Left";
+        private int _brandingGridColumns;  // Freeform: requested grid columns from branding
 
         // Live execution fields
         private PowerShell _currentPowerShell;
@@ -79,6 +80,12 @@ namespace Launcher.ViewModels
         // Security: Control script execution mode
         public bool AllowUnrestrictedExecution { get; set; } = true;
         
+        // Theme override storage for toggle support
+        private Dictionary<string, string> _themeOverridesSingle; // Single-mode: same overrides for both themes
+        private Dictionary<string, string> _themeOverridesLight;  // Dual-mode: light-specific overrides
+        private Dictionary<string, string> _themeOverridesDark;   // Dual-mode: dark-specific overrides
+        private bool _hasDualThemeOverrides; // True when Light/Dark overrides are provided
+        
         // Progress indicator fields
         private bool _isProcessing = false;
         private string _processingMessage = "Loading...";
@@ -87,6 +94,22 @@ namespace Launcher.ViewModels
 
         // Event to notify UI of theme changes for toggle synchronization
         public event EventHandler ThemeChanged;
+
+        // Global animation toggle - static so it can be accessed from XAML converters and code-behind
+        public static bool AnimationsEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Instance property wrapping the static AnimationsEnabled for XAML binding.
+        /// </summary>
+        public bool IsAnimationsEnabled
+        {
+            get { return AnimationsEnabled; }
+            set
+            {
+                AnimationsEnabled = value;
+                OnPropertyChanged(nameof(IsAnimationsEnabled));
+            }
+        }
 
         public ObservableCollection<StepItem> Steps { get; private set; }
         public Dictionary<string, object> FormData { get; private set; }
@@ -200,6 +223,20 @@ namespace Launcher.ViewModels
         /// </summary>
         public bool IsWorkflowMode => CurrentPage is WorkflowViewModel;
 
+        /// <summary>
+        /// Returns true when ALL steps are Freeform type.
+        /// Freeform mode: no step numbers, no Previous/Next/Finish buttons, free sidebar navigation.
+        /// </summary>
+        public bool IsFreeformMode
+        {
+            get
+            {
+                if (_parsedData?.WizardSteps == null || _parsedData.WizardSteps.Count == 0)
+                    return false;
+                return _parsedData.WizardSteps.All(s => IsFreeformType(s?.PageType));
+            }
+        }
+
         private static string NormalizeOrientation(string orientation)
         {
             var normalized = (orientation ?? string.Empty).Trim();
@@ -240,6 +277,8 @@ namespace Launcher.ViewModels
                     return "Dashboard";
                 case "workflow":
                     return "Workflow";
+                case "freeform":
+                    return "Freeform";
                 default:
                     return "Wizard"; // Default to Wizard
             }
@@ -251,6 +290,15 @@ namespace Launcher.ViewModels
         private static bool IsWorkflowType(string pageType)
         {
             return NormalizePageType(pageType) == "Workflow";
+        }
+
+        /// <summary>
+        /// Checks if a page type represents a Freeform page.
+        /// Freeform pages render as either card grids or form-based layouts depending on the page's Layout property.
+        /// </summary>
+        private static bool IsFreeformType(string pageType)
+        {
+            return NormalizePageType(pageType) == "Freeform";
         }
 
         /// <summary>
@@ -306,13 +354,13 @@ namespace Launcher.ViewModels
         /// In dashboard mode, navigation is done via sidebar icons instead.
         /// In workflow mode, the workflow controls handle navigation.
         /// </summary>
-        public bool ShowNavigationButtons => !IsCardGridMode && !IsMultiPageCardGridMode && !IsWorkflowMode;
+        public bool ShowNavigationButtons => !IsCardGridMode && !IsMultiPageCardGridMode && !IsWorkflowMode && !IsFreeformMode;
 
         /// <summary>
         /// Returns true when step numbers should be shown in sidebar.
         /// Hidden for both single and multi-page Dashboard modes.
         /// </summary>
-        public bool ShowStepNumbers => !IsCardGridMode && !IsMultiPageCardGridMode;
+        public bool ShowStepNumbers => !IsCardGridMode && !IsMultiPageCardGridMode && !IsFreeformMode;
 
         /// <summary>
         /// Returns true when in dashboard mode (single or multi-page card grid)
@@ -433,10 +481,12 @@ namespace Launcher.ViewModels
                 _currentPage = value;
                 OnPropertyChanged(nameof(CurrentPage));
 
-                // Notify Workflow-related properties when page changes
+                // Notify Workflow/Freeform-related properties when page changes
                 OnPropertyChanged(nameof(IsWorkflowMode));
+                OnPropertyChanged(nameof(IsFreeformMode));
                 OnPropertyChanged(nameof(IsSidebarHidden));
                 OnPropertyChanged(nameof(ShowNavigationButtons));
+                OnPropertyChanged(nameof(ShowStepNumbers));
 
                 // Subscribe to new form parameter changes to keep CanExecute in sync
                 if (_currentPage is GenericFormViewModel newForm)
@@ -554,6 +604,7 @@ namespace Launcher.ViewModels
                     
                     // Convert icon glyph if present
                     string iconGlyph = null;
+                    string iconFilePath = null;
                     
                     // Prioritize IconGlyph property if set
                     string glyphSource = !string.IsNullOrEmpty(step.IconGlyph) ? step.IconGlyph : step.IconPath;
@@ -571,6 +622,12 @@ namespace Launcher.ViewModels
                             LoggingService.Error($"Failed to convert icon glyph: {glyphSource}", ex, component: "MainWindowViewModel");
                         }
                     }
+                    else if (!string.IsNullOrEmpty(step.IconPath) && !step.IconPath.StartsWith("&#x"))
+                    {
+                        // It's a file path (PNG icon), resolve relative to script
+                        iconFilePath = ResolvePathRelativeToScript(step.IconPath);
+                        LoggingService.Info($"Step '{step.Title}' using PNG icon: {iconFilePath}", component: "MainWindowViewModel");
+                    }
                     
                     int currentStepNum = stepNumber; // Capture for closure
                     Steps.Add(new StepItem
@@ -578,6 +635,7 @@ namespace Launcher.ViewModels
                         StepNumber = stepNumber,
                         Title = step.Title,
                         IconGlyph = iconGlyph,
+                        IconPath = iconFilePath,
                         ShowConnector = stepNumber < _wizardSteps.Count,
                         IsCurrent = (stepNumber == 1),
                         NavigateCommand = new RelayCommand(_ => NavigateToStep(currentStepNum))
@@ -800,14 +858,17 @@ namespace Launcher.ViewModels
 
             object newPage = null; // Variable to hold the created page
 
-            if (IsWizardType(currentStepInfo.PageType) || currentStepInfo.PageType == "GenericForm")
+            if (IsWizardType(currentStepInfo.PageType) || IsFreeformType(currentStepInfo.PageType) || currentStepInfo.PageType == "GenericForm")
             {
                 LoggingService.Trace($"  - Creating GenericFormViewModel for step \'{currentStepInfo.Title}\'", component: "MainWindowViewModel");
+                bool isFreeform = IsFreeformType(currentStepInfo.PageType);
                 var formViewModel = new GenericFormViewModel(
                     currentStepInfo.Title ?? $"Step {_currentPageIndex + 1}",
                     currentStepInfo.Description)
                 {
-                    Parameters = new ObservableCollection<ParameterViewModel>()
+                    Parameters = new ObservableCollection<ParameterViewModel>(),
+                    IsFreeformGrid = isFreeform,
+                    RequestedGridColumns = isFreeform ? _brandingGridColumns : 0
                 };
 
                 // Process Controls collection for banners and cards (from Add-UIBanner, Add-UICard cmdlets)
@@ -845,21 +906,21 @@ namespace Launcher.ViewModels
                             LoggingService.Error($"Failed to process control for banner/card: {ex.Message}", ex, component: "MainWindowViewModel");
                         }
                     }
-                    LoggingService.Trace($"    - Loaded {formViewModel.Banners.Count} banners, {formViewModel.AdditionalCards.Count} cards from Controls", component: "MainWindowViewModel");
+                    LoggingService.Info($"    - Loaded {formViewModel.Banners.Count} banners, {formViewModel.AdditionalCards.Count} cards from Controls", component: "MainWindowViewModel");
                 }
 
                 if (currentStepInfo.Parameters != null)
                 {
-                    LoggingService.Trace($"    - Processing {currentStepInfo.Parameters.Count} parameters for GenericFormViewModel", component: "MainWindowViewModel");
+                    LoggingService.Info($"    - Processing {currentStepInfo.Parameters.Count} parameters for GenericFormViewModel (IsFreeform={isFreeform})", component: "MainWindowViewModel");
                     int paramIndex = 0;
                     foreach (var paramInfo in currentStepInfo.Parameters)
                     {
-                        LoggingService.Trace($"      - Parameter {paramIndex}: Name='{paramInfo.Name}', IsCard={paramInfo.IsCard}, HasBannerJson={!string.IsNullOrEmpty(paramInfo.BannerJson)}", component: "MainWindowViewModel");
+                        LoggingService.Info($"      - Parameter {paramIndex}: Name='{paramInfo.Name}', IsPlaceholder={paramInfo.IsPlaceholder}, Tabs={paramInfo.Tabs?.Count ?? 0}, Tab='{paramInfo.Tab ?? "null"}'", component: "MainWindowViewModel");
                         
                         // Check if this parameter is a banner (process BEFORE card to ensure both are handled)
                         if (!string.IsNullOrEmpty(paramInfo.BannerJson))
                         {
-                            LoggingService.Trace($"        - Creating banner from JSON ({paramInfo.BannerJson.Length} chars)", component: "MainWindowViewModel");
+                            LoggingService.Info($"        - Creating banner from JSON ({paramInfo.BannerJson.Length} chars)", component: "MainWindowViewModel");
                             try
                             {
                                 var bannerVm = CreateBannerFromJson(paramInfo.BannerJson);
@@ -904,11 +965,19 @@ namespace Launcher.ViewModels
                         // If parameter has banner but no card, skip as placeholder
                         if (!string.IsNullOrEmpty(paramInfo.BannerJson) && !paramInfo.IsCard)
                         {
-                            // Banner already processed above, just skip this parameter
                             paramIndex++;
                             continue;
                         }
-                        
+
+                        // Handle TabControl: extract tab names for layout grouping
+                        if (paramInfo.Tabs != null && paramInfo.Tabs.Count > 0)
+                        {
+                            formViewModel.SetTabNames(paramInfo.Tabs);
+                            LoggingService.Info($"        - TabControl '{paramInfo.Name}' defines {paramInfo.Tabs.Count} tabs: {string.Join(", ", paramInfo.Tabs)}", component: "MainWindowViewModel");
+                            paramIndex++;
+                            continue;
+                        }
+
                         // Skip placeholder parameters (they don't render as controls)
                         if (paramInfo.IsPlaceholder)
                         {
@@ -924,11 +993,11 @@ namespace Launcher.ViewModels
                         if (FormData.TryGetValue(paramInfo.Name, out object savedValue))
                         {
                             existingValue = savedValue;
-                            LoggingService.Trace($"        - Found existing value for \'{paramInfo.Name}\' in FormData: \'{existingValue}\' (Type: {existingValue?.GetType().Name ?? "null"})", component: "MainWindowViewModel");
+                            LoggingService.Trace($"        - Found existing value for '{paramInfo.Name}' in FormData: '{existingValue}' (Type: {existingValue?.GetType().Name ?? "null"})", component: "MainWindowViewModel");
                         }
                         else
                         {
-                             LoggingService.Trace($"        - No existing value found for \'{paramInfo.Name}\' in FormData.", component: "MainWindowViewModel");
+                             LoggingService.Trace($"        - No existing value found for '{paramInfo.Name}' in FormData.", component: "MainWindowViewModel");
                         }
                         
                         try
@@ -940,8 +1009,6 @@ namespace Launcher.ViewModels
                             if (_parameterViewModels != null && !string.IsNullOrEmpty(paramInfo.Name))
                             {
                                 _parameterViewModels[paramInfo.Name] = paramVm;
-                                // Note: Initial data is loaded in ReflectionService pre-execution
-                                // RefreshParameterChoices is called when dependencies change
                             }
                             
                             LoggingService.Trace($"        - Successfully added ParameterViewModel {paramIndex} ('{paramInfo.Name}')", component: "MainWindowViewModel");
@@ -949,9 +1016,8 @@ namespace Launcher.ViewModels
                         catch(Exception pvmEx)
                         {
                             LoggingService.Error("Failed to create or add ParameterViewModel", pvmEx, "MainWindowViewModel");
-                            // Optionally, add a placeholder or error indicator to the UI if needed
                         }
-                        paramIndex++; // Increment index regardless of success/failure to match count
+                        paramIndex++;
                     }
                     LoggingService.Trace($"    - Finished processing {paramIndex} parameters for GenericFormViewModel", component: "MainWindowViewModel"); 
                 }
@@ -959,6 +1025,7 @@ namespace Launcher.ViewModels
                 {
                      LoggingService.Trace($"    - No parameters defined for this GenericForm step.", component: "MainWindowViewModel");
                 }
+
                 newPage = formViewModel; // Assign the created form
             }
             else if (currentStepInfo.PageType == "Dashboard")
@@ -1086,6 +1153,12 @@ namespace Launcher.ViewModels
             var newPageType = CurrentPage?.GetType().Name ?? "null";
             LoggingService.Info($"===> CurrentPage set. Index: {_currentPageIndex}. Previous Type: {previousPageType}, New Type: {newPageType}. Is Null: {CurrentPage == null}", component: "MainWindowViewModel");
             // --- END Logging --- 
+            
+            // Build category groups AFTER CurrentPage is set so WPF bindings are active
+            if (newPage is GenericFormViewModel fvm && fvm.IsFreeformGrid && fvm.Parameters.Count > 0)
+            {
+                fvm.RebuildCategoryGroups();
+            }
             
             UpdateNavigationButtonVisibility();
             
@@ -2505,10 +2578,39 @@ namespace Launcher.ViewModels
                         SidebarHeaderIconOrientation = branding.SidebarHeaderIconOrientation;
                         LoggingService.Info($"Applied sidebar icon orientation: {SidebarHeaderIconOrientation}", component: "MainWindowViewModel");
                     }
-                    if (!string.IsNullOrWhiteSpace(branding.Theme))
+                    if (!string.IsNullOrWhiteSpace(branding.Theme) || (branding.ThemeOverrides != null && branding.ThemeOverrides.Count > 0)
+                        || (branding.ThemeOverridesLight != null && branding.ThemeOverridesLight.Count > 0)
+                        || (branding.ThemeOverridesDark != null && branding.ThemeOverridesDark.Count > 0))
                     {
-                        ApplyThemeFromBranding(branding.Theme);
-                        LoggingService.Info($"Applied theme from branding: {branding.Theme}", component: "MainWindowViewModel");
+                        ApplyThemeFromBranding(branding.Theme, branding.ThemeOverrides, branding.ThemeOverridesLight, branding.ThemeOverridesDark);
+                        LoggingService.Info($"Applied theme from branding: {branding.Theme ?? "Auto"}" + 
+                            (branding.ThemeOverrides != null && branding.ThemeOverrides.Count > 0 ? $" (ThemeOverrides: {branding.ThemeOverrides.Count} slots)" : "") +
+                            (branding.ThemeOverridesLight != null && branding.ThemeOverridesLight.Count > 0 ? $" (Light: {branding.ThemeOverridesLight.Count} slots)" : "") +
+                            (branding.ThemeOverridesDark != null && branding.ThemeOverridesDark.Count > 0 ? $" (Dark: {branding.ThemeOverridesDark.Count} slots)" : ""), component: "MainWindowViewModel");
+                    }
+                    if (branding.DisableAnimations)
+                    {
+                        IsAnimationsEnabled = false;
+                        LoggingService.Info("Animations disabled via branding", component: "MainWindowViewModel");
+                    }
+
+                    // Store grid columns from branding
+                    if (branding.GridColumns > 0)
+                    {
+                        _brandingGridColumns = branding.GridColumns;
+                        LoggingService.Info($"Branding GridColumns set to {_brandingGridColumns}", component: "MainWindowViewModel");
+                    }
+
+                    // Freeform: hide sidebar when Navigation='None' (default) or single page
+                    if (IsFreeformMode)
+                    {
+                        string nav = (branding.Navigation ?? "None").Trim();
+                        bool singlePage = _wizardSteps != null && _wizardSteps.Count <= 1;
+                        if (singlePage || nav.Equals("None", StringComparison.OrdinalIgnoreCase))
+                        {
+                            IsSidebarHidden = true;
+                            LoggingService.Info($"Freeform sidebar hidden: Navigation='{nav}', Pages={_wizardSteps?.Count ?? 0}", component: "MainWindowViewModel");
+                        }
                     }
                 }
 
@@ -2534,12 +2636,15 @@ namespace Launcher.ViewModels
                     _currentPageIndex = startIndex; // Set index before creating page
                     var firstStepInfo = _wizardSteps[startIndex];
                     LoggingService.Trace($"Directly creating initial page (Index 0): Title='{firstStepInfo.Title}', Type='{firstStepInfo.PageType}'", component: "MainWindowViewModel");
-                    if (IsWizardType(firstStepInfo.PageType) || firstStepInfo.PageType == "GenericForm")
+                    if (IsWizardType(firstStepInfo.PageType) || IsFreeformType(firstStepInfo.PageType) || firstStepInfo.PageType == "GenericForm")
                     {
                         // Initial page creation - handle cards properly
+                        bool isFreeformInit = IsFreeformType(firstStepInfo.PageType);
                         var formViewModel = new GenericFormViewModel(firstStepInfo.Title ?? "Step 1", firstStepInfo.Description)
                         {
-                            Parameters = new ObservableCollection<ParameterViewModel>()
+                            Parameters = new ObservableCollection<ParameterViewModel>(),
+                            IsFreeformGrid = isFreeformInit,
+                            RequestedGridColumns = isFreeformInit ? _brandingGridColumns : 0
                         };
                         
                         // Process Controls collection for banners and cards (from Add-UIBanner, Add-UICard cmdlets)
@@ -2629,10 +2734,17 @@ namespace Launcher.ViewModels
                                 // If parameter has only banner (no card), skip as placeholder
                                 if (!string.IsNullOrEmpty(paramInfo.BannerJson) && !paramInfo.IsCard)
                                 {
-                                    // Banner already processed above, just skip
                                     continue;
                                 }
-                                
+
+                                // Handle TabControl: extract tab names for layout grouping
+                                if (paramInfo.Tabs != null && paramInfo.Tabs.Count > 0)
+                                {
+                                    formViewModel.SetTabNames(paramInfo.Tabs);
+                                    LoggingService.Info($"  - TabControl '{paramInfo.Name}' defines {paramInfo.Tabs.Count} tabs: {string.Join(", ", paramInfo.Tabs)}", component: "MainWindowViewModel");
+                                    continue;
+                                }
+
                                 // Skip placeholder parameters (they don't render as controls)
                                 if (paramInfo.IsPlaceholder)
                                 {
@@ -2641,42 +2753,43 @@ namespace Launcher.ViewModels
                                 }
                                 
                                 // Pass null for existingValue as FormData is clear
-                                // Pass dialog service to ParameterViewModel constructor
                                 var paramVm = new ParameterViewModel(paramInfo, this, null, _dialogService);
                                 formViewModel.Parameters.Add(paramVm);
                                 
-                                // Track for dynamic parameter updates (Phase 2)
+                                // Track for dynamic parameter updates
                                 if (_parameterViewModels != null && !string.IsNullOrEmpty(paramInfo.Name))
                                 {
                                     _parameterViewModels[paramInfo.Name] = paramVm;
                                 } 
                             } 
                         }
+
+                        // Build category groups for Freeform after all parameters are added
+                        if (isFreeformInit && formViewModel.Parameters.Count > 0)
+                        {
+                            formViewModel.RebuildCategoryGroups();
+                            LoggingService.Info($"  - Initial page: RebuildCategoryGroups done. HasTabs={formViewModel.HasTabs}, Categories={formViewModel.CategoryGroups?.Count ?? 0}, Buttons={formViewModel.ButtonParameters?.Count ?? 0}", component: "MainWindowViewModel");
+                        }
+
                         CurrentPage = formViewModel;
                     }
                     else if (IsDashboardType(firstStepInfo.PageType) || firstStepInfo.PageType == "CardGrid")
                     {
                         LoggingService.Trace("  - Creating initial Dashboard page", component: "MainWindowViewModel");
-                        
                         var cardGridVm = new CardGridViewModel
                         {
                             Title = firstStepInfo.Title ?? "Dashboard",
                             Description = firstStepInfo.Description ?? ""
                         };
-
-                        // Load cards from Controls collection (Add-UIBanner, Add-UIVisualizationCard, etc.)
                         if (firstStepInfo.Controls != null && firstStepInfo.Controls.Count > 0)
                         {
                             LoggingService.Info($"Loading {firstStepInfo.Controls.Count} cards from Controls for initial Dashboard", component: "MainWindowViewModel");
                             cardGridVm.LoadCardsFromControls(firstStepInfo.Controls);
                         }
-
-                        // Find UIScriptCards data from parameters
                         if (firstStepInfo.Parameters != null)
                         {
                             foreach (var paramInfo in firstStepInfo.Parameters)
                             {
-                                // Look for script cards JSON in parameter properties
                                 if (!string.IsNullOrEmpty(paramInfo.ScriptCardsJson))
                                 {
                                     LoggingService.Info($"Loading script cards from JSON ({paramInfo.ScriptCardsJson.Length} chars)", component: "MainWindowViewModel");
@@ -2685,38 +2798,27 @@ namespace Launcher.ViewModels
                                 }
                             }
                         }
-                        
                         CurrentPage = cardGridVm;
                     }
                     else if (firstStepInfo.PageType == "Card")
                     {
                         LoggingService.Trace("  - Creating initial Card page", component: "MainWindowViewModel");
-                        
-                        // Create a form view model to hold parameters and display form controls
-                        var formViewModel = new GenericFormViewModel(firstStepInfo.Title ?? "Information", firstStepInfo.Description ?? "")
+                        var cardFormVm = new GenericFormViewModel(firstStepInfo.Title ?? "Information", firstStepInfo.Description ?? "")
                         {
                             Parameters = new ObservableCollection<ParameterViewModel>()
                         };
-                        
-                        // Create and add the main card
                         var mainCard = new CardViewModel
                         {
                             Title = firstStepInfo.Title ?? "Information",
                             Content = firstStepInfo.Description ?? "This is a card for displaying informational text."
                         };
-                        
-                        // Process parameters for this step
                         if (firstStepInfo.Parameters != null)
                         {
-                            LoggingService.Trace($"Processing {firstStepInfo.Parameters.Count} parameters for initial Card page", component: "MainWindowViewModel");
-                            
                             foreach (var paramInfo in firstStepInfo.Parameters)
                             {
-                                // If this parameter has card properties, create a CardViewModel for it
                                 if (paramInfo.IsCard)
                                 {
-                                    LoggingService.Trace($"Creating additional card: {paramInfo.CardTitle}", component: "MainWindowViewModel");
-                                    formViewModel.AdditionalCards.Add(new CardViewModel
+                                    cardFormVm.AdditionalCards.Add(new CardViewModel
                                     {
                                         Title = paramInfo.CardTitle,
                                         Content = paramInfo.CardContent,
@@ -2734,16 +2836,12 @@ namespace Launcher.ViewModels
                                         OpenLinkCommand = new RelayCommand(param => OpenUrl(param?.ToString()))
                                     });
                                 }
-                                // Otherwise, if it's a regular parameter (not a placeholder), add it to the form
                                 else if (paramInfo.ParameterType != null && 
                                          !paramInfo.IsPlaceholder && 
                                          !string.IsNullOrEmpty(paramInfo.Label))
                                 {
-                                    LoggingService.Trace($"Adding parameter control to initial Card page: {paramInfo.Name}", component: "MainWindowViewModel");
                                     var paramVm = new ParameterViewModel(paramInfo, this, null, _dialogService);
-                                    formViewModel.Parameters.Add(paramVm);
-                                    
-                                    // Track for dynamic parameter updates (Phase 2)
+                                    cardFormVm.Parameters.Add(paramVm);
                                     if (_parameterViewModels != null && !string.IsNullOrEmpty(paramInfo.Name))
                                     {
                                         _parameterViewModels[paramInfo.Name] = paramVm;
@@ -2751,10 +2849,8 @@ namespace Launcher.ViewModels
                                 }
                             }
                         }
-                        
-                        // Add the main card as the first card
-                        formViewModel.AdditionalCards.Insert(0, mainCard);
-                        CurrentPage = formViewModel;
+                        cardFormVm.AdditionalCards.Insert(0, mainCard);
+                        CurrentPage = cardFormVm;
                     }
                     else if (IsWorkflowType(firstStepInfo.PageType))
                     {
@@ -3547,25 +3643,96 @@ namespace Launcher.ViewModels
             return false;
         }
 
-        // Apply theme from wizard branding
-        private void ApplyThemeFromBranding(string theme)
+        // Apply theme from wizard branding using ThemeBuilder
+        // Supports single-mode (themeOverrides for both) and dual-mode (separate light/dark overrides)
+        private void ApplyThemeFromBranding(string theme, Dictionary<string, string> themeOverrides = null,
+            Dictionary<string, string> themeOverridesLight = null, Dictionary<string, string> themeOverridesDark = null)
         {
-            if (string.IsNullOrWhiteSpace(theme))
+            if (string.IsNullOrWhiteSpace(theme) && (themeOverrides == null || themeOverrides.Count == 0)
+                && (themeOverridesLight == null || themeOverridesLight.Count == 0)
+                && (themeOverridesDark == null || themeOverridesDark.Count == 0))
                 return;
 
+            // Store overrides for theme toggle re-application
+            _themeOverridesSingle = themeOverrides;
+            _themeOverridesLight = themeOverridesLight;
+            _themeOverridesDark = themeOverridesDark;
+            _hasDualThemeOverrides = (themeOverridesLight != null && themeOverridesLight.Count > 0)
+                                  || (themeOverridesDark != null && themeOverridesDark.Count > 0);
+
             // Normalize theme value
-            theme = theme.Trim();
+            if (!string.IsNullOrWhiteSpace(theme))
+                theme = theme.Trim();
             
+            // Determine if dark mode for initial apply
+            bool isDark = false;
+            if (theme != null && theme.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+                isDark = true;
+            else if (theme != null && theme.Equals("Auto", StringComparison.OrdinalIgnoreCase))
+                isDark = IsSystemDarkTheme();
+
+            // Pick the right overrides for initial apply
+            var effectiveOverrides = GetEffectiveOverrides(isDark);
+
+            ApplyThemeInternal(isDark ? "/Assets/DarkTheme.xaml" : "/Assets/Fluent.xaml", effectiveOverrides, theme);
+        }
+
+        /// <summary>
+        /// Called by the theme toggle button to re-apply custom overrides after switching base theme.
+        /// </summary>
+        public void ReapplyThemeOverrides(bool isDarkTheme)
+        {
+            var effectiveOverrides = GetEffectiveOverrides(isDarkTheme);
+            string themePath = isDarkTheme ? "/Assets/DarkTheme.xaml" : "/Assets/Fluent.xaml";
+            ApplyThemeInternal(themePath, effectiveOverrides, isDarkTheme ? "Dark" : "Light");
+        }
+
+        /// <summary>
+        /// Returns true if any custom theme overrides are stored (single or dual mode).
+        /// </summary>
+        public bool HasCustomThemeOverrides
+        {
+            get
+            {
+                return (_themeOverridesSingle != null && _themeOverridesSingle.Count > 0)
+                    || _hasDualThemeOverrides;
+            }
+        }
+
+        /// <summary>
+        /// Gets the effective overrides for the given theme mode.
+        /// Dual-mode: returns the light or dark overrides. Single-mode: returns the shared overrides.
+        /// </summary>
+        private Dictionary<string, string> GetEffectiveOverrides(bool isDark)
+        {
+            if (_hasDualThemeOverrides)
+            {
+                var modeOverrides = isDark ? _themeOverridesDark : _themeOverridesLight;
+                // Mode-specific overrides already have the base merged in (done by PowerShell side)
+                if (modeOverrides != null && modeOverrides.Count > 0)
+                    return modeOverrides;
+                // Fallback to single overrides if mode-specific is empty
+                return _themeOverridesSingle;
+            }
+            return _themeOverridesSingle;
+        }
+
+        /// <summary>
+        /// Core theme application: swaps base theme dict and applies custom overrides.
+        /// </summary>
+        private void ApplyThemeInternal(string themePath, Dictionary<string, string> overrides, string themeLabel)
+        {
             Application.Current.Dispatcher.Invoke(() =>
             {
                 try
                 {
                     var merged = Application.Current.Resources.MergedDictionaries;
                     
-                    // Remove existing theme dictionaries
+                    // Remove existing theme dictionaries and custom theme overlays
                     for (int i = merged.Count - 1; i >= 0; i--)
                     {
-                        var src = merged[i].Source;
+                        var dict = merged[i];
+                        var src = dict.Source;
                         if (src != null)
                         {
                             var s = src.OriginalString ?? string.Empty;
@@ -3575,42 +3742,49 @@ namespace Launcher.ViewModels
                                 merged.RemoveAt(i);
                             }
                         }
+                        // Remove previously loaded custom theme overlays (no Source, tagged)
+                        else if (src == null && dict.Contains("_PoshUICustomTheme"))
+                        {
+                            merged.RemoveAt(i);
+                        }
                     }
                     
-                    // Apply requested theme
-                    string themePath = null;
-                    if (theme.Equals("Dark", StringComparison.OrdinalIgnoreCase))
+                    // Insert base theme
+                    var newDict = new ResourceDictionary { Source = new Uri(themePath, UriKind.Relative) };
+                    merged.Insert(0, newDict);
+                    LoggingService.Info($"Base theme applied: {themeLabel ?? "Light"} -> {themePath}", component: "MainWindowViewModel");
+                    
+                    // Apply theme overrides from Set-UITheme hashtable via ThemeBuilder
+                    if (overrides != null && overrides.Count > 0)
                     {
-                        themePath = "/Assets/DarkTheme.xaml";
-                    }
-                    else if (theme.Equals("Light", StringComparison.OrdinalIgnoreCase))
-                    {
-                        themePath = "/Assets/Fluent.xaml";
-                    }
-                    else if (theme.Equals("Auto", StringComparison.OrdinalIgnoreCase))
-                    {
-                        bool isDarkTheme = IsSystemDarkTheme();
-                        themePath = isDarkTheme ? "/Assets/DarkTheme.xaml" : "/Assets/Fluent.xaml";
-                        LoggingService.Info($"Auto theme selected. System theme detected as {(isDarkTheme ? "Dark" : "Light")}", component: "MainWindowViewModel");
+                        var customDict = ThemeBuilder.BuildResourceDictionary(overrides);
+                        if (customDict != null)
+                        {
+                            // Add at end so custom overrides have HIGHEST priority (WPF searches last-to-first)
+                            merged.Add(customDict);
+                            LoggingService.Info($"Theme overrides applied: {overrides.Count} slots via ThemeBuilder (mode: {themeLabel})", component: "MainWindowViewModel");
+                        }
                     }
                     
-                    if (!string.IsNullOrEmpty(themePath))
+                    // Diagnostic: log resolved brush values to verify theme overrides are taking effect
+                    try
                     {
-                        var newDict = new ResourceDictionary { Source = new Uri(themePath, UriKind.Relative) };
-                        merged.Insert(0, newDict);
-                        
-                        // Notify custom controls to refresh
-                        ThemeManager.NotifyThemeChanged();
-                        
-                        // Notify UI to sync theme toggle button
-                        ThemeChanged?.Invoke(this, EventArgs.Empty);
-                        
-                        LoggingService.Info($"Theme applied successfully: {theme} -> {themePath}", component: "MainWindowViewModel");
+                        var bodyFg = Application.Current.TryFindResource("BodyForegroundBrush") as System.Windows.Media.SolidColorBrush;
+                        var tbBg = Application.Current.TryFindResource("TextBoxBackgroundBrush") as System.Windows.Media.SolidColorBrush;
+                        var contentBg = Application.Current.TryFindResource("ContentBackgroundBrush") as System.Windows.Media.SolidColorBrush;
+                        LoggingService.Info($"[THEME-DIAG] BodyForegroundBrush={bodyFg?.Color}, TextBoxBackgroundBrush={tbBg?.Color}, ContentBackgroundBrush={contentBg?.Color}", component: "MainWindowViewModel");
                     }
+                    catch { }
+                    
+                    // Notify custom controls to refresh
+                    ThemeManager.NotifyThemeChanged();
+                    
+                    // Notify UI to sync theme toggle button
+                    ThemeChanged?.Invoke(this, EventArgs.Empty);
                 }
                 catch (Exception ex)
                 {
-                    LoggingService.Error($"Failed to apply theme: {theme}", ex, component: "MainWindowViewModel");
+                    LoggingService.Error($"Failed to apply theme: {themeLabel}", ex, component: "MainWindowViewModel");
                 }
             });
         }
@@ -3788,6 +3962,7 @@ namespace Launcher.ViewModels
                     Subtitle = subtitle,
                     Description = GetProp("Description"),
                     Category = !string.IsNullOrEmpty(GetProp("Category")) ? GetProp("Category") : "General",
+                    Style = GetProp("Style"),
 
                     // Layout & Sizing
                     Height = GetIntProp("Height", 180),
@@ -3859,7 +4034,7 @@ namespace Launcher.ViewModels
                     // Animation
                     EntranceAnimation = !string.IsNullOrEmpty(GetProp("EntranceAnimation")) ? GetProp("EntranceAnimation") : "None",
                     AnimationDuration = GetIntProp("AnimationDuration", 300),
-                    
+
                     // Carousel properties
                     AutoRotate = GetBoolProp("AutoRotate", false),
                     RotateInterval = GetIntProp("RotateInterval", 3000),
@@ -3890,20 +4065,26 @@ namespace Launcher.ViewModels
                                             isClickable = boolVal;
                                         else if (clickableVal != null)
                                             bool.TryParse(clickableVal.ToString(), out isClickable);
-                                        
+
                                         var slide = new BannerSlide
                                         {
                                             Title = itemDict["Title"]?.ToString() ?? "",
                                             Subtitle = itemDict["Subtitle"]?.ToString() ?? "",
                                             Icon = itemDict["Icon"]?.ToString() ?? "",
+                                            IconPath = itemDict["IconPath"]?.ToString() ?? "",
+                                            IconSize = int.TryParse(itemDict["IconSize"]?.ToString(), out var slideIconSize) ? slideIconSize : 64,
+                                            IconColor = itemDict["IconColor"]?.ToString() ?? "#40FFFFFF",
+                                            IconPosition = itemDict["IconPosition"]?.ToString() ?? "Right",
                                             BackgroundColor = itemDict["BackgroundColor"]?.ToString() ?? "",
                                             BackgroundImagePath = itemDict["BackgroundImagePath"]?.ToString() ?? "",
                                             BackgroundImageOpacity = double.TryParse(itemDict["BackgroundImageOpacity"]?.ToString(), out var opacity) ? opacity : 0.3,
                                             BackgroundImageStretch = itemDict["BackgroundImageStretch"]?.ToString() ?? "Uniform",
+                                            TitleFontSize = itemDict["TitleFontSize"]?.ToString() ?? "32",
+                                            SubtitleFontSize = itemDict["SubtitleFontSize"]?.ToString() ?? "16",
+                                            TitleFontWeight = itemDict["TitleFontWeight"]?.ToString() ?? "Bold",
                                             LinkUrl = itemDict["LinkUrl"]?.ToString() ?? "",
                                             Clickable = isClickable
                                         };
-                                        LoggingService.Info($"Carousel slide: Title='{slide.Title}', LinkUrl='{slide.LinkUrl}', Clickable={slide.Clickable}, HasLink={slide.HasLink}", component: "MainWindowViewModel");
                                         vm.CarouselItems.Add(slide);
                                     }
                                 }
@@ -3917,7 +4098,13 @@ namespace Launcher.ViewModels
                     LoggingService.Error($"Failed to parse CarouselItems from control: {carouselEx.Message}", component: "MainWindowViewModel");
                 }
 
-                LoggingService.Trace($"Created BannerViewModel from Control: Title='{vm.Title}', IconGlyph='{vm.IconGlyph}', Height={vm.Height}, CarouselItems={vm.CarouselItems.Count}", component: "MainWindowViewModel");
+                // Start carousel timer if this is a carousel banner
+                if (vm.IsCarousel && vm.AutoRotate)
+                {
+                    vm.StartCarouselTimer();
+                }
+
+                LoggingService.Trace($"Created BannerViewModel from Control: Title='{vm.Title}', IconGlyph='{vm.IconGlyph}', Height={vm.Height}, CarouselItems={vm.CarouselItems.Count}, IsCarousel={vm.IsCarousel}", component: "MainWindowViewModel");
                 return vm;
             }
             catch (Exception ex)
@@ -4071,6 +4258,7 @@ namespace Launcher.ViewModels
                 {
                     Title = GetString("Title"),
                     Subtitle = GetString("Subtitle").Length > 0 ? GetString("Subtitle") : GetString("Description"),
+                    Style = GetString("Style"),
                     Height = GetInt("Height", 180),
                     Width = GetInt("Width", 700),
                     CornerRadius = GetInt("CornerRadius", 12),
@@ -4150,6 +4338,13 @@ namespace Launcher.ViewModels
                                         Title = itemPsObj.Properties["Title"]?.Value?.ToString() ?? "",
                                         Subtitle = itemPsObj.Properties["Subtitle"]?.Value?.ToString() ?? "",
                                         Icon = itemPsObj.Properties["Icon"]?.Value?.ToString() ?? "",
+                                        IconPath = itemPsObj.Properties["IconPath"]?.Value?.ToString() ?? "",
+                                        IconSize = int.TryParse(itemPsObj.Properties["IconSize"]?.Value?.ToString(), out var slideIconSize) ? slideIconSize : 64,
+                                        IconColor = itemPsObj.Properties["IconColor"]?.Value?.ToString() ?? "#40FFFFFF",
+                                        IconPosition = itemPsObj.Properties["IconPosition"]?.Value?.ToString() ?? "Right",
+                                        TitleFontSize = itemPsObj.Properties["TitleFontSize"]?.Value?.ToString() ?? "32",
+                                        SubtitleFontSize = itemPsObj.Properties["SubtitleFontSize"]?.Value?.ToString() ?? "16",
+                                        TitleFontWeight = itemPsObj.Properties["TitleFontWeight"]?.Value?.ToString() ?? "Bold",
                                         BackgroundColor = itemPsObj.Properties["BackgroundColor"]?.Value?.ToString() ?? "",
                                         BackgroundImagePath = itemPsObj.Properties["BackgroundImagePath"]?.Value?.ToString() ?? "",
                                         BackgroundImageOpacity = double.TryParse(itemPsObj.Properties["BackgroundImageOpacity"]?.Value?.ToString(), out var opacity) ? opacity : 0.3,
@@ -4260,6 +4455,7 @@ namespace Launcher.ViewModels
                             Description = GetString("Description"),
                             Order = GetInt("Order", workflowVm.Tasks.Count + 1),
                             Icon = GetString("Icon"),
+                            IconPath = GetString("IconPath"),
                             ScriptBlockString = GetString("ScriptBlock"),
                             ScriptPath = GetString("ScriptPath"),
                             ApprovalMessage = GetString("ApprovalMessage"),

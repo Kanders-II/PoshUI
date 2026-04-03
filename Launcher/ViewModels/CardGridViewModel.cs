@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System;
@@ -259,6 +259,43 @@ namespace Launcher.ViewModels
                                     if (bool.TryParse(propValue?.ToString(), out showTarget))
                                         cardData.ShowTarget = showTarget;
                                     break;
+                                case "ShowGauge":
+                                    bool showGauge;
+                                    if (bool.TryParse(propValue?.ToString(), out showGauge))
+                                        cardData.ShowGauge = showGauge;
+                                    break;
+                                case "AutoSparkline":
+                                    bool autoSparkline;
+                                    if (bool.TryParse(propValue?.ToString(), out autoSparkline))
+                                        cardData.AutoSparkline = autoSparkline;
+                                    break;
+                                case "SparklineData":
+                                    {
+                                        var sparkList = new System.Collections.Generic.List<double>();
+                                        if (propValue is object[] sparkArr)
+                                        {
+                                            foreach (var item in sparkArr)
+                                            {
+                                                double dv;
+                                                if (double.TryParse(item?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dv))
+                                                    sparkList.Add(dv);
+                                            }
+                                        }
+                                        else if (propValue is string sparkStr && sparkStr.TrimStart().StartsWith("["))
+                                        {
+                                            // Parse JSON array string from PowerShell ConvertTo-Json
+                                            var cleaned = sparkStr.Trim().TrimStart('[').TrimEnd(']');
+                                            foreach (var part in cleaned.Split(','))
+                                            {
+                                                double dv;
+                                                if (double.TryParse(part.Trim(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out dv))
+                                                    sparkList.Add(dv);
+                                            }
+                                        }
+                                        if (sparkList.Count > 1)
+                                            cardData.SparklineData = sparkList.ToArray();
+                                    }
+                                    break;
                                 case "ChartType":
                                     cardData.ChartType = propValue?.ToString();
                                     break;
@@ -304,6 +341,28 @@ namespace Launcher.ViewModels
                                     break;
                                 case "LinkUrl":
                                     cardData.LinkUrl = propValue?.ToString();
+                                    break;
+                                case "LinkText":
+                                    cardData.LinkText = propValue?.ToString();
+                                    break;
+                                case "CardStyle":
+                                    cardData.CardStyle = propValue?.ToString();
+                                    break;
+                                case "Subtitle":
+                                    cardData.Subtitle = propValue?.ToString();
+                                    break;
+                                case "Collapsible":
+                                    bool collapsible;
+                                    if (bool.TryParse(propValue?.ToString(), out collapsible))
+                                        cardData.Collapsible = collapsible;
+                                    break;
+                                case "IsExpanded":
+                                    bool isExpanded;
+                                    if (bool.TryParse(propValue?.ToString(), out isExpanded))
+                                        cardData.IsExpanded = isExpanded;
+                                    break;
+                                case "AccentColor":
+                                    cardData.AccentColor = propValue?.ToString();
                                     break;
                                 case "ContentAlignment":
                                     cardData.ContentAlignment = propValue?.ToString();
@@ -467,9 +526,7 @@ namespace Launcher.ViewModels
                     
                     // Create the appropriate ViewModel
                     object cardVm = CreateCardByType(cardData);
-                    LoggingService.Info($"*** CREATED ViewModel: {cardVm.GetType().Name}, Title={cardData.Title}, Type={cardData.Type}", component: "CardGridViewModel");
                     AllCards.Add(cardVm);
-                    LoggingService.Info($"*** ADDED to AllCards. Total AllCards count: {AllCards.Count}", component: "CardGridViewModel");
                     
                     // Extract category
                     if (!string.IsNullOrEmpty(cardData.Category) && !Categories.Contains(cardData.Category))
@@ -573,6 +630,7 @@ namespace Launcher.ViewModels
         private object CreateCardByType(CardData data)
         {
             var cardType = (data.Type ?? "scriptcard").ToLowerInvariant();
+            LoggingService.Info($"CreateCardByType: cardType='{cardType}', Title='{data.Title}', HasData={data.Data != null}", component: "CardGridViewModel");
             
             switch (cardType)
             {
@@ -585,6 +643,10 @@ namespace Launcher.ViewModels
                 case "infocard":
                 case "info":
                     return CreateInfoCardViewModel(data);
+                case "statusindicatorcard":
+                case "statuscard":
+                case "status":
+                    return CreateStatusIndicatorCardViewModel(data);
                 case "banner":
                     return CreateBannerViewModel(data);
                 case "scriptcard":
@@ -605,7 +667,8 @@ namespace Launcher.ViewModels
                 Unit = data.Unit ?? string.Empty,
                 Description = data.Description ?? string.Empty,
                 Category = data.Category ?? "General",
-                Icon = ConvertIconToGlyph(data.Icon)
+                Icon = ConvertIconToGlyph(data.Icon),
+                IconPath = data.IconPath ?? string.Empty
             };
 
             // Parse metric-specific properties
@@ -624,6 +687,8 @@ namespace Launcher.ViewModels
             vm.ShowProgressBar = data.ShowProgressBar ?? (data.Target.HasValue);
             vm.ShowTrend = data.ShowTrend ?? (!string.IsNullOrEmpty(data.Trend));
             vm.ShowTarget = data.ShowTarget ?? (data.Target.HasValue);
+            vm.ShowGauge = data.ShowGauge ?? false;
+            vm.AutoSparkline = data.AutoSparkline ?? false;
             
             // Set refresh script if provided
             if (!string.IsNullOrEmpty(data.RefreshScript))
@@ -631,7 +696,19 @@ namespace Launcher.ViewModels
                 vm.RefreshScript = data.RefreshScript;
             }
 
-            LoggingService.Debug($"Created MetricCard: {vm.Title} = {vm.Value}{vm.Unit}, CanRefresh={vm.CanRefresh}", component: "CardGridViewModel");
+            // Set sparkline data if provided
+            if (data.SparklineData != null && data.SparklineData.Length > 1)
+            {
+                vm.SparklineData = new System.Collections.ObjectModel.ObservableCollection<double>(data.SparklineData);
+            }
+            else if (vm.AutoSparkline && data.Value.HasValue)
+            {
+                // Auto-sparkline: seed with initial value so refresh can build history
+                vm.SparklineData = new System.Collections.ObjectModel.ObservableCollection<double> { data.Value.Value };
+                LoggingService.Debug($"Auto-sparkline initialized for '{vm.Title}' with seed value: {data.Value.Value}", component: "CardGridViewModel");
+            }
+
+            LoggingService.Debug($"Created MetricCard: {vm.Title} = {vm.Value}{vm.Unit}, CanRefresh={vm.CanRefresh}, ShowGauge={vm.ShowGauge}, AutoSparkline={vm.AutoSparkline}, SparklineCount={vm.SparklineData?.Count ?? 0}", component: "CardGridViewModel");
             return vm;
         }
 
@@ -646,6 +723,7 @@ namespace Launcher.ViewModels
                 Description = data.Description ?? "",
                 ChartType = data.ChartType ?? "Line",
                 Icon = ConvertIconToGlyph(data.Icon),
+                IconPath = data.IconPath ?? "",
                 Category = data.Category ?? "General",
                 ShowLegend = data.ShowLegend ?? true,
                 ShowTooltip = data.ShowTooltip ?? true
@@ -732,6 +810,7 @@ namespace Launcher.ViewModels
                 Title = data.Title ?? "Data Grid",
                 Description = data.Description ?? "",
                 Icon = ConvertIconToGlyph(data.Icon),
+                IconPath = data.IconPath ?? "",
                 Category = data.Category ?? "General",
                 AllowSort = data.AllowSort ?? true,
                 AllowFilter = data.AllowFilter ?? true,
@@ -839,8 +918,17 @@ namespace Launcher.ViewModels
                 Description = data.Description ?? string.Empty,
                 Content = data.Content ?? string.Empty,
                 Category = data.Category ?? "General",
-                Icon = ConvertIconToGlyph(data.Icon)
+                Icon = ConvertIconToGlyph(data.Icon),
+                IconPath = data.IconPath ?? string.Empty
             };
+
+            // New style properties
+            if (!string.IsNullOrEmpty(data.CardStyle)) vm.Style = data.CardStyle;
+            if (!string.IsNullOrEmpty(data.Subtitle)) vm.Subtitle = data.Subtitle;
+            vm.IsCollapsible = data.Collapsible;
+            vm.IsExpanded = data.IsExpanded;
+            if (!string.IsNullOrEmpty(data.AccentColor)) vm.AccentColor = data.AccentColor;
+            if (!string.IsNullOrEmpty(data.ButtonText)) vm.ButtonText = data.ButtonText;
 
             // Set optional properties if provided
             if (!string.IsNullOrEmpty(data.ImagePath)) vm.ImagePath = data.ImagePath;
@@ -855,7 +943,103 @@ namespace Launcher.ViewModels
             if (!string.IsNullOrEmpty(data.ContentAlignment)) vm.ContentAlignment = data.ContentAlignment;
             if (!string.IsNullOrEmpty(data.ImageAlignment)) vm.ImageAlignment = data.ImageAlignment;
 
-            LoggingService.Debug(string.Format("Created InfoCard: {0}, HasImage={1}, HasContent={2}", vm.Title, vm.HasImage, vm.HasContent), component: "CardGridViewModel");
+            LoggingService.Debug(string.Format("Created InfoCard: {0}, Style={1}, HasContent={2}, Collapsible={3}", vm.Title, vm.Style, vm.HasContent, vm.IsCollapsible), component: "CardGridViewModel");
+            return vm;
+        }
+
+        /// <summary>
+        /// Creates a StatusIndicatorCardViewModel from card data.
+        /// Expects Data to be an array of objects with Label and Status properties.
+        /// </summary>
+        private StatusIndicatorCardViewModel CreateStatusIndicatorCardViewModel(CardData data)
+        {
+            var vm = new StatusIndicatorCardViewModel
+            {
+                Title = data.Title ?? "Status",
+                Description = data.Description ?? string.Empty,
+                Category = data.Category ?? "General",
+                Icon = ConvertIconToGlyph(data.Icon)
+            };
+
+            if (!string.IsNullOrEmpty(data.RefreshScript))
+            {
+                vm.RefreshScript = data.RefreshScript;
+            }
+
+            // Parse status items from Data property (may be JSON string or object[])
+            if (data.Data != null)
+            {
+                LoggingService.Debug($"StatusIndicatorCard '{data.Title}': Data type={data.Data.GetType().Name}, value={data.Data.ToString().Substring(0, Math.Min(200, data.Data.ToString().Length))}", component: "CardGridViewModel");
+                try
+                {
+                    object[] dataArray = null;
+
+                    if (data.Data is object[] arr)
+                    {
+                        LoggingService.Debug($"StatusIndicatorCard '{data.Title}': Data is object[], length={arr.Length}", component: "CardGridViewModel");
+                        dataArray = arr;
+                    }
+                    else if (data.Data is string jsonStr)
+                    {
+                        LoggingService.Debug($"StatusIndicatorCard '{data.Title}': Data is string, length={jsonStr.Length}", component: "CardGridViewModel");
+                        // Data arrives as JSON string from PowerShell ConvertTo-Json
+                        var trimmed = jsonStr.Trim();
+                        if (trimmed.StartsWith("["))
+                        {
+                            using (var ps = System.Management.Automation.PowerShell.Create())
+                            {
+                                ps.AddCommand("ConvertFrom-Json").AddParameter("InputObject", trimmed);
+                                var results = ps.Invoke();
+                                if (results != null && results.Count > 0)
+                                {
+                                    // Handle single result that is an array
+                                    if (results.Count == 1 && results[0].BaseObject is System.Collections.IEnumerable enumerable && !(results[0].BaseObject is string))
+                                    {
+                                        var items = new List<object>();
+                                        foreach (var i in enumerable) items.Add(i);
+                                        dataArray = items.ToArray();
+                                    }
+                                    else
+                                    {
+                                        dataArray = results.Select(r => (object)r).ToArray();
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (dataArray != null)
+                    {
+                        foreach (var item in dataArray)
+                        {
+                            string label = "Item";
+                            string status = "Unknown";
+
+                            if (item is System.Collections.Generic.Dictionary<string, object> dict)
+                            {
+                                label = dict.ContainsKey("Label") ? dict["Label"]?.ToString() :
+                                        dict.ContainsKey("Name") ? dict["Name"]?.ToString() : "Item";
+                                status = dict.ContainsKey("Status") ? dict["Status"]?.ToString() : "Unknown";
+                            }
+                            else if (item is PSObject pso)
+                            {
+                                var lProp = pso.Properties["Label"] ?? pso.Properties["Name"];
+                                var sProp = pso.Properties["Status"];
+                                if (lProp != null) label = lProp.Value?.ToString() ?? "Item";
+                                if (sProp != null) status = sProp.Value?.ToString() ?? "Unknown";
+                            }
+
+                            vm.Items.Add(StatusItem.Create(label, status));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Error($"Error parsing StatusIndicatorCard data: {ex.Message}", component: "CardGridViewModel");
+                }
+            }
+
+            LoggingService.Debug($"Created StatusIndicatorCard: {vm.Title}, Items={vm.Items.Count}", component: "CardGridViewModel");
             return vm;
         }
 
@@ -982,7 +1166,7 @@ namespace Launcher.ViewModels
                             LoggingService.Info($"Successfully deserialized {slides.Count} carousel slides", component: "CardGridViewModel");
                             foreach (var slide in slides)
                             {
-                                LoggingService.Info($"Carousel slide: Title='{slide.Title}', LinkUrl='{slide.LinkUrl}', Clickable={slide.Clickable}, HasLink={slide.HasLink}", component: "CardGridViewModel");
+                                LoggingService.Info($"Carousel slide: Title='{slide.Title}', IconPath='{slide.IconPath}', HasIconPath={slide.HasIconPath}, LinkUrl='{slide.LinkUrl}', Clickable={slide.Clickable}, HasLink={slide.HasLink}", component: "CardGridViewModel");
                             }
                         }
                     }
@@ -1018,6 +1202,7 @@ namespace Launcher.ViewModels
                 Title = data.Title,
                 Description = data.Description,
                 IconGlyph = ConvertIconToGlyph(data.Icon),
+                IconPath = data.IconPath ?? string.Empty,
                 Category = data.Category,
                 Tags = data.Tags,
                 ScriptSource = data.ScriptSource,
@@ -1128,6 +1313,8 @@ namespace Launcher.ViewModels
                 return dc.Category ?? "General";
             if (card is InfoCardViewModel ic)
                 return ic.Category ?? "General";
+            if (card is StatusIndicatorCardViewModel sic)
+                return sic.Category ?? "General";
             if (card is BannerViewModel bv)
                 return bv.Category ?? "General";
             return "General";
@@ -1275,6 +1462,9 @@ namespace Launcher.ViewModels
         public bool? ShowProgressBar { get; set; }
         public bool? ShowTrend { get; set; }
         public bool? ShowTarget { get; set; }
+        public double[] SparklineData { get; set; }
+        public bool? ShowGauge { get; set; }
+        public bool? AutoSparkline { get; set; }
 
         // GraphCard properties
         public string ChartType { get; set; }
@@ -1297,8 +1487,14 @@ namespace Launcher.ViewModels
         public string TextColor { get; set; }
         public string BorderColor { get; set; }
         public string LinkUrl { get; set; }
+        public string LinkText { get; set; }
         public string ContentAlignment { get; set; }
         public string ImageAlignment { get; set; }
+        public string CardStyle { get; set; }
+        public string Subtitle { get; set; }
+        public bool Collapsible { get; set; }
+        public bool IsExpanded { get; set; } = true;
+        public string AccentColor { get; set; }
 
         // Refresh support - PowerShell script to re-fetch data
         public string RefreshScript { get; set; }

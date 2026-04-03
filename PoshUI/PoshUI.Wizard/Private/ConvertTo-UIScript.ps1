@@ -71,6 +71,46 @@ function ConvertTo-UIScript {
             # Add from Branding hashtable
             foreach ($key in $Definition.Branding.Keys) {
                 $value = $Definition.Branding[$key]
+                
+                # Special handling for ThemeOverrides hashtables - serialize to JSON
+                if ($key -eq 'ThemeOverrides') {
+                    Write-Verbose "Found ThemeOverrides key, type=$($value.GetType().Name), count=$($value.Count)"
+                    if ($value -is [hashtable] -and $value.Count -gt 0) {
+                        $themeJson = $value | ConvertTo-Json -Compress
+                        Write-Verbose "Serialized ThemeOverrides to JSON: $themeJson"
+                        $themeJson = $themeJson.Replace("'", "''")
+                        $brandingParts += "ThemeOverridesJson = '$themeJson'"
+                        $addedKeys[$key] = $true
+                        Write-Verbose "Added ThemeOverridesJson to branding attribute"
+                        continue
+                    }
+                    else {
+                        Write-Verbose "ThemeOverrides is empty or not a hashtable, skipping"
+                    }
+                }
+                if ($key -eq 'ThemeOverridesLight') {
+                    Write-Verbose "Found ThemeOverridesLight key, type=$($value.GetType().Name), count=$($value.Count)"
+                    if ($value -is [hashtable] -and $value.Count -gt 0) {
+                        $themeJson = $value | ConvertTo-Json -Compress
+                        $themeJson = $themeJson.Replace("'", "''")
+                        $brandingParts += "ThemeOverridesLightJson = '$themeJson'"
+                        $addedKeys[$key] = $true
+                        Write-Verbose "Added ThemeOverridesLightJson to branding attribute"
+                        continue
+                    }
+                }
+                if ($key -eq 'ThemeOverridesDark') {
+                    Write-Verbose "Found ThemeOverridesDark key, type=$($value.GetType().Name), count=$($value.Count)"
+                    if ($value -is [hashtable] -and $value.Count -gt 0) {
+                        $themeJson = $value | ConvertTo-Json -Compress
+                        $themeJson = $themeJson.Replace("'", "''")
+                        $brandingParts += "ThemeOverridesDarkJson = '$themeJson'"
+                        $addedKeys[$key] = $true
+                        Write-Verbose "Added ThemeOverridesDarkJson to branding attribute"
+                        continue
+                    }
+                }
+                
                 if ([string]::IsNullOrEmpty($value)) {
                     continue
                 }
@@ -225,6 +265,12 @@ function Convert-UIControl {
     $detailsAttribute = "[WizardParameterDetails(Label='$($Control.Label)'"
     if ($Control.Width -gt 0) {
         $detailsAttribute += ", ControlWidth=$($Control.Width)"
+    }
+    # Add IconPath if present
+    $iconPath = $Control.GetPropertyOrDefault('IconPath', $null)
+    if ($iconPath) {
+        $escapedIconPath = $iconPath -replace "'", "''"
+        $detailsAttribute += ", IconPath='$escapedIconPath'"
     }
     $detailsAttribute += ")]"
     $lines += "    $detailsAttribute"
@@ -477,11 +523,17 @@ function Convert-UIControl {
                 # Build WizardCard with additional properties
                 $namedArgs = @()
                 $icon = $Control.GetPropertyOrDefault('CardIcon', $null)
+                if (-not $icon) { $icon = $Control.GetPropertyOrDefault('Icon', $null) }
                 $iconPath = $Control.GetPropertyOrDefault('CardIconPath', $null)
+                if (-not $iconPath) { $iconPath = $Control.GetPropertyOrDefault('IconPath', $null) }
                 $imagePath = $Control.GetPropertyOrDefault('CardImagePath', $null)
+                if (-not $imagePath) { $imagePath = $Control.GetPropertyOrDefault('ImagePath', $null) }
                 $linkUrl = $Control.GetPropertyOrDefault('CardLinkUrl', $null)
+                if (-not $linkUrl) { $linkUrl = $Control.GetPropertyOrDefault('LinkUrl', $null) }
                 $linkText = $Control.GetPropertyOrDefault('CardLinkText', $null)
+                if (-not $linkText) { $linkText = $Control.GetPropertyOrDefault('LinkText', $null) }
                 $bgColor = $Control.GetPropertyOrDefault('CardBackgroundColor', $null)
+                if (-not $bgColor) { $bgColor = $Control.GetPropertyOrDefault('BackgroundColor', $null) }
                 
                 if ($icon) { 
                     # Convert HTML entity &#xE713; to actual Unicode character

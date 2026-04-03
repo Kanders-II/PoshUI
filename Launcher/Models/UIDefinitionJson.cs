@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
@@ -61,11 +61,29 @@ namespace Launcher.Models
         [DataMember(Name = "Theme")]
         public string Theme { get; set; }
 
+        [DataMember(Name = "ThemeOverrides")]
+        public Dictionary<string, string> ThemeOverrides { get; set; }
+
+        [DataMember(Name = "ThemeOverridesLight")]
+        public Dictionary<string, string> ThemeOverridesLight { get; set; }
+
+        [DataMember(Name = "ThemeOverridesDark")]
+        public Dictionary<string, string> ThemeOverridesDark { get; set; }
+
+        [DataMember(Name = "DisableAnimations")]
+        public bool DisableAnimations { get; set; }
+
         [DataMember(Name = "OriginalScriptName")]
         public string OriginalScriptName { get; set; }
 
         [DataMember(Name = "OriginalScriptPath")]
         public string OriginalScriptPath { get; set; }
+
+        [DataMember(Name = "Navigation")]
+        public string Navigation { get; set; }
+
+        [DataMember(Name = "GridColumns")]
+        public int GridColumns { get; set; }
     }
 
     [DataContract]
@@ -88,6 +106,9 @@ namespace Launcher.Models
 
         [DataMember(Name = "Icon")]
         public string Icon { get; set; }
+
+        [DataMember(Name = "Layout")]
+        public string Layout { get; set; }
 
         [DataMember(Name = "Controls")]
         public List<UIControlJson> Controls { get; set; }
@@ -122,6 +143,9 @@ namespace Launcher.Models
 
         [DataMember(Name = "HelpText")]
         public string HelpText { get; set; }
+
+        [DataMember(Name = "Category")]
+        public string Category { get; set; }
 
         [DataMember(Name = "Width")]
         public int Width { get; set; }
@@ -437,10 +461,11 @@ namespace Launcher.Models
         [DataMember(Name = "Height")]
         public object Height { get; set; }
 
-        // Note: Properties dictionary may not deserialize correctly with DataContractJsonSerializer
-        // Key card properties are stored in the Properties sub-object from PS serialization
+        // Properties stored as Dictionary<string, object> for reliable DataContractJsonSerializer deserialization.
+        // The strongly-typed UICardPropertiesJson class was not being deserialized by the serializer;
+        // using a simple dictionary ensures the Properties sub-object from PS serialization is always read.
         [DataMember(Name = "Properties")]
-        public UICardPropertiesJson Properties { get; set; }
+        public Dictionary<string, object> Properties { get; set; }
     }
 
     /// <summary>
@@ -499,6 +524,15 @@ namespace Launcher.Models
         [DataMember(Name = "ShowTarget")]
         public bool ShowTarget { get; set; }
 
+        [DataMember(Name = "ShowGauge")]
+        public bool ShowGauge { get; set; }
+
+        [DataMember(Name = "SparklineData")]
+        public object SparklineData { get; set; }
+
+        [DataMember(Name = "AutoSparkline")]
+        public bool AutoSparkline { get; set; }
+
         [DataMember(Name = "RefreshScript")]
         public string RefreshScript { get; set; }
 
@@ -521,6 +555,27 @@ namespace Launcher.Models
 
         [DataMember(Name = "CardContent")]
         public string CardContent { get; set; }
+
+        [DataMember(Name = "CardStyle")]
+        public string CardStyle { get; set; }
+
+        [DataMember(Name = "Subtitle")]
+        public string Subtitle { get; set; }
+
+        [DataMember(Name = "Collapsible")]
+        public bool Collapsible { get; set; }
+
+        [DataMember(Name = "IsExpanded")]
+        public bool IsExpanded { get; set; } = true;
+
+        [DataMember(Name = "AccentColor")]
+        public string AccentColor { get; set; }
+
+        [DataMember(Name = "ButtonText")]
+        public string ButtonText { get; set; }
+
+        [DataMember(Name = "LinkText")]
+        public string LinkText { get; set; }
 
         [DataMember(Name = "ImageSource")]
         public string ImageSource { get; set; }

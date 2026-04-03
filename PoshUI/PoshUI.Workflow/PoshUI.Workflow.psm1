@@ -16,7 +16,7 @@ $PublicFunctions = @(Get-ChildItem -Path $publicFolder -Filter '*.ps1' -Recurse 
 $Classes         = @(Get-ChildItem -Path $classesFolder -Filter '*.ps1' -ErrorAction SilentlyContinue)
 
 # Load classes in dependency order
-$ClassOrder = @('UIWorkflowTaskStatus.ps1', 'UIWorkflowTaskType.ps1', 'UIWorkflowTask.ps1', 'UIWorkflow.ps1', 'UITemplate.ps1', 'UIStepType.ps1', 'UIControl.ps1', 'UIStep.ps1', 'UIDefinition.ps1', 'UIFactory.ps1')
+$ClassOrder = @('UIWorkflowTaskStatus.ps1', 'UIWorkflowTaskType.ps1', 'UIWorkflowTask.ps1', 'UIWorkflow.ps1', 'UITemplate.ps1', 'UIStepType.ps1', 'UIControl.ps1', 'UIStep.ps1', 'UIDefinition.ps1', 'UIFactory.ps1', 'UIEvents.ps1')
 foreach ($className in $ClassOrder) {
     $classFile = $Classes | Where-Object { $_.Name -eq $className }
     if ($classFile) {
@@ -45,6 +45,22 @@ if (Test-Path $securityFolder) {
         }
     }
     Write-Verbose "Loaded $($securityScripts.Count) security functions"
+}
+
+# Load state management functions
+$stateManagementFolder = Join-Path $privateFolder 'StateManagement'
+if (Test-Path $stateManagementFolder) {
+    $stateScripts = @(Get-ChildItem -Path $stateManagementFolder -Filter '*.ps1' -ErrorAction SilentlyContinue)
+    foreach ($stateScript in $stateScripts) {
+        try {
+            Write-Verbose "Loading state management function: $($stateScript.FullName)"
+            . $stateScript.FullName
+        }
+        catch {
+            Write-Error -Message "Failed to load state management function $($stateScript.FullName): $_"
+        }
+    }
+    Write-Verbose "Loaded $($stateScripts.Count) state management functions"
 }
 
 # Load private helper scripts
@@ -83,6 +99,36 @@ foreach ($import in $PublicFunctions) {
 # Module-level variables
 $script:CurrentWorkflow = $null
 $script:ModuleRoot = $PSScriptRoot
+
+# Auto-cleanup: Remove stale sessions from previous crashed instances
+Write-Verbose "Performing auto-cleanup of stale PoshUI sessions..."
+try {
+    $registryPath = "HKCU:\Software\PoshUI\Sessions"
+    if (Test-Path $registryPath) {
+        $staleHours = 24
+        $sessionKeys = Get-ChildItem -Path $registryPath -ErrorAction SilentlyContinue
+        $staleSessions = 0
+
+        foreach ($key in $sessionKeys) {
+            try {
+                if ($key.LastWriteTime -lt (Get-Date).AddHours(-$staleHours)) {
+                    Remove-Item -Path $key.PSPath -Recurse -Force -ErrorAction SilentlyContinue
+                    $staleSessions++
+                }
+            }
+            catch {
+                # Silently continue if we can't clean a session
+            }
+        }
+
+        if ($staleSessions -gt 0) {
+            Write-Verbose "Cleaned up $staleSessions stale session(s)"
+        }
+    }
+}
+catch {
+    Write-Verbose "Auto-cleanup skipped: $($_.Exception.Message)"
+}
 
 # Initialize module
 Write-Verbose "PoshUI.Workflow module loaded. Functions available: $($PublicFunctions.Count)"

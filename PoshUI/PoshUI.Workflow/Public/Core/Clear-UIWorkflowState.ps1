@@ -62,12 +62,16 @@ function Clear-UIWorkflowState {
         }
         else {
             # Default locations (encrypted .dat and legacy .json)
-            $defaultLocations = @(
-                (Join-Path $env:LOCALAPPDATA 'PoshUI\PoshUI_Workflow_State.dat'),
-                (Join-Path $env:LOCALAPPDATA 'PoshUI\PoshUI_Workflow_State.json'),
-                (Join-Path $env:PROGRAMDATA 'PoshUI\PoshUI_Workflow_State.dat'),
-                (Join-Path $env:PROGRAMDATA 'PoshUI\PoshUI_Workflow_State.json')
-            )
+            # Guard against null env vars (e.g. WinPE has no LOCALAPPDATA)
+            $defaultLocations = @()
+            if ($env:LOCALAPPDATA) {
+                $defaultLocations += (Join-Path $env:LOCALAPPDATA 'PoshUI\PoshUI_Workflow_State.dat')
+                $defaultLocations += (Join-Path $env:LOCALAPPDATA 'PoshUI\PoshUI_Workflow_State.json')
+            }
+            if ($env:PROGRAMDATA) {
+                $defaultLocations += (Join-Path $env:PROGRAMDATA 'PoshUI\PoshUI_Workflow_State.dat')
+                $defaultLocations += (Join-Path $env:PROGRAMDATA 'PoshUI\PoshUI_Workflow_State.json')
+            }
 
             if ($All) {
                 # Remove from all locations

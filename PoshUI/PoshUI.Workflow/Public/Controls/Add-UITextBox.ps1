@@ -104,7 +104,10 @@ function Add-UITextBox {
         [int]$Width,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -149,6 +152,9 @@ function Add-UITextBox {
             }
             if ($PSBoundParameters.ContainsKey('MaxLength')) {
                 $control.SetProperty('MaxLength', $MaxLength)
+            }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
 
             # Add to step

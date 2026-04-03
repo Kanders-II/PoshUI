@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System;
@@ -44,6 +44,9 @@ namespace Launcher.ViewModels
         private bool _isRefreshing;
         private double? _previousValue;
         private bool _autoCalculateTrend = true;
+        private bool _showGauge;
+        private bool _autoSparkline;
+        private ObservableCollection<double> _sparklineData;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -250,6 +253,31 @@ namespace Launcher.ViewModels
             }
         }
 
+        private string _iconPath = string.Empty;
+
+        /// <summary>
+        /// File path to a colored PNG icon for the metric card.
+        /// When set, displayed instead of the Segoe MDL2 glyph.
+        /// </summary>
+        public string IconPath
+        {
+            get => _iconPath;
+            set
+            {
+                if (_iconPath != value)
+                {
+                    _iconPath = value;
+                    OnPropertyChanged(nameof(IconPath));
+                    OnPropertyChanged(nameof(HasIconPath));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns true if IconPath is set (for XAML binding)
+        /// </summary>
+        public bool HasIconPath => !string.IsNullOrEmpty(IconPath);
+
         /// <summary>
         /// Optional description below the value
         /// </summary>
@@ -436,6 +464,45 @@ namespace Launcher.ViewModels
             }
         }
 
+        public bool ShowGauge
+        {
+            get => _showGauge;
+            set
+            {
+                if (_showGauge != value)
+                {
+                    _showGauge = value;
+                    OnPropertyChanged(nameof(ShowGauge));
+                }
+            }
+        }
+
+        public ObservableCollection<double> SparklineData
+        {
+            get => _sparklineData;
+            set
+            {
+                _sparklineData = value;
+                OnPropertyChanged(nameof(SparklineData));
+                OnPropertyChanged(nameof(HasSparkline));
+            }
+        }
+
+        public bool HasSparkline => _sparklineData != null && _sparklineData.Count > 1;
+
+        public bool AutoSparkline
+        {
+            get => _autoSparkline;
+            set
+            {
+                if (_autoSparkline != value)
+                {
+                    _autoSparkline = value;
+                    OnPropertyChanged(nameof(AutoSparkline));
+                }
+            }
+        }
+
         #endregion
 
         #region Commands
@@ -581,6 +648,22 @@ namespace Launcher.ViewModels
                         }
 
                         Value = newValue;
+                        
+                        // Update auto-sparkline history if enabled
+                        if (_autoSparkline && _sparklineData != null)
+                        {
+                            var history = _sparklineData.ToList();
+                            history.Add(newValue);
+                            
+                            // Keep rolling window of last 15 values
+                            if (history.Count > 15)
+                            {
+                                history.RemoveAt(0);
+                            }
+                            
+                            SparklineData = new ObservableCollection<double>(history);
+                            LoggingService.Debug($"Auto-sparkline updated for '{Title}': {history.Count} values", component: "MetricCardViewModel");
+                        }
                     }
                 });
             }

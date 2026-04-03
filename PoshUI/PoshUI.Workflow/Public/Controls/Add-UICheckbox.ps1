@@ -75,7 +75,10 @@ function Add-UICheckbox {
         [int]$Width,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -108,7 +111,10 @@ function Add-UICheckbox {
             $control.Mandatory = $Mandatory.IsPresent
             $control.HelpText = $HelpText
             $control.Width = $Width
-            
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
+
             # Add to step
             $wizardStep.AddControl($control)
             

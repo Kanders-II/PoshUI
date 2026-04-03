@@ -20,12 +20,12 @@ function Add-UICard {
     .PARAMETER Content
     The main content text to display in the card. Supports multi-line text.
     Best practice: Use here-strings (@"..."@) for multi-line content instead of backtick-n.
-    You can use bullet points (•), numbers, and formatting for better readability.
+    You can use bullet points (-), numbers, and formatting for better readability.
     
     .PARAMETER Icon
     Optional icon to display in the card header. Can be:
     - Segoe MDL2 icon glyph in format '&#xE1D3;' (e.g., '&#xE946;' for Info)
-    - Emoji characters (e.g., '📋', '💡', '⚠️')
+    - Emoji characters (e.g., '[list]', '[i]', '[!]')
     
     .PARAMETER IconPath
     Path to an image file to display as an icon next to the title (32x32px).
@@ -64,15 +64,15 @@ function Add-UICard {
     Add-UICard -Step "Config" -Name "InfoCard" -Title "Important Information" -Content @"
 Please read the following guidelines before proceeding:
 
-• Requirement 1
-• Requirement 2
-• Requirement 3
+- Requirement 1
+- Requirement 2
+- Requirement 3
 "@
 
     Adds a simple informational card with bullet points using here-string.
 
     .EXAMPLE
-    Add-UICard -Step "Setup" -Name "TipsCard" -Title "💡 Pro Tips" -Content @"
+    Add-UICard -Step "Setup" -Name "TipsCard" -Title "[i] Pro Tips" -Content @"
 Here are some tips for optimal configuration:
 
 1. Use strong passwords
@@ -86,9 +86,9 @@ Here are some tips for optimal configuration:
     Add-UICard -Step "Network" -Name "NetworkInfo" -Title "Network Requirements" -Icon "&#xE968;" -Content @"
 Ensure the following network requirements are met:
 
-• Port 443 must be open
-• DNS resolution configured
-• Proxy settings (if applicable)
+- Port 443 must be open
+- DNS resolution configured
+- Proxy settings (if applicable)
 "@
 
     Adds a card with a Segoe MDL2 network icon using here-string.
@@ -157,7 +157,23 @@ Ensure the following network requirements are met:
         [string]$GradientEnd,
         
         [Parameter()]
-        [string]$Category
+        [string]$Category,
+
+        [Parameter()]
+        [ValidateSet('Info', 'Success', 'Warning', 'Error', 'Hero')]
+        [string]$Style = 'Info',
+
+        [Parameter()]
+        [string]$Subtitle,
+
+        [Parameter()]
+        [switch]$Collapsible,
+
+        [Parameter()]
+        [string]$AccentColor,
+
+        [Parameter()]
+        [string]$ButtonText
     )
     
     begin {
@@ -193,6 +209,23 @@ Ensure the following network requirements are met:
 
             if ($Icon) {
                 $control.SetProperty('Icon', $Icon)
+            }
+
+            # Style properties
+            if ($Style -ne 'Info') {
+                $control.SetProperty('CardStyle', $Style)
+            }
+            if ($Subtitle) {
+                $control.SetProperty('Subtitle', $Subtitle)
+            }
+            if ($Collapsible) {
+                $control.SetProperty('Collapsible', $true)
+            }
+            if ($AccentColor) {
+                $control.SetProperty('AccentColor', $AccentColor)
+            }
+            if ($ButtonText) {
+                $control.SetProperty('ButtonText', $ButtonText)
             }
             
             # Wizard template card features

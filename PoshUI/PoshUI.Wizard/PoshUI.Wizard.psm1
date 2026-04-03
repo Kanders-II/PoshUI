@@ -72,7 +72,8 @@ $privateScripts = @(
     'Test-UIDataSource.ps1',
     'Test-UIScriptBlockParameters.ps1',
     'Measure-UIDataSource.ps1',
-    'Get-ScriptParameters.ps1'
+    'Get-ScriptParameters.ps1',
+    'ValidationHelpers.ps1'
 )
 
 foreach ($scriptName in $privateScripts) {
@@ -146,7 +147,7 @@ $MyInvocation.MyCommand.ScriptBlock.Module.OnRemove = {
 
 # Export public functions
 $FunctionNames = $PublicFunctions | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_.Name) }
-$ValidationHelpers = @('Test-UIDataSource', 'Test-UIScriptBlockParameters', 'Measure-UIDataSource')
+$ValidationHelpers = @('Test-UIDataSource', 'Test-UIScriptBlockParameters', 'Measure-UIDataSource', 'Test-UIStepExists', 'Test-UIControlNameUnique', 'Test-UIParameterValidation', 'Test-ValidateSetValue', 'Test-ScriptBlockOrValue', 'Get-UIValidationErrorMessage')
 $SecurityHelpers = @('Invoke-PoshUIExe')
 $AllExportedFunctions = $FunctionNames + $ValidationHelpers + $SecurityHelpers
 
@@ -154,7 +155,7 @@ Export-ModuleMember -Function $AllExportedFunctions
 
 # Export backward compatibility aliases
 $Aliases = @(
-    'New-PoshWizard', 'Show-PoshWizard',
+    'New-PoshWizard', 'Show-PoshWizard', 'Get-PoshWizard',
     'Add-WizardStep',
     'Add-WizardTextBox', 'Add-WizardPassword', 'Add-WizardCheckbox', 'Add-WizardToggle',
     'Add-WizardDropdown', 'Add-WizardListBox', 'Add-WizardFilePath', 'Add-WizardFolderPath',

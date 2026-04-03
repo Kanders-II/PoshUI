@@ -98,7 +98,10 @@
         [int]$Width,
 
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
 
     begin {
@@ -176,6 +179,9 @@
             if ($PSBoundParameters.ContainsKey('Format') -and -not [string]::IsNullOrWhiteSpace($Format)) {
                 $control.SetProperty('Format', $Format)
                 Write-Verbose "Number format set to '$Format' for '$Name'"
+            }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
 
             $wizardStep.AddControl($control)

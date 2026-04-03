@@ -170,6 +170,11 @@ function Show-PoshUIWizard {
             
             $generatedScript = ConvertTo-UIScript -Definition $script:CurrentWizard -ScriptBody $ScriptBody
 
+            # DEBUG: Save generated script for inspection
+            $debugPath = Join-Path $env:TEMP 'PoshUI_DebugGenerated.ps1'
+            Set-Content -Path $debugPath -Value $generatedScript -Force
+            Write-Verbose "DEBUG: Generated script saved to $debugPath"
+
             # Create SECURE temporary script file (using security framework)
             Write-Verbose "Creating secure temporary script file"
             $tempScriptPath = New-SecureTempFile -Content $generatedScript -Extension '.ps1'

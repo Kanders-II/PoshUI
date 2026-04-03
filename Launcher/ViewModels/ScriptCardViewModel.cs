@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System;
@@ -112,6 +112,7 @@ namespace Launcher.ViewModels
         private string _title;
         private string _description;
         private string _iconGlyph;
+        private string _iconPath;
         private string _category;
         private string _tags;
         private CardExecutionState _state = CardExecutionState.Ready;
@@ -122,11 +123,15 @@ namespace Launcher.ViewModels
         private double _progress;
         private string _errorMessage;
         private CancellationTokenSource _cancellationTokenSource;
+        private System.Windows.Media.Brush _accentBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 120, 212));
 
+        public System.Windows.Media.Brush AccentBrush { get => _accentBrush; set { _accentBrush = value; OnPropertyChanged(); } }
         public string Name { get => _name; set { _name = value; OnPropertyChanged(); } }
         public string Title { get => _title; set { _title = value; OnPropertyChanged(); } }
         public string Description { get => _description; set { _description = value; OnPropertyChanged(); } }
         public string IconGlyph { get => _iconGlyph; set { _iconGlyph = value; OnPropertyChanged(); } }
+        public string IconPath { get => _iconPath; set { _iconPath = value; OnPropertyChanged(); OnPropertyChanged(nameof(HasIconPath)); } }
+        public bool HasIconPath => !string.IsNullOrWhiteSpace(IconPath);
         public string Category { get => _category; set { _category = value; OnPropertyChanged(); } }
         public string Tags { get => _tags; set { _tags = value; OnPropertyChanged(); } }
 

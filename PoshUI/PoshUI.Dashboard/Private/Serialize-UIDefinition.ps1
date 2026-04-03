@@ -69,7 +69,7 @@ function Serialize-UIDefinition {
             
             foreach ($control in $step.Controls) {
                 # Check if this is a card (card types)
-                $cardTypes = @('MetricCard', 'GraphCard', 'DataGridCard', 'ScriptCard', 'InfoCard', 'metriccard', 'graphcard', 'datagridcard', 'scriptcard', 'infocard')
+                $cardTypes = @('MetricCard', 'GraphCard', 'DataGridCard', 'ScriptCard', 'InfoCard', 'StatusIndicatorCard', 'metriccard', 'graphcard', 'datagridcard', 'scriptcard', 'infocard', 'statusindicatorcard')
                 if ($control.Type -in $cardTypes) {
                     # This is a card
                     $cardJson = @{
