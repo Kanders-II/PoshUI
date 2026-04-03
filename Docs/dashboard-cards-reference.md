@@ -23,6 +23,7 @@ Add-UIMetricCard
     [-MinValue <Double>]
     [-MaxValue <Double>]
     [-Icon <String>]
+    [-IconPath <String>]
     [-Category <String>]
     [-RefreshScript <ScriptBlock>]
 ```
@@ -44,6 +45,7 @@ Add-UIMetricCard
 | `-MinValue` | Double | No | 0 | Minimum value for progress bar |
 | `-MaxValue` | Double | No | 100 | Maximum value for progress bar |
 | `-Icon` | String | No | - | Segoe MDL2 icon glyph (e.g., '&#xE7C4;') |
+| `-IconPath` | String | No | - | Path to PNG/ICO image for full-color icon *(v1.3.0)* |
 | `-Category` | String | No | "General" | Category for filtering cards |
 | `-RefreshScript` | ScriptBlock | No | - | Script to refresh the value |
 
@@ -72,6 +74,13 @@ Add-UIMetricCard -Step 'Dashboard' -Name 'Disk' -Title 'Disk Usage' `
 ```powershell
 Add-UIMetricCard -Step 'Dashboard' -Name 'Tasks' -Title 'Completed Tasks' `
     -Value 75 -Target 100 -MinValue 0 -MaxValue 100 -Unit 'tasks'
+```
+
+**With PNG Icon (v1.3.0):**
+```powershell
+Add-UIMetricCard -Step 'Dashboard' -Name 'CPU' -Title 'CPU Usage' `
+    -Value 45 -Unit '%' -Target 100 `
+    -IconPath 'C:\Icons\Emoji\rocket_3d.png'
 ```
 
 ### Notes
@@ -277,6 +286,7 @@ Add-UICard
     -Title <String>
     -Content <String>
     [-Icon <String>]
+    [-IconPath <String>]
     [-Category <String>]
 ```
 
@@ -289,6 +299,7 @@ Add-UICard
 | `-Title` | String | Yes | - | Display title for the card |
 | `-Content` | String | Yes | - | Text content to display |
 | `-Icon` | String | No | - | Segoe MDL2 icon glyph |
+| `-IconPath` | String | No | - | Path to PNG/ICO image for full-color icon *(v1.3.0)* |
 | `-Category` | String | No | "General" | Category for filtering cards |
 
 ### Examples
@@ -299,11 +310,18 @@ Add-UICard -Step 'Dashboard' -Name 'Welcome' -Title 'Welcome' `
     -Content 'This dashboard shows real-time system metrics. Cards refresh automatically every 5 seconds.'
 ```
 
-**With Icon:**
+**With Glyph Icon:**
 ```powershell
 Add-UICard -Step 'Dashboard' -Name 'Help' -Title 'Quick Help' `
     -Content 'Click any metric card to see detailed information. Use the category filter to show specific card types.' `
     -Icon '&#xE897;'
+```
+
+**With PNG Icon (v1.3.0):**
+```powershell
+Add-UICard -Step 'Dashboard' -Name 'Help' -Title 'Quick Help' `
+    -Content 'Server configuration details and status.' `
+    -IconPath 'C:\Icons\Emoji\globe_3d.png'
 ```
 
 **Multi-line Content:**

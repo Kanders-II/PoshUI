@@ -22,7 +22,7 @@ To build PoshUI, you will need the following tools installed on your system:
 ### 1. Clone the Repository
 Open your terminal and clone the source code:
 ```powershell
-git clone https://github.com/asolutionit/PoshUI.git
+git clone https://github.com/Kanders-II/PoshUI.git
 cd PoshUI
 ```
 

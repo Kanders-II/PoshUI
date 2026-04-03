@@ -163,6 +163,10 @@ claude/
 # Exclude utility scripts (local development only)
 Scripts/
 
+# WinPE scripts and documentation (local development only)
+PoshUI/Examples/Workflow-WinPE-OSD.ps1
+PoshUI/Examples/WinPE-OSD-README.md
+
 # Runtime logs from PoshUI execution
 wizard_run.log
 sequential_output.txt

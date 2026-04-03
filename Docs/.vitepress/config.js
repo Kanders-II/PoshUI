@@ -51,6 +51,7 @@ export default {
           { text: 'GraphCard', link: '/visualization/graph-cards' },
           { text: 'DataGridCard', link: '/visualization/datagrid-cards' },
           { text: 'ScriptCard', link: '/visualization/script-cards' },
+          { text: 'Carousel Banners', link: '/carousel-clickable-links' },
           { text: 'Live Refresh', link: '/dashboards/refresh' },
           { text: 'Categories', link: '/dashboards/categories' }
         ]
@@ -86,6 +87,7 @@ export default {
           { text: 'Architecture', link: '/platform/architecture' },
           { text: 'Module Structure', link: '/platform/module-structure' },
           { text: 'Security', link: '/platform/security' },
+          { text: 'Custom Themes', link: '/platform/custom-themes' },
           { text: 'Logging', link: '/platform/logging' },
           { text: 'Theming', link: '/platform/theming' },
           { text: 'Validation', link: '/platform/validation' }
@@ -124,7 +126,7 @@ export default {
       }
     ],
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/asolutionit/PoshUI' }
+      { icon: 'github', link: 'https://github.com/Kanders-II/PoshUI' }
     ]
   }
 }

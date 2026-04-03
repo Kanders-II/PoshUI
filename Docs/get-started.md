@@ -18,7 +18,7 @@ Download the latest release or build from source.
 
 ```powershell [Download Release]
 # Download from GitHub Releases
-# https://github.com/asolutionit/PoshUI/releases
+# https://github.com/Kanders-II/PoshUI/releases
 
 # Extract and unblock
 Get-ChildItem -Recurse | Unblock-File
@@ -26,7 +26,7 @@ Get-ChildItem -Recurse | Unblock-File
 
 ```powershell [Build from Source]
 # Clone the repository
-git clone https://github.com/asolutionit/PoshUI.git
+git clone https://github.com/Kanders-II/PoshUI.git
 cd PoshUI
 
 # Build the solution

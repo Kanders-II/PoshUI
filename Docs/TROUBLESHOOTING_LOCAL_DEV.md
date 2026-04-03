@@ -278,4 +278,4 @@ If none of these solutions work, please provide:
 - Error messages from terminal
 - Browser console errors (F12 → Console tab)
 
-Open an issue at: https://github.com/asolutionit/PoshUI/issues
+Open an issue at: https://github.com/Kanders-II/PoshUI/issues

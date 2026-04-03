@@ -11,6 +11,9 @@ Workflows in PoshUI are designed for multi-task automation that requires trackin
 - **Reboot & Resume**: Workflows can save their state, request a system reboot, and automatically resume from the next task.
 - **CMTrace-Compatible Logging**: Detailed execution logs are generated in a format familiar to IT professionals.
 - **Workflow Context**: The `$PoshUIWorkflow` object provides methods for progress tracking, output logging, and reboot control.
+- **PNG Icon Support** *(v1.3.0)*: Full-color PNG icons on wizard steps, cards, banners, and carousel slides.
+- **Dual-Mode Custom Themes** *(v1.3.0)*: Independent light/dark color palettes with runtime toggle.
+- **Theme Toggle** *(v1.3.0)*: Sun/moon button in the title bar for instant theme switching.
 
 ## When to Use Workflows
 

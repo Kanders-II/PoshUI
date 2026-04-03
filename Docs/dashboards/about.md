@@ -2,7 +2,7 @@
 
 Dashboards in PoshUI are designed for real-time monitoring, KPI visualization, and IT operations management. They provide a high-level overview of system health and metrics using a card-based grid layout.
 
-![Dashboard Dark Theme](../images/visualization/Dashboard_Dark_.png)
+![Dashboard with PNG Icons](../images/visualization/Dashboard_ComputerMaintenance_Dark.png)
 
 ## Key Features
 
@@ -12,6 +12,12 @@ Dashboards in PoshUI are designed for real-time monitoring, KPI visualization, a
 - **Category Filtering**: Built-in search and filtering to group related cards together.
 - **Interactive Tools**: ScriptCards allow users to run management tasks directly from the dashboard.
 - **Export Capabilities**: Export data from DataGridCards to CSV or TXT files.
+- **PNG Icon Support** *(v1.3.0)*: Full-color PNG icons on steps, cards, banners, and carousel slides.
+- **Carousel Banners with PNG Icons** *(v1.3.0)*: Per-slide PNG icons in clickable carousel banners.
+- **Dual-Mode Custom Themes** *(v1.3.0)*: Independent light/dark color palettes with runtime toggle.
+- **Theme Toggle** *(v1.3.0)*: Sun/moon button in the title bar for instant theme switching.
+
+![ScriptCards with PNG Icons](../images/visualization/Dashboard_ScriptCards_Dark.png)
 
 ## When to Use Dashboards
 

@@ -2,6 +2,53 @@
 
 All notable changes to the PoshUI project are documented here.
 
+## [1.3.0] - 2026-03-23
+
+### Dual-Mode Custom Themes & Theme Toggle
+
+PoshUI now supports **independent color palettes for light and dark modes** via `Set-UITheme -Light $hash -Dark $hash`. Users can toggle between themes at runtime using the **sun/moon button** in the title bar, and custom colors persist across toggles.
+
+**22 overridable color slots:** `Background`, `ContentBackground`, `CardBackground`, `SidebarBackground`, `SidebarText`, `SidebarHighlight`, `TextPrimary`, `TextSecondary`, `AccentColor`, `ButtonBackground`, `ButtonForeground`, `InputBackground`, `InputBorder`, `BorderColor`, `TitleBarBackground`, `TitleBarText`, `SuccessColor`, `WarningColor`, `ErrorColor`, `HeadingForeground`, `BodyForeground`, `SecondaryForeground`
+
+```powershell
+Set-UITheme -Light @{
+    Background       = '#FFF0F5'
+    AccentColor      = '#E91E63'
+    SidebarBackground = '#880E4F'
+} -Dark @{
+    Background       = '#1A1A2E'
+    AccentColor      = '#00BFA5'
+    SidebarBackground = '#0A1A18'
+}
+```
+
+### PNG Icon Support
+
+All modules now support colored PNG/ICO images as icons, replacing or supplementing monochrome Segoe MDL2 glyphs.
+
+- `Add-UIStep -IconPath` - Sidebar step icons (Wizard, Dashboard, Workflow)
+- `Add-UIMetricCard -IconPath` - Metric card icons (Dashboard)
+- `Add-UICard -IconPath` - Info card icons (Dashboard)
+- `Add-UIBanner -IconPath` - Banner overlay icons
+- `Set-UIBranding -SidebarHeaderIcon` - Full-color sidebar header logos
+- `Set-UIBranding -WindowTitleIcon` - Window title bar icon
+
+PNG icons fall back to glyph icons automatically if the file path is invalid.
+
+### New Examples
+
+- `Test-CustomTheme-Dashboard.ps1` - Dual-mode themes with PNG icons
+- `Test-CustomTheme-Workflow.ps1` - Dual-mode themes with PNG icons
+- `Wizard-EmojiIcons.ps1` - PNG emoji icons in sidebar steps
+
+### Bug Fixes
+
+- Theme toggle now re-applies custom color palettes when switching modes
+- `ConvertTo-UIScript` correctly maps `IconPath`, `Icon`, and other properties from `Add-UICard`
+- `JsonDefinitionLoader` extracts `IconPath` from card Properties dictionary
+
+---
+
 ## [1.0.0] - 2026-01-15
 
 ### 🎉 Initial Public Release

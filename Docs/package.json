@@ -14,7 +14,7 @@
     "documentation",
     "vitepress"
   ],
-  "author": "A Solution IT LLC",
+  "author": "Kanders-II",
   "license": "MIT",
   "devDependencies": {
     "vitepress": "^1.6.4"

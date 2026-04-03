@@ -24,7 +24,7 @@ if ($sig.Status -eq 'Valid') {
 
 ### Why Code Signing Matters
 
-- **Authenticity**: Confirms the executable comes from A Solution IT LLC
+- **Authenticity**: Confirms the executable comes from Kanders-II
 - **Integrity**: Ensures the file hasn't been tampered with since signing
 - **Trust**: Windows SmartScreen and antivirus software recognize signed executables
 - **Compliance**: Meets enterprise security policies requiring signed code
