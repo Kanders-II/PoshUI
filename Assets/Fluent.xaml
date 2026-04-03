@@ -38,8 +38,8 @@
     <system:Double x:Key="SpacingXl">32</system:Double>
     <system:Double x:Key="Spacing2Xl">48</system:Double>
     
-    <!-- ═══ TYPOGRAPHY SCALE ═══ -->
-    <system:Double x:Key="FontSizeBase">12</system:Double>
+    <!-- ═══ TYPOGRAPHY SCALE (Refreshed) ═══ -->
+    <system:Double x:Key="FontSizeBase">13</system:Double>
     <system:Double x:Key="FontSizeCaption">11</system:Double>
     <system:Double x:Key="FontSizeSmall">12</system:Double>
     <system:Double x:Key="FontSizeBody">14</system:Double>
@@ -116,34 +116,38 @@
     <SolidColorBrush x:Key="DialogTitleBarForegroundBrush" Color="{StaticResource Gray900}"/>
     <SolidColorBrush x:Key="DialogTitleBarHoverBrush" Color="{StaticResource Gray300}"/>
     
-    <!-- ═══ SHADOW EFFECTS (Elevation) ═══ -->
+    <!-- ═══ SHADOW EFFECTS (Elevation - Modernized) ═══ -->
+    <!-- Rest: subtle shadow for cards at rest -->
     <DropShadowEffect x:Key="ShadowDepth1" 
-                      Color="#40000000" 
+                      Color="#20000000" 
                       Direction="270" 
                       ShadowDepth="1" 
-                      BlurRadius="4" 
-                      Opacity="0.2"/>
+                      BlurRadius="6" 
+                      Opacity="0.16"/>
     
+    <!-- Hover: slight lift on interaction -->
     <DropShadowEffect x:Key="ShadowDepth2" 
-                      Color="#40000000" 
+                      Color="#28000000" 
                       Direction="270" 
                       ShadowDepth="2" 
-                      BlurRadius="8" 
-                      Opacity="0.25"/>
+                      BlurRadius="10" 
+                      Opacity="0.2"/>
     
+    <!-- Active/Focus: prominent elevation -->
     <DropShadowEffect x:Key="ShadowDepth3" 
-                      Color="#40000000" 
+                      Color="#30000000" 
                       Direction="270" 
                       ShadowDepth="4" 
-                      BlurRadius="12" 
-                      Opacity="0.3"/>
+                      BlurRadius="16" 
+                      Opacity="0.24"/>
     
+    <!-- Dialog/Overlay: highest elevation -->
     <DropShadowEffect x:Key="ShadowDepth4" 
-                      Color="#40000000" 
+                      Color="#38000000" 
                       Direction="270" 
                       ShadowDepth="8" 
-                      BlurRadius="16" 
-                      Opacity="0.35"/>
+                      BlurRadius="24" 
+                      Opacity="0.3"/>
     
     <!-- ═══ ACCENT GLOW EFFECT ═══ -->
     <DropShadowEffect x:Key="AccentGlow" 
@@ -218,8 +222,8 @@
         <Setter Property="Background" Value="{StaticResource WorkflowCardBackgroundBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource WorkflowCardBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius" Value="6"/>
-        <Setter Property="Padding" Value="16,12"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="20,14"/>
         <Setter Property="Margin" Value="8,4,0,8"/>
         <Setter Property="Effect" Value="{StaticResource WorkflowCardShadow}"/>
     </Style>

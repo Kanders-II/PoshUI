@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`Set-UITheme -Light $hash -Dark $hash`** - Define independent color palettes for light and dark modes using PowerShell hashtables; the engine applies the correct palette automatically based on the active theme
 - **Theme toggle button** - Sun/moon icon in the title bar allows users to switch between light and dark themes at runtime; custom color palettes persist across toggles
-- **22 color slots** - Override any combination of: `Background`, `ContentBackground`, `CardBackground`, `SidebarBackground`, `SidebarText`, `SidebarHighlight`, `TextPrimary`, `TextSecondary`, `AccentColor`, `ButtonBackground`, `ButtonForeground`, `InputBackground`, `InputBorder`, `BorderColor`, `TitleBarBackground`, `TitleBarText`, `SuccessColor`, `WarningColor`, `ErrorColor`, `HeadingForeground`, `BodyForeground`, `SecondaryForeground`
+- **24 color slots** - Override any combination of: `AccentColor`, `AccentDark`, `AccentDarker`, `AccentLight`, `Background`, `ContentBackground`, `CardBackground`, `SidebarBackground`, `SidebarText`, `SidebarHighlight`, `TextPrimary`, `TextSecondary`, `ButtonBackground`, `ButtonForeground`, `InputBackground`, `InputBorder`, `BorderColor`, `TitleBarBackground`, `TitleBarText`, `SuccessColor`, `WarningColor`, `ErrorColor`, `FontFamily`, `CornerRadius`
 - Partial overrides supported - only specify the slots you want to change; unspecified slots use the built-in theme defaults
 
 ### PNG Icon Support
