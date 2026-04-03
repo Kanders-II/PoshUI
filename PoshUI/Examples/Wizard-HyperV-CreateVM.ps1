@@ -91,17 +91,17 @@ Add-UICard -Step 'Welcome' -Type 'Info' `
 This wizard will guide you through creating a new virtual machine on your local Hyper-V host.
 
 You will configure:
-• VM name and generation settings
-• Memory and processor allocation
-• Virtual hard disk configuration
-• Network adapter settings
-• Additional options and features
+- VM name and generation settings
+- Memory and processor allocation
+- Virtual hard disk configuration
+- Network adapter settings
+- Additional options and features
 
 Prerequisites:
-• Hyper-V role installed and enabled
-• Administrator privileges
-• Sufficient disk space for VM files
-• Valid virtual switch configured
+- Hyper-V role installed and enabled
+- Administrator privileges
+- Sufficient disk space for VM files
+- Valid virtual switch configured
 
 Documentation: https://docs.microsoft.com/virtualization/hyper-v-on-windows
 
@@ -395,9 +395,9 @@ What the wizard will do:
 5. Apply all optional settings
 
 Ready to proceed:
-• Click Finish to create the VM
-• Click Previous to make changes
-• All parameters validated and ready
+- Click Finish to create the VM
+- Click Previous to make changes
+- All parameters validated and ready
 
 Note: VM creation requires Hyper-V PowerShell module
 and administrator privileges.
@@ -477,7 +477,7 @@ if ($result) {
     }
     Write-Host ""
 
-    Write-Host ('═' * 63) -ForegroundColor Cyan
+    Write-Host ('=' * 63) -ForegroundColor Cyan
     Write-Host ""
 
     # Check if Hyper-V module is available

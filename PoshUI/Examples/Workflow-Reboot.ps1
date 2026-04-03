@@ -6,23 +6,29 @@
 .DESCRIPTION
     This demo shows how Workflow can save state, handle a reboot request,
     and resume from where it left off. When a task calls RequestReboot(),
-    the workflow state is saved and two buttons appear:
+    the workflow state is saved and a "Reboot Now" button appears.
 
-    - "Simulate (Close Only)" - For demos: Just saves state and closes.
-      Run this script again to see it resume from where it left off.
+    AUTO-RESUME FEATURE:
+    When "Reboot Now" is clicked, PoshUI automatically:
+    1. Saves the workflow state to an encrypted file
+    2. Registers a Windows scheduled task to re-run this script at logon
+    3. Initiates the system reboot
+    4. After reboot, the scheduled task runs the script automatically
+    5. The script detects saved state and resumes from where it left off
+    6. When the workflow completes, the scheduled task is removed
 
-    - "Reboot Now" - For production: Actually reboots the system.
-
-    In a real deployment scenario, the script would be re-run after system
-    reboot via Task Scheduler, Group Policy, or startup script.
+    This provides a seamless reboot/resume experience without manual intervention.
 
 .EXAMPLE
-    .\Demo-Workflow-Reboot.ps1
+    .\Workflow-Reboot.ps1
 
 .NOTES
-    Run this script twice to see the resume functionality:
-    1. First run: Executes Phase 1, requests reboot
-    2. Second run: Resumes from Phase 2, completes workflow
+    The auto-resume scheduled task runs at user logon with highest privileges.
+    The workflow state is encrypted with DPAPI (only readable by the same user).
+    
+    For testing without actual reboot:
+    - Close the window when reboot is requested
+    - Run the script again manually to see resume behavior
 #>
 
 # Import the workflow module
@@ -32,6 +38,16 @@ Import-Module $modulePath -Force
 # Get branding assets
 $scriptIconPath = Join-Path $PSScriptRoot 'Logo Files\Icons\browser.png'
 $sidebarIconPath = Join-Path $PSScriptRoot 'Logo Files\png\Color logo - no background.png'
+
+# Define icon paths (using existing icons from Icon8 folder)
+$iconBase = Join-Path $PSScriptRoot 'Icon8'
+$iconConfig = Join-Path $iconBase 'icons8-settings-100.png'
+$iconExecution = Join-Path $iconBase 'icons8-advance-100.png'
+$iconPhase1 = Join-Path $iconBase 'icons8-gears-100.png'
+$iconReboot = Join-Path $iconBase 'icons8-back-to-100.png'
+$iconPhase2 = Join-Path $iconBase 'icons8-brand-new-100.png'
+$iconFinalize = Join-Path $iconBase 'icons8-check-mark-100.png'
+$iconServer = Join-Path $iconBase 'icons8-workstation-100.png'
 
 # Check for saved state (resume scenario)
 $isResume = Test-UIWorkflowState
@@ -56,6 +72,43 @@ New-PoshUIWorkflow -Title "Reboot Demo" `
                    -Description "Demonstrates reboot/resume capability" `
                    -Theme Auto
 
+# ============================================================================
+# CUSTOM THEMES - Sleek modern look
+# ============================================================================
+
+# Custom Dark Theme - Deep Space with Cyan accents
+$darkTheme = @{
+    AccentColor = '#00BCD4'
+    AccentDark = '#0097A7'
+    Background = '#0D1117'
+    ContentBackground = '#161B22'
+    SidebarBackground = '#0D1117'
+    TextPrimary = '#E6EDF3'
+    TextSecondary = '#8B949E'
+    BorderColor = '#30363D'
+    SuccessColor = '#3FB950'
+    WarningColor = '#D29922'
+    ErrorColor = '#F85149'
+}
+
+# Custom Light Theme - Clean Arctic with Teal accents
+$lightTheme = @{
+    AccentColor = '#0097A7'
+    AccentDark = '#00796B'
+    Background = '#F0F4F8'
+    ContentBackground = '#FFFFFF'
+    SidebarBackground = '#E8EEF2'
+    TextPrimary = '#1A202C'
+    TextSecondary = '#4A5568'
+    BorderColor = '#CBD5E0'
+    SuccessColor = '#38A169'
+    WarningColor = '#D69E2E'
+    ErrorColor = '#E53E3E'
+}
+
+# Apply both themes (dark and light modes)
+Set-UITheme -Dark $darkTheme -Light $lightTheme
+
 # Set branding with icons
 Set-UIBranding -WindowTitle "Reboot Demo" `
                -WindowTitleIcon $scriptIconPath `
@@ -69,7 +122,7 @@ if ($isResume) {
 }
 
 # Step 1: Welcome/Configuration page
-Add-UIStep -Name "Config" -Title "Configuration" -Order 1
+Add-UIStep -Name "Config" -Title "Configuration" -Order 1 -IconPath $iconConfig
 
 # Carousel banner with clickable links
 $carouselItems = @(
@@ -77,14 +130,14 @@ $carouselItems = @(
         Title = 'Reboot/Resume Demo'
         Subtitle = 'Demonstrates state persistence across reboots'
         BackgroundColor = '#0078D4'
-        LinkUrl = 'https://asolutionit.github.io/PoshUI/'
+        LinkUrl = 'https://kanders-ii.github.io/PoshUI/'
         Clickable = $true
     },
     @{
         Title = 'PowerShell Workflows'
         Subtitle = 'Build robust automation with state management'
         BackgroundColor = '#107C10'
-        LinkUrl = 'https://asolutionit.github.io/PoshUI/'
+        LinkUrl = 'https://kanders-ii.github.io/PoshUI/'
         Clickable = $true
     },
     @{
@@ -123,15 +176,16 @@ Run this script again to see it resume from Phase 2!
 }
 
 Add-UITextBox -Step "Config" -Name "ServerName" -Label "Server Name" `
-              -Default $env:COMPUTERNAME -Mandatory
+              -Default $env:COMPUTERNAME -Mandatory -IconPath $iconServer
 
 # Step 2: Workflow execution
 Add-UIStep -Name "Execution" -Title "Execution" -Type Workflow -Order 2 `
-           -Description "Multi-phase deployment with reboot"
+           -Description "Multi-phase deployment with reboot" -IconPath $iconExecution
 
 # Task 1: Phase 1 - Pre-reboot tasks
 Add-UIWorkflowTask -Step "Execution" -Name "Phase1" -Title "Phase 1: Pre-Reboot Setup" -Order 1 `
     -Description "Initial configuration before reboot" `
+    -IconPath $iconPhase1 `
     -ScriptBlock {
         # Progress is auto-tracked based on WriteOutput calls - no need for UpdateProgress!
         $PoshUIWorkflow.WriteOutput("Starting Phase 1 configuration...", "INFO")
@@ -159,6 +213,7 @@ Add-UIWorkflowTask -Step "Execution" -Name "Phase1" -Title "Phase 1: Pre-Reboot 
 # Task 2: Reboot Request
 Add-UIWorkflowTask -Step "Execution" -Name "RebootRequest" -Title "System Reboot Required" -Order 2 `
     -Description "Reboot needed to apply Phase 1 changes" `
+    -IconPath $iconReboot `
     -ScriptBlock {
         $PoshUIWorkflow.WriteOutput("Phase 1 changes require a system reboot.", "WARN")
         $PoshUIWorkflow.WriteOutput("Preparing for reboot...", "INFO")
@@ -174,6 +229,7 @@ Add-UIWorkflowTask -Step "Execution" -Name "RebootRequest" -Title "System Reboot
 # Task 3: Phase 2 - Post-reboot tasks
 Add-UIWorkflowTask -Step "Execution" -Name "Phase2" -Title "Phase 2: Post-Reboot Configuration" -Order 3 `
     -Description "Configuration after system reboot" `
+    -IconPath $iconPhase2 `
     -ScriptBlock {
         $PoshUIWorkflow.WriteOutput("Starting Phase 2 configuration...", "INFO")
         Start-Sleep -Milliseconds 600
@@ -196,6 +252,7 @@ Add-UIWorkflowTask -Step "Execution" -Name "Phase2" -Title "Phase 2: Post-Reboot
 # Task 4: Finalize
 Add-UIWorkflowTask -Step "Execution" -Name "Finalize" -Title "Finalize Deployment" -Order 4 `
     -Description "Final cleanup and verification" `
+    -IconPath $iconFinalize `
     -ScriptBlock {
         $PoshUIWorkflow.WriteOutput("Finalizing deployment...", "INFO")
         Start-Sleep -Milliseconds 500

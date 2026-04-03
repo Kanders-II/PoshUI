@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.ObjectModel;
@@ -124,6 +124,41 @@ namespace Launcher.ViewModels
         
         // Phase 2: Track if parameter is dynamic
         private bool _isDynamic;
+
+        // Freeform control properties
+        private bool _isButton;
+        private string _buttonStyle;
+        private string _buttonIcon;
+        private string _buttonIconPath;
+        private string _buttonCategory;
+        private string _onClickScript;
+        private bool _isLabel;
+        private double? _fontSize;
+        private string _fontWeight;
+        private string _foreground;
+        private bool _isImage;
+        private string _imagePath;
+        private string _imageStretch;
+        private bool _isSlider;
+        private double? _sliderMin;
+        private double? _sliderMax;
+        private double? _sliderStep;
+        private bool _isProgressBar;
+        private double? _progressMax;
+        private bool _progressIndeterminate;
+        private double? _controlHeight;
+        private string _flyoutScript;
+        private string _flyoutTitle;
+        private bool _flyoutShowMarkdown;
+        private int _gridRow = -1;
+        private int _gridColumn = -1;
+        private int _columnSpan = 1;
+        private int _rowSpan = 1;
+        private string _category = "General";
+        private string _helpText;
+        private string _tab;
+        private string _iconPath;
+        private ICommand _buttonClickCommand;
 
         private readonly IDialogService _dialogService;
         private readonly MainWindowViewModel _mainWindowViewModel;
@@ -673,6 +708,161 @@ namespace Launcher.ViewModels
             }
         }
 
+        // Freeform control properties
+        public bool IsButton => _isButton;
+        public string ButtonStyle => _buttonStyle;
+        public string ButtonIcon => _buttonIcon;
+        public string ButtonIconPath => _buttonIconPath;
+        public bool HasButtonIconPath => !string.IsNullOrEmpty(_buttonIconPath);
+        public string ButtonCategory => _buttonCategory;
+        public string OnClickScript => _onClickScript;
+        public bool IsLabel => _isLabel;
+        public double? FontSize => _fontSize;
+        public string FontWeight => _fontWeight;
+        public string Foreground => _foreground;
+        public bool IsImage => _isImage;
+        public string ImagePath => _imagePath;
+        public string ImageStretch => _imageStretch;
+        public bool IsSlider => _isSlider;
+        public double? SliderMin => _sliderMin;
+        public double? SliderMax => _sliderMax;
+        public double? SliderStep => _sliderStep;
+        public bool IsProgressBar => _isProgressBar;
+        public double? ProgressMax => _progressMax;
+        public bool ProgressIndeterminate => _progressIndeterminate;
+        public double? ControlHeight => _controlHeight;
+        public string FlyoutScript => _flyoutScript;
+        public string FlyoutTitle => _flyoutTitle;
+        public bool FlyoutShowMarkdown => _flyoutShowMarkdown;
+        public bool HasFlyout => !string.IsNullOrEmpty(_flyoutScript);
+
+        // Grid layout properties (Freeform)
+        public int GridRow => _gridRow;
+        public int GridColumn => _gridColumn;
+        public int ColumnSpan => _columnSpan;
+        public int RowSpan => _rowSpan;
+
+        // Settings UI category grouping
+        public string Category => _category;
+        public string HelpText => _helpText;
+        public bool HasHelpText => !string.IsNullOrWhiteSpace(_helpText);
+        public string Tab => _tab;
+
+        // Control-level icon (displayed next to label)
+        public string IconPath => _iconPath;
+        public bool HasIconPath => !string.IsNullOrWhiteSpace(_iconPath);
+
+        public ICommand ButtonClickCommand
+        {
+            get
+            {
+                if (_buttonClickCommand == null)
+                {
+                    _buttonClickCommand = new RelayCommand(_ => ExecuteButtonClick(), _ => _isButton);
+                }
+                return _buttonClickCommand;
+            }
+        }
+
+        private async void ExecuteButtonClick()
+        {
+            if (HasFlyout)
+            {
+                var flyoutVm = new FlyoutViewModel
+                {
+                    Title = _flyoutTitle ?? "Script Output",
+                    IsRunning = true
+                };
+
+                var flyoutWindow = new Views.FlyoutWindow(flyoutVm);
+                flyoutWindow.Owner = System.Windows.Application.Current.MainWindow;
+                flyoutWindow.Show();
+
+                try
+                {
+                    var allOutputLines = new List<string>();
+                    using (var ps = System.Management.Automation.PowerShell.Create())
+                    {
+                        ps.AddScript(_flyoutScript);
+
+                        if (_mainWindowViewModel != null)
+                        {
+                            foreach (var kvp in _mainWindowViewModel.FormData)
+                            {
+                                ps.Runspace.SessionStateProxy.SetVariable(kvp.Key, kvp.Value);
+                            }
+                        }
+
+                        var outputCollection = new System.Management.Automation.PSDataCollection<System.Management.Automation.PSObject>();
+                        outputCollection.DataAdded += (s, e) =>
+                        {
+                            var data = outputCollection[e.Index];
+                            var line = data?.ToString() ?? "";
+                            allOutputLines.Add(line);
+                            flyoutVm.AppendOutput(line);
+                        };
+
+                        ps.Streams.Information.DataAdded += (s, e) =>
+                        {
+                            var info = ps.Streams.Information[e.Index];
+                            flyoutVm.AppendOutput(info.MessageData?.ToString() ?? "");
+                        };
+                        ps.Streams.Warning.DataAdded += (s, e) =>
+                        {
+                            var warn = ps.Streams.Warning[e.Index];
+                            flyoutVm.AppendOutput($"WARNING: {warn.Message}");
+                        };
+                        ps.Streams.Error.DataAdded += (s, e) =>
+                        {
+                            var err = ps.Streams.Error[e.Index];
+                            flyoutVm.AppendOutput($"ERROR: {err.Exception?.Message ?? err.ToString()}");
+                        };
+
+                        await System.Threading.Tasks.Task.Run(() =>
+                        {
+                            ps.Invoke(null, outputCollection);
+                        });
+                    }
+
+                    if (_flyoutShowMarkdown && allOutputLines.Count > 0)
+                    {
+                        flyoutVm.MarkdownResult = string.Join(Environment.NewLine, allOutputLines);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    flyoutVm.AppendOutput($"ERROR: {ex.Message}");
+                    LoggingService.Error($"Flyout script execution failed: {ex.Message}", ex, component: "ParameterViewModel");
+                }
+                finally
+                {
+                    flyoutVm.IsRunning = false;
+                }
+            }
+            else if (!string.IsNullOrEmpty(_onClickScript))
+            {
+                try
+                {
+                    using (var ps = System.Management.Automation.PowerShell.Create())
+                    {
+                        ps.AddScript(_onClickScript);
+                        if (_mainWindowViewModel != null)
+                        {
+                            foreach (var kvp in _mainWindowViewModel.FormData)
+                            {
+                                ps.Runspace.SessionStateProxy.SetVariable(kvp.Key, kvp.Value);
+                            }
+                        }
+                        await System.Threading.Tasks.Task.Run(() => ps.Invoke());
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LoggingService.Error($"Button click script failed: {ex.Message}", ex, component: "ParameterViewModel");
+                }
+            }
+        }
+
         public ParameterViewModel(ParameterInfo info, MainWindowViewModel mainVm, object existingValue, IDialogService dialogService)
         {
             try
@@ -707,7 +897,41 @@ namespace Launcher.ViewModels
                 _isMultiLineText = info.IsMultiLineText;
                 _multiLineRows = info.MultiLineRows;
                 _isDynamic = info.IsDynamic; // Phase 2: Track dynamic parameters
-                
+
+                // Freeform control properties
+                _isButton = info.IsButton;
+                _buttonStyle = info.ButtonStyle;
+                _buttonIcon = info.ButtonIcon;
+                _buttonIconPath = info.ButtonIconPath;
+                _buttonCategory = info.ButtonCategory;
+                _onClickScript = info.OnClickScript;
+                _isLabel = info.IsLabel;
+                _fontSize = info.FontSize;
+                _fontWeight = info.FontWeight;
+                _foreground = info.Foreground;
+                _isImage = info.IsImage;
+                _imagePath = info.ImagePath;
+                _imageStretch = info.ImageStretch;
+                _isSlider = info.IsSlider;
+                _sliderMin = info.SliderMin;
+                _sliderMax = info.SliderMax;
+                _sliderStep = info.SliderStep;
+                _isProgressBar = info.IsProgressBar;
+                _progressMax = info.ProgressMax;
+                _progressIndeterminate = info.ProgressIndeterminate;
+                _controlHeight = info.ControlHeight;
+                _flyoutScript = info.FlyoutScript;
+                _flyoutTitle = info.FlyoutTitle;
+                _flyoutShowMarkdown = info.FlyoutShowMarkdown;
+                _gridRow = info.GridRow;
+                _gridColumn = info.GridColumn;
+                _columnSpan = info.ColumnSpan;
+                _rowSpan = info.RowSpan;
+                if (!string.IsNullOrEmpty(info.Category)) _category = info.Category;
+                _helpText = info.HelpText;
+                _tab = info.Tab;
+                _iconPath = info.IconPath;
+
                 object defaultValue = info.DefaultValue;
                 
                 double? numericDefault = null;

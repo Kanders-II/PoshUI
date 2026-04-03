@@ -26,6 +26,9 @@ function Add-UITableCard {
     .PARAMETER Icon
     Optional icon glyph (e.g., '&#xE7C4;').
     
+    .PARAMETER IconPath
+    Optional path to a PNG icon file. If both Icon and IconPath are specified, IconPath takes precedence.
+    
     .PARAMETER Category
     Category for grouping/filtering cards.
     
@@ -71,6 +74,9 @@ function Add-UITableCard {
         [string]$Icon,
         
         [Parameter()]
+        [string]$IconPath,
+        
+        [Parameter()]
         [string]$Category = "General",
         
         [Parameter()]
@@ -107,7 +113,10 @@ function Add-UITableCard {
             $control.SetProperty('CardDescription', $Description)
             $control.SetProperty('Category', $Category)
             
-            if ($Icon) {
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
+            elseif ($Icon) {
                 $control.SetProperty('Icon', $Icon)
             }
             

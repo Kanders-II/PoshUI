@@ -35,7 +35,7 @@ function Add-UIBanner {
     Preset style for the banner: Default, Gradient, Image, Minimal, Hero, Accent.
     This simplifies banner creation for common use cases (80% of scenarios).
     - Default: Standard banner with theme colors
-    - Gradient: Blue gradient background (135° angle)
+    - Gradient: Blue gradient background (135 deg angle)
     - Image: Larger banner optimized for background images
     - Minimal: Compact banner with no shadow
     - Hero: Large centered banner for landing pages
@@ -247,7 +247,11 @@ function Add-UIBanner {
         [string]$LinkUrl,
 
         [Parameter()]
-        [switch]$Clickable
+        [switch]$Clickable,
+
+        [Parameter()]
+        [ValidateSet('', 'Info', 'Success', 'Warning', 'Error')]
+        [string]$Style
     )
 
     begin {
@@ -278,9 +282,9 @@ function Add-UIBanner {
                 
                 switch ($BannerStyle) {
                     'Gradient' {
-                        if (-not $BannerConfig.ContainsKey('GradientStart')) { $GradientStart = '#0078D4' }
-                        if (-not $BannerConfig.ContainsKey('GradientEnd')) { $GradientEnd = '#004578' }
-                        if (-not $BannerConfig.ContainsKey('GradientAngle')) { $GradientAngle = 135 }
+                        if (-not $PSBoundParameters.ContainsKey('GradientStart') -and -not $BannerConfig.ContainsKey('GradientStart')) { $GradientStart = '#0078D4'; $PSBoundParameters['GradientStart'] = '#0078D4' }
+                        if (-not $PSBoundParameters.ContainsKey('GradientEnd') -and -not $BannerConfig.ContainsKey('GradientEnd')) { $GradientEnd = '#004578'; $PSBoundParameters['GradientEnd'] = '#004578' }
+                        if (-not $PSBoundParameters.ContainsKey('GradientAngle') -and -not $BannerConfig.ContainsKey('GradientAngle')) { $GradientAngle = 135; $PSBoundParameters['GradientAngle'] = 135 }
                         if (-not $BannerConfig.ContainsKey('Height')) { $Height = 200 }
                     }
                     'Image' {
@@ -305,11 +309,14 @@ function Add-UIBanner {
                     }
                 }
                 
-                # Apply BannerConfig overrides
+                # Apply BannerConfig overrides (also register in PSBoundParameters so property-setting code picks them up)
                 foreach ($key in $BannerConfig.Keys) {
                     $value = $BannerConfig[$key]
                     Write-Verbose "  Applying BannerConfig override: $key = $value"
                     Set-Variable -Name $key -Value $value -Scope Local -ErrorAction SilentlyContinue
+                    if (-not $PSBoundParameters.ContainsKey($key)) {
+                        $PSBoundParameters[$key] = $value
+                    }
                 }
             }
 
@@ -358,6 +365,7 @@ function Add-UIBanner {
             if ($PSBoundParameters.ContainsKey('GradientAngle')) { $control.SetProperty('GradientAngle', $GradientAngle) }
             if ($PSBoundParameters.ContainsKey('LinkUrl')) { $control.SetProperty('LinkUrl', $LinkUrl) }
             $control.SetProperty('Clickable', $Clickable.IsPresent)
+            if ($PSBoundParameters.ContainsKey('Style')) { $control.SetProperty('Style', $Style) }
 
             # Add control to step
             $wizardStep.AddControl($control)

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System;
@@ -18,27 +18,40 @@ namespace Launcher.ViewModels
         private string _title = string.Empty;
         private string _description = string.Empty;
         private string _content = string.Empty;
+        private string _subtitle = string.Empty;
         private string _imagePath = string.Empty;
         private string _imageUrl = string.Empty;
         private string _icon = string.Empty;
+        private string _iconPath = string.Empty;
         private string _category = "General";
+        private string _style = "Info";
+        private string _accentColor = string.Empty;
         private string _backgroundColor = string.Empty;
         private string _textColor = string.Empty;
         private string _borderColor = string.Empty;
+        private string _buttonText = string.Empty;
+        private string _buttonScript = string.Empty;
         private double _width = 350;
         private double _height = 250;
         private string _contentAlignment = "Left";
         private string _imageAlignment = "Top";
         private double _imageHeight = 120;
         private bool _showBorder = true;
+        private bool _isCollapsible = false;
+        private bool _isExpanded = true;
         private string _markdown = string.Empty;
         private string _htmlContent = string.Empty;
+        private Brush _accentBrush = new SolidColorBrush(Color.FromRgb(0, 120, 212));
+
+        public Brush AccentBrush { get => _accentBrush; set { _accentBrush = value; OnPropertyChanged(); } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public InfoCardViewModel()
         {
             OpenLinkCommand = new RelayCommand(ExecuteOpenLink, CanExecuteOpenLink);
+            ToggleCollapseCommand = new RelayCommand(ExecuteToggleCollapse);
+            ExecuteButtonCommand = new RelayCommand(ExecuteButton, CanExecuteButton);
         }
 
         #region Properties
@@ -71,12 +84,90 @@ namespace Launcher.ViewModels
         }
 
         /// <summary>
+        /// Subtitle displayed below the title
+        /// </summary>
+        public string Subtitle
+        {
+            get { return _subtitle; }
+            set { _subtitle = value; OnPropertyChanged(); OnPropertyChanged("HasSubtitle"); }
+        }
+
+        /// <summary>
+        /// Card style: Info, Success, Warning, Error, Hero
+        /// </summary>
+        public string Style
+        {
+            get { return _style; }
+            set
+            {
+                _style = value;
+                OnPropertyChanged();
+                OnPropertyChanged("IsHeroStyle");
+                OnPropertyChanged("IsInfoStyle");
+                OnPropertyChanged("IsSuccessStyle");
+                OnPropertyChanged("IsWarningStyle");
+                OnPropertyChanged("IsErrorStyle");
+                UpdateAccentBrushFromStyle();
+            }
+        }
+
+        /// <summary>
+        /// Custom accent color override (hex). If not set, derived from Style.
+        /// </summary>
+        public string AccentColor
+        {
+            get { return _accentColor; }
+            set { _accentColor = value; OnPropertyChanged(); UpdateAccentBrushFromStyle(); }
+        }
+
+        /// <summary>
+        /// Whether the card content can be collapsed
+        /// </summary>
+        public bool IsCollapsible
+        {
+            get { return _isCollapsible; }
+            set { _isCollapsible = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// Whether the card content is currently expanded (visible)
+        /// </summary>
+        public bool IsExpanded
+        {
+            get { return _isExpanded; }
+            set { _isExpanded = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
+        /// Text for an optional action button in the card footer
+        /// </summary>
+        public string ButtonText
+        {
+            get { return _buttonText; }
+            set { _buttonText = value; OnPropertyChanged(); OnPropertyChanged("HasButton"); }
+        }
+
+        /// <summary>
+        /// PowerShell script to execute when the button is clicked
+        /// </summary>
+        public string ButtonScript
+        {
+            get { return _buttonScript; }
+            set { _buttonScript = value; OnPropertyChanged(); }
+        }
+
+        /// <summary>
         /// Main text content to display
         /// </summary>
         public string Content
         {
             get { return _content; }
-            set { _content = value; OnPropertyChanged(); OnPropertyChanged("HasContent"); }
+            set 
+            { 
+                _content = value; 
+                OnPropertyChanged(); 
+                OnPropertyChanged("HasContent"); 
+            }
         }
 
         /// <summary>
@@ -112,6 +203,16 @@ namespace Launcher.ViewModels
         {
             get { return _icon; }
             set { _icon = value; OnPropertyChanged(); OnPropertyChanged("HasIcon"); }
+        }
+
+        /// <summary>
+        /// Path to a PNG icon file displayed next to the title (32x32px).
+        /// When set, the PNG image is shown instead of the Segoe MDL2 glyph.
+        /// </summary>
+        public string IconPath
+        {
+            get { return _iconPath; }
+            set { _iconPath = value; OnPropertyChanged(); OnPropertyChanged("HasIconPath"); }
         }
 
         /// <summary>
@@ -225,9 +326,18 @@ namespace Launcher.ViewModels
         public bool HasContent { get { return !string.IsNullOrWhiteSpace(Content); } }
         public bool HasImage { get { return !string.IsNullOrWhiteSpace(ImagePath) || !string.IsNullOrWhiteSpace(ImageUrl); } }
         public bool HasIcon { get { return !string.IsNullOrWhiteSpace(Icon); } }
+        public bool HasIconPath { get { return !string.IsNullOrWhiteSpace(IconPath); } }
         public bool HasMarkdown { get { return !string.IsNullOrWhiteSpace(Markdown); } }
         public bool HasHtml { get { return !string.IsNullOrWhiteSpace(HtmlContent); } }
         public bool HasLink { get { return !string.IsNullOrWhiteSpace(LinkUrl); } }
+        public bool HasSubtitle { get { return !string.IsNullOrWhiteSpace(Subtitle); } }
+        public bool HasButton { get { return !string.IsNullOrWhiteSpace(ButtonText); } }
+        public bool HasFooter { get { return HasLink || HasButton; } }
+        public bool IsHeroStyle { get { return string.Equals(Style, "Hero", StringComparison.OrdinalIgnoreCase); } }
+        public bool IsInfoStyle { get { return string.Equals(Style, "Info", StringComparison.OrdinalIgnoreCase); } }
+        public bool IsSuccessStyle { get { return string.Equals(Style, "Success", StringComparison.OrdinalIgnoreCase); } }
+        public bool IsWarningStyle { get { return string.Equals(Style, "Warning", StringComparison.OrdinalIgnoreCase); } }
+        public bool IsErrorStyle { get { return string.Equals(Style, "Error", StringComparison.OrdinalIgnoreCase); } }
 
         public Brush BackgroundBrush
         {
@@ -273,6 +383,29 @@ namespace Launcher.ViewModels
         #region Commands
 
         public ICommand OpenLinkCommand { get; private set; }
+        public ICommand ToggleCollapseCommand { get; private set; }
+        public ICommand ExecuteButtonCommand { get; private set; }
+
+        private void ExecuteToggleCollapse(object parameter)
+        {
+            IsExpanded = !IsExpanded;
+        }
+
+        private bool CanExecuteButton(object parameter)
+        {
+            return HasButton;
+        }
+
+        private void ExecuteButton(object parameter)
+        {
+            if (string.IsNullOrWhiteSpace(ButtonScript) && !string.IsNullOrWhiteSpace(LinkUrl))
+            {
+                ExecuteOpenLink(parameter);
+                return;
+            }
+            // Button script execution is handled by the parent CardGridViewModel
+            LoggingService.Info(string.Format("InfoCard button clicked: {0}", Title), component: "InfoCardViewModel");
+        }
 
         private bool CanExecuteOpenLink(object parameter)
         {
@@ -305,6 +438,44 @@ namespace Launcher.ViewModels
             if (handler != null)
             {
                 handler(this, new PropertyChangedEventArgs(propertyName));
+            }
+        }
+
+        /// <summary>
+        /// Updates the AccentBrush based on the Style or AccentColor property.
+        /// </summary>
+        private void UpdateAccentBrushFromStyle()
+        {
+            // Custom accent color takes priority
+            if (!string.IsNullOrWhiteSpace(AccentColor))
+            {
+                try
+                {
+                    AccentBrush = new BrushConverter().ConvertFromString(AccentColor) as Brush;
+                    return;
+                }
+                catch { }
+            }
+
+            // Default colors by style
+            switch ((Style ?? "Info").ToLowerInvariant())
+            {
+                case "success":
+                    AccentBrush = new SolidColorBrush(Color.FromRgb(16, 124, 16)); // #107C10
+                    break;
+                case "warning":
+                    AccentBrush = new SolidColorBrush(Color.FromRgb(255, 165, 0)); // #FFA500
+                    break;
+                case "error":
+                    AccentBrush = new SolidColorBrush(Color.FromRgb(220, 38, 38)); // #DC2626
+                    break;
+                case "hero":
+                    AccentBrush = new SolidColorBrush(Color.FromRgb(0, 120, 212)); // #0078D4
+                    break;
+                case "info":
+                default:
+                    AccentBrush = new SolidColorBrush(Color.FromRgb(0, 120, 212)); // #0078D4
+                    break;
             }
         }
     }

@@ -10,7 +10,7 @@ to communicate without tight coupling. Supports event filtering,
 priority handling, and async execution.
 
 .NOTES
-Company: A Solution IT LLC
+Company: Kanders-II
 Version: 2.0.0
 #>
 

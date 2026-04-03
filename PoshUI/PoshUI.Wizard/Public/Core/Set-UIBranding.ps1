@@ -28,6 +28,11 @@ function Set-UIBranding {
     .PARAMETER Theme
     Visual theme: 'Light', 'Dark', or 'Auto' (system default).
     
+    
+    .PARAMETER DisableAnimations
+    When specified, disables all UI transition animations (step transitions, sidebar,
+    dialogs, hover effects). Useful for accessibility or low-performance environments.
+    
     .PARAMETER AllowCancel
     Whether users can cancel the UI (default: $true).
 
@@ -40,6 +45,12 @@ function Set-UIBranding {
     Set-UIBranding -WindowTitle "Deployment Wizard" -Theme "Dark" -AllowCancel $false
 
     Sets dark theme and prevents cancellation.
+
+    .EXAMPLE
+    Set-UIBranding -Theme "Dark" -DisableAnimations
+
+    Uses dark theme with all animations disabled.
+    Use Set-UITheme for custom color overrides.
     #>
     [CmdletBinding()]
     param(
@@ -65,6 +76,9 @@ function Set-UIBranding {
         [Parameter()]
         [ValidateSet('Light', 'Dark', 'Auto')]
         [string]$Theme = 'Auto',
+        
+        [Parameter()]
+        [switch]$DisableAnimations,
         
         [Parameter()]
         [bool]$AllowCancel = $true
@@ -116,6 +130,10 @@ function Set-UIBranding {
 
             if ($PSBoundParameters.ContainsKey('Theme')) {
                 $script:CurrentWizard.Theme = $Theme
+            }
+
+            if ($PSBoundParameters.ContainsKey('DisableAnimations')) {
+                $script:CurrentWizard.Branding['DisableAnimations'] = $DisableAnimations.IsPresent
             }
 
             if ($PSBoundParameters.ContainsKey('AllowCancel')) {

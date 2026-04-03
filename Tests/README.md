@@ -197,4 +197,4 @@ dotnet test WizardFramework.sln --configuration Release
 ---
 
 **Last Updated**: November 2025
-**Maintained by**: A Solution IT LLC
+**Maintained by**: Kanders-II

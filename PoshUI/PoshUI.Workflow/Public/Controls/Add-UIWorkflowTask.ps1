@@ -169,6 +169,9 @@ function Add-UIWorkflowTask {
         [string]$Icon,
 
         [Parameter()]
+        [string]$IconPath,
+
+        [Parameter()]
         [scriptblock]$ScriptBlock,
 
         [Parameter()]
@@ -299,6 +302,7 @@ function Add-UIWorkflowTask {
             $task = [UIWorkflowTask]::new($Name, $Title, $Order)
             $task.Description = $Description
             $task.Icon = $Icon
+            $task.IconPath = $IconPath
             $task.ScriptBlock = $ScriptBlock
             $task.ScriptPath = $ScriptPath
             $task.Arguments = $Arguments

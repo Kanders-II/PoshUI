@@ -1,10 +1,13 @@
 # ==============================================================================
-# Multi-Page Dashboard Demo - Comprehensive Refresh Tests
-# Demonstrates refresh functionality for all card types:
-# - MetricCards with RefreshScript
-# - GraphCards (Line, Bar, Area, Pie) with RefreshScript
-# - DataGridCards with RefreshScript
-# - InfoCards for static content
+# Multi-Page Dashboard Demo - Complete Control Showcase
+# Demonstrates ALL dashboard control types with custom navy/grey/red theme:
+# - MetricCards with Gauges and Sparklines
+# - GraphCards (Line, Bar, Donut, Pie)
+# - StatusIndicatorCards
+# - DataGridCards
+# - InfoCards
+# - ScriptCards
+# - Carousel Banners on every page
 # Compatible with PowerShell 5.1 and .NET Framework 4.8
 # ==============================================================================
 
@@ -15,575 +18,531 @@ Import-Module $modulePath -Force
 Write-Host @'
 
 +--------------------------------------------------------+
-|  Multi-Page Dashboard Demo - Refresh Tests             |
-|  Charts, DataGrids, Scripts with Auto-Refresh          |
+|  Multi-Page Dashboard - Complete Control Showcase     |
+|  All Dashboard Controls with Navy/Grey/Red Theme       |
 +--------------------------------------------------------+
 '@ -ForegroundColor Cyan
 
-Write-Host "`nDemonstrating dashboard with comprehensive refresh tests:" -ForegroundColor Yellow
-Write-Host "  - System Overview - Metrics with auto-refresh" -ForegroundColor White
-Write-Host "  - Charts Test - Line, Bar, Area, Pie charts with refresh" -ForegroundColor White
-Write-Host "  - DataGrid Test - Tables with auto-refresh data" -ForegroundColor White
-Write-Host "  - Storage & Info - Additional metrics and info cards" -ForegroundColor White
+Write-Host "`nShowcasing ALL dashboard controls with custom theme:" -ForegroundColor Yellow
+Write-Host "  - Performance Metrics - Gauges, Sparklines, Status Cards" -ForegroundColor White
+Write-Host "  - Analytics - All Chart Types (Bar, Line, Donut, Pie)" -ForegroundColor White
+Write-Host "  - System Data - DataGrids and Tables" -ForegroundColor White
+Write-Host "  - Automation - Interactive Script Cards" -ForegroundColor White
+Write-Host "  - Custom Navy/Grey/Red Theme Applied" -ForegroundColor Magenta
 Write-Host ""
 
-# Get paths for branding assets
-$scriptIconPath = Join-Path $PSScriptRoot 'Logo Files\Icons\browser.png'
-$sidebarIconPath = Join-Path $PSScriptRoot 'Logo Files\png\Color logo - no background.png'
+# Get paths for branding assets - use Icon8 folder
+$iconBase = Join-Path $PSScriptRoot 'Icon8'
+$scriptIconPath = Join-Path $iconBase 'icons8-dashboard-100.png'
+$sidebarIconPath = Join-Path $iconBase 'icons8-workstation-100.png'
 
 # Verify branding assets exist
 foreach ($assetPath in @($scriptIconPath, $sidebarIconPath)) {
     if (-not (Test-Path $assetPath)) {
-        throw "Branding asset not found: $assetPath"
+        # Fallback to available icons if specific ones don't exist
+        $scriptIconPath = Join-Path $iconBase 'icons8-monitor-100.png'
+        $sidebarIconPath = Join-Path $iconBase 'icons8-imac-100.png'
     }
 }
 
 # Initialize the dashboard
-New-PoshUIDashboard -Title 'Multi-Page Dashboard Demo' `
-    -Description 'Comprehensive dashboard with refresh tests for all card types' `
-    -Theme 'Auto' `
+New-PoshUIDashboard -Title 'Multi-Page Dashboard - Complete Showcase' `
+    -Description 'Comprehensive dashboard demonstrating all control types' `
+    -Theme 'Dark' `
     -Icon $scriptIconPath
 
-Set-UIBranding -WindowTitle "Multi-Page Dashboard" `
+Set-UIBranding -WindowTitle "Multi-Page Dashboard - Complete Showcase" `
     -WindowTitleIcon $scriptIconPath `
     -SidebarHeaderIcon $sidebarIconPath
 
+# Apply Custom Navy/Grey/Red Theme
+Set-UITheme @{
+    AccentColor = '#DC2626'              # Crimson Red accent
+    Background = '#0F172A'               # Dark navy background
+    SidebarBackground = '#1B3A57'        # Navy blue sidebar
+    ContentBackground = '#1E293B'        # Slate content area
+    CardBackground = '#334155'           # Slate grey cards
+    TitleBarBackground = '#1B3A57'       # Navy title bar
+    TextPrimary = '#F1F5F9'              # Light text
+    TextSecondary = '#CBD5E1'            # Grey text
+    SidebarText = '#E2E8F0'              # Light sidebar text
+    BorderColor = '#475569'              # Slate borders
+    InputBackground = '#1E293B'          # Dark inputs
+    TitleBarText = '#F1F5F9'             # Light title text
+}
+
 # ==============================================================================
-# PAGE 1: System Overview - Metrics with Refresh
+# PAGE 1: Performance Metrics - Gauges, Sparklines, Status Cards
 # ==============================================================================
 
-Add-UIStep -Name 'SystemOverview' -Title 'System Overview' -Order 1 -Icon '&#xE80D;' `
-    -Type "Dashboard" -Description 'Real-time system performance metrics with auto-refresh'
+Add-UIStep -Name 'PerformanceMetrics' -Title 'Performance Metrics' -Order 1 `
+    -IconPath (Join-Path $iconBase 'icons8-graph-100.png') `
+    -Type "Dashboard" -Description 'Real-time metrics with gauges, sparklines, and status indicators'
 
-# Get logo paths for carousel backgrounds
-$colorLogoBgPath = Join-Path $PSScriptRoot 'Logo Files\png\Color logo - no background.png'
-$whiteLogoBgPath = Join-Path $PSScriptRoot 'Logo Files\png\White logo - no background.png'
-
-# Carousel banner with clickable links and background images
+# Carousel banner with navy/red theme
 $carouselItems = @(
     @{
-        Title = ''
-        Subtitle = ''
-        BackgroundImagePath = $colorLogoBgPath
-        BackgroundImageOpacity = 1.0
-        BackgroundImageStretch = 'Uniform'
+        Title = 'Performance Dashboard'
+        Subtitle = 'Real-time system monitoring with visual indicators'
+        BackgroundColor = '#1B3A57'  # Navy
+        LinkUrl = 'https://kanders-ii.github.io/PoshUI/'
+        Clickable = $true
+        IconPath = (Join-Path $iconBase 'icons8-graph-100.png')
     },
     @{
-        Title = 'PowerShell Monitoring'
-        Subtitle = 'Track system resources with PowerShell'
-        BackgroundColor = '#107C10'
-        LinkUrl = 'https://asolutionit.github.io/PoshUI/'
-        Clickable = $true
+        Title = 'Gauge Controls'
+        Subtitle = 'Radial gauges show metrics at a glance'
+        BackgroundColor = '#DC2626'  # Crimson Red
+        IconPath = (Join-Path $iconBase 'icons8-stopwatch-100.png')
     },
     @{
-        Title = 'Dashboard Best Practices'
-        Subtitle = 'Learn how to build effective dashboards'
-        BackgroundColor = '#8764B8'
-        LinkUrl = 'https://asolutionit.github.io/PoshUI/'
-        Clickable = $true
+        Title = 'Sparkline Charts'
+        Subtitle = 'Compact trend visualization in cards'
+        BackgroundColor = '#4A5568'  # Steel Grey
+        IconPath = (Join-Path $iconBase 'icons8-stocks-growth-100.png')
     }
 )
 
-Add-UIBanner -Step "SystemOverview" -Name "SystemBanner" `
-    -Title "System Performance" `
+Add-UIBanner -Step "PerformanceMetrics" -Name "PerfBanner" `
+    -Title "Performance Metrics" `
     -CarouselSlides $carouselItems `
     -AutoRotate $true `
-    -RotateInterval 5000 `
-    -Height 180
+    -RotateInterval 4000 `
+    -Height 180 `
+    -Style 'Info'
 
-# Context card explaining this page
-Add-UICard -Step "SystemOverview" -Name "OverviewInfo" `
+# Context card
+Add-UICard -Step "PerformanceMetrics" -Name "MetricsInfo" `
     -Title "About This Page" `
-    -Content "This page demonstrates Add-UIMetricCard and Add-UIChartCard cmdlets. MetricCards display KPIs with optional progress bars and trend indicators. ChartCards visualize data as Line, Bar, or Area charts. All cards support auto-refresh via ScriptBlock values." `
-    -Category "Info"
+    -Content "This page showcases **MetricCards with Gauges and Sparklines**, plus **StatusIndicatorCards**. Gauges display radial progress rings, sparklines show compact trend data, and status cards provide quick health indicators with colored dots." `
+    -Category "Info" `
+    -IconPath (Join-Path $iconBase 'icons8-ask-question-100.png')
 
-# CPU Usage Metric with refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "SystemOverview" -Name "CPUMetric" `
+# CPU Usage with AUTO-SPARKLINE
+Add-UIMetricCard -Step "PerformanceMetrics" -Name "CPUMetric" `
     -Title "CPU Usage" `
     -Value { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average } `
     -Unit "%" `
-    -Description "Current processor utilization (auto-refresh with auto-trend)" `
-    -Target 80 `
-    -Icon "&#xE9D9;" `
+    -Description "Processor utilization with trend" `
+    -IconPath (Join-Path $iconBase 'icons8-powershell-100.png') `
+    -ShowSparkline `
     -Category "Performance"
 
-# Memory Usage Metric with refresh - Using ScriptBlock (auto-generates RefreshScript)
+# Memory Usage with GAUGE
 $os = Get-CimInstance Win32_OperatingSystem
-$memoryTotal = [math]::Round($os.TotalVisibleMemorySize / 1MB, 1)
-$memoryUsed = [math]::Round(($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / 1MB, 1)
-Add-UIMetricCard -Step "SystemOverview" -Name "MemoryMetric" `
+$memoryPct = [math]::Round((($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize) * 100, 1)
+Add-UIMetricCard -Step "PerformanceMetrics" -Name "MemoryMetric" `
     -Title "Memory Usage" `
-    -Value {
-        $os = Get-CimInstance Win32_OperatingSystem
-        [math]::Round((($os.TotalVisibleMemorySize - $os.FreePhysicalMemory) / $os.TotalVisibleMemorySize) * 100, 1)
-    } `
+    -Value $memoryPct `
     -Unit "%" `
-    -Description "$memoryUsed GB of $memoryTotal GB used (auto-trend)" `
-    -Target 85 `
-    -Icon "&#xE9D9;" `
+    -Description "RAM utilization" `
+    -IconPath (Join-Path $iconBase 'icons8-memory-slot-100.png') `
+    -ShowGauge `
+    -MinValue 0 `
+    -MaxValue 100 `
     -Category "Performance"
 
-# Disk Usage Metric with refresh - Using ScriptBlock (auto-generates RefreshScript)
+# Disk Usage with GAUGE
 $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
-$diskFreeGB = [math]::Round($disk.FreeSpace / 1GB, 1)
-$diskTotalGB = [math]::Round($disk.Size / 1GB, 1)
-Add-UIMetricCard -Step "SystemOverview" -Name "DiskMetric" `
-    -Title "Disk Usage (C:)" `
-    -Value {
-        $disk = Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
-        [math]::Round((($disk.Size - $disk.FreeSpace) / $disk.Size) * 100, 1)
-    } `
+$diskPct = [math]::Round((($disk.Size - $disk.FreeSpace) / $disk.Size) * 100, 1)
+Add-UIMetricCard -Step "PerformanceMetrics" -Name "DiskMetric" `
+    -Title "Disk C: Usage" `
+    -Value $diskPct `
     -Unit "%" `
-    -Description "$diskFreeGB GB free of $diskTotalGB GB (auto-trend)" `
-    -Target 90 `
-    -Icon "&#xE9D9;" `
+    -Description "Storage utilization" `
+    -IconPath (Join-Path $iconBase 'icons8-memory-slot-100.png') `
+    -ShowGauge `
+    -MinValue 0 `
+    -MaxValue 100 `
     -Category "Performance"
 
-# Uptime Metric with refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "SystemOverview" -Name "UptimeMetric" `
-    -Title "System Uptime" `
-    -Value {
-        $uptime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
-        [math]::Round(((Get-Date) - $uptime).TotalHours, 1)
-    } `
-    -Unit "hours" `
-    -Description "Time since last boot" `
-    -Icon "&#xE9D9;" `
-    -Category "System"
+# Network with static value (no auto-sparkline for static values)
+Add-UIMetricCard -Step "PerformanceMetrics" -Name "NetworkMetric" `
+    -Title "Network Activity" `
+    -Value 245 `
+    -Unit "Mbps" `
+    -Description "Current throughput" `
+    -IconPath (Join-Path $iconBase 'icons8-network-cable-100.png') `
+    -Category "Performance"
 
-# CPU Usage Over Time - Line Chart with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "SystemOverview" -Name "CPUTrendChart" `
-    -Title "CPU Usage Trend (Refreshable)" `
+# Battery with GAUGE and AUTO-SPARKLINE (simulated with random data)
+Add-UIMetricCard -Step "PerformanceMetrics" -Name "BatteryMetric" `
+    -Title "Battery Level" `
+    -Value { Get-Random -Minimum 85 -Maximum 95 } `
+    -Unit "%" `
+    -Description "Power remaining (simulated)" `
+    -IconPath (Join-Path $iconBase 'icons8-shutdown-100.png') `
+    -ShowGauge `
+    -ShowSparkline `
+    -MinValue 0 `
+    -MaxValue 100 `
+    -Category "Performance"
+
+# Response Time with AUTO-SPARKLINE (simulated with random data)
+Add-UIMetricCard -Step "PerformanceMetrics" -Name "ResponseMetric" `
+    -Title "Avg Response" `
+    -Value { Get-Random -Minimum 120 -Maximum 180 } `
+    -Unit "ms" `
+    -Description "API latency (simulated)" `
+    -IconPath (Join-Path $iconBase 'icons8-stopwatch-100.png') `
+    -ShowSparkline `
+    -Category "Performance"
+
+# STATUS INDICATOR CARD - Service Health
+$serviceStatus = @(
+    @{ Label = 'Web Server'; Status = 'Online' }
+    @{ Label = 'Database'; Status = 'Online' }
+    @{ Label = 'API Gateway'; Status = 'Warning' }
+    @{ Label = 'Cache'; Status = 'Online' }
+    @{ Label = 'Queue'; Status = 'Offline' }
+)
+
+Add-UIStatusCard -Step "PerformanceMetrics" -Name "ServiceStatus" `
+    -Title "Service Health" `
+    -Data $serviceStatus `
+    -IconPath (Join-Path $iconBase 'icons8-gears-100.png') `
+    -Category "Status"
+
+# STATUS INDICATOR CARD - Environment Status
+$envStatus = @(
+    @{ Label = 'Production'; Status = 'Online' }
+    @{ Label = 'Staging'; Status = 'Online' }
+    @{ Label = 'Development'; Status = 'Warning' }
+)
+
+Add-UIStatusCard -Step "PerformanceMetrics" -Name "EnvStatus" `
+    -Title "Environment Status" `
+    -Data $envStatus `
+    -IconPath (Join-Path $iconBase 'icons8-earth-planet-100.png') `
+    -Category "Status"
+
+
+# ==============================================================================
+# PAGE 2: Analytics - All Chart Types (Bar, Line, Donut, Pie)
+# ==============================================================================
+
+Add-UIStep -Name 'Analytics' -Title 'Analytics' -Order 2 `
+    -IconPath (Join-Path $iconBase 'icons8-graph-100.png') `
+    -Type "Dashboard" -Description 'Comprehensive chart visualization with all supported types'
+
+# Carousel banner for Analytics page
+$analyticsCarousel = @(
+    @{
+        Title = 'Data Visualization'
+        Subtitle = 'Bar, Line, Donut, and Pie charts'
+        BackgroundColor = '#DC2626'  # Crimson Red
+        IconPath = (Join-Path $iconBase 'icons8-graph-100.png')
+    },
+    @{
+        Title = 'Interactive Charts'
+        Subtitle = 'Click and explore your data'
+        BackgroundColor = '#1B3A57'  # Navy
+        IconPath = (Join-Path $iconBase 'icons8-stocks-growth-100.png')
+    },
+    @{
+        Title = 'Real-Time Updates'
+        Subtitle = 'Refresh data on demand'
+        BackgroundColor = '#4A5568'  # Steel Grey
+        IconPath = (Join-Path $iconBase 'icons8-stopwatch-100.png')
+    }
+)
+
+Add-UIBanner -Step "Analytics" -Name "AnalyticsBanner" `
+    -Title "Analytics Dashboard" `
+    -CarouselSlides $analyticsCarousel `
+    -AutoRotate $true `
+    -RotateInterval 4000 `
+    -Height 180 `
+    -Style 'Warning'
+
+# Context card
+Add-UICard -Step "Analytics" -Name "ChartsInfo" `
+    -Title "Chart Types" `
+    -Content "This page demonstrates **all chart types**: Bar charts for comparisons, Line charts for trends, Donut charts for proportions with center totals, and Pie charts for distribution. All charts support dynamic data and refresh capabilities." `
+    -Category "Info" `
+    -IconPath (Join-Path $iconBase 'icons8-ask-question-100.png')
+
+# LINE CHART - CPU Trend
+$cpuTrendData = @()
+for ($i = 10; $i -ge 0; $i--) {
+    $cpuTrendData += @{ Label = "-$i min"; Value = [math]::Round((Get-Random -Minimum 30 -Maximum 75), 1) }
+}
+
+Add-UIChartCard -Step "Analytics" -Name "CPULineChart" `
+    -Title "CPU Usage Trend" `
     -ChartType "Line" `
-    -Data {
-        $data = @()
-        for ($i = 10; $i -ge 0; $i--) {
-            $data += @{ Label = "-$i min"; Value = [math]::Round((Get-Random -Minimum 20 -Maximum 80), 1) }
-        }
-        $data
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Click refresh to see new random data" `
-    -Category "Charts"
-
-# Memory Usage Over Time - Area Chart with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "SystemOverview" -Name "MemoryTrendChart" `
-    -Title "Memory Trend (Area Chart - Refreshable)" `
-    -ChartType "Area" `
-    -Data {
-        $data = @()
-        for ($i = 10; $i -ge 0; $i--) {
-            $data += @{ Label = "-$i min"; Value = [math]::Round((Get-Random -Minimum 40 -Maximum 75), 1) }
-        }
-        $data
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Area chart with refresh capability" `
-    -Category "Charts"
-
-# PAGE 2: Charts Test - All Chart Types with Refresh
-# ------------------------------------------------------------
-
-Add-UIStep -Name 'ChartsTest' -Title 'Charts Test' -Order 2 -Icon '&#xE9D9;' `
-    -Type "Dashboard" -Description 'Line, Bar, and Area charts with refresh functionality'
-
-# Banner
-Add-UIBanner -Step "ChartsTest" -Name "ChartsBanner" `
-    -Title "Charts Refresh Test" `
-    -Subtitle "All chart types with refresh capability" `
-    -BackgroundColor "#107C10"
-
-# Context card explaining chart types
-Add-UICard -Step "ChartsTest" -Name "ChartsInfo" `
-    -Title "Chart Types Available" `
-    -Content "Add-UIChartCard supports Line, Bar, and Area chart types. Pass a ScriptBlock to -Data for live refresh capability. Each chart automatically gets a refresh button when using ScriptBlocks." `
-    -Category "Info"
-
-# LINE CHART with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ChartsTest" -Name "LineChartRefresh" `
-    -Title "Line Chart (Refreshable)" `
-    -ChartType "Line" `
-    -Data {
-        $data = @()
-        for ($i = 1; $i -le 8; $i++) {
-            $data += @{ Label = "Point $i"; Value = Get-Random -Minimum 10 -Maximum 100 }
-        }
-        $data
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Random data - click refresh to update" `
+    -Data $cpuTrendData `
+    -IconPath (Join-Path $iconBase 'icons8-graph-100.png') `
+    -Description "Processor utilization over time" `
     -Category "Line Charts"
 
-# BAR CHART with Refresh - Top Processes - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ChartsTest" -Name "BarChartRefresh" `
-    -Title "Bar Chart - Top CPU Processes (Refreshable)" `
+# BAR CHART - Top Processes
+$procs = Get-Process | Where-Object { $_.CPU -gt 0 } | Sort-Object CPU -Descending | Select-Object -First 8
+$procData = $procs | ForEach-Object {
+    @{ Label = $_.ProcessName.Substring(0, [Math]::Min(10, $_.ProcessName.Length)); Value = [math]::Round($_.CPU, 1) }
+}
+
+Add-UIChartCard -Step "Analytics" -Name "ProcessBarChart" `
+    -Title "Top CPU Processes" `
     -ChartType "Bar" `
-    -Data {
-        $procs = Get-Process | Where-Object { $_.CPU -gt 0 } | Sort-Object CPU -Descending | Select-Object -First 8
-        $procs | ForEach-Object {
-            @{ Label = $_.ProcessName.Substring(0, [Math]::Min(10, $_.ProcessName.Length)); Value = [math]::Round($_.CPU, 1) }
-        }
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Live process data - refreshes with current values" `
+    -Data $procData `
+    -IconPath (Join-Path $iconBase 'icons8-stocks-growth-100.png') `
+    -Description "Processes by CPU usage" `
     -Category "Bar Charts"
 
-# AREA CHART with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ChartsTest" -Name "AreaChartRefresh" `
-    -Title "Area Chart (Refreshable)" `
-    -ChartType "Area" `
-    -Data {
-        $data = @()
-        for ($i = 1; $i -le 10; $i++) {
-            $data += @{ Label = "T$i"; Value = Get-Random -Minimum 20 -Maximum 90 }
-        }
-        $data
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Simulated trend data with area fill" `
-    -Category "Area Charts"
+# DONUT CHART - License Allocation
+$licenseData = @(
+    @{ Label = 'Office 365'; Value = 350 }
+    @{ Label = 'Windows'; Value = 280 }
+    @{ Label = 'Azure'; Value = 150 }
+    @{ Label = 'Unused'; Value = 120 }
+)
 
-# BAR CHART - Memory Usage with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ChartsTest" -Name "MemoryBarChart" `
-    -Title "Memory Usage Bar Chart (Refreshable)" `
-    -ChartType "Bar" `
-    -Data {
-        $procs = Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 8
-        $procs | ForEach-Object {
-            @{ Label = $_.ProcessName.Substring(0, [Math]::Min(10, $_.ProcessName.Length)); Value = [math]::Round($_.WorkingSet / 1MB, 1) }
-        }
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Top 8 processes by memory consumption" `
-    -Category "Bar Charts"
+Add-UIChartCard -Step "Analytics" -Name "LicenseDonut" `
+    -Title "License Allocation" `
+    -ChartType "Donut" `
+    -Data $licenseData `
+    -IconPath (Join-Path $iconBase 'icons8-certificate-100.png') `
+    -Description "By product" `
+    -Category "Donut Charts"
 
-# LINE CHART - Sine Wave Pattern with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ChartsTest" -Name "SineLineChart" `
-    -Title "Dynamic Wave Pattern (Line)" `
-    -ChartType "Line" `
-    -Data {
-        $data = @()
-        $phase = Get-Random -Minimum 0 -Maximum 6
-        for ($i = 0; $i -lt 12; $i++) {
-            $val = [math]::Round(50 + 40 * [math]::Sin($i * 0.5 + $phase), 1)
-            $data += @{ Label = "$i"; Value = $val }
-        }
-        $data
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Mathematical pattern with random phase shift" `
-    -Category "Line Charts"
+# PIE CHART - Disk Distribution
+$diskData = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
+    @{ Label = "$($_.DeviceID)"; Value = [math]::Round(($_.Size - $_.FreeSpace) / 1GB, 1) }
+}
 
-# PIE CHART - Disk Space Distribution with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ChartsTest" -Name "DiskPieChart" `
-    -Title "Disk Usage Distribution (Pie)" `
+Add-UIChartCard -Step "Analytics" -Name "DiskPieChart" `
+    -Title "Disk Usage Distribution" `
     -ChartType "Pie" `
-    -Data {
-        Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
-            @{ Label = "$($_.DeviceID)"; Value = [math]::Round(($_.Size - $_.FreeSpace) / 1GB, 1) }
-        }
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Storage usage across drives" `
+    -Data $diskData `
+    -IconPath (Join-Path $iconBase 'icons8-memory-slot-100.png') `
+    -Description "Storage by drive" `
     -Category "Pie Charts"
 
-# PAGE 3: DataGrid Test - Tables with Refresh
-# ------------------------------------------------------------
+# BAR CHART - Memory by Process
+$memProcs = Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 8
+$memData = $memProcs | ForEach-Object {
+    @{ Label = $_.ProcessName.Substring(0, [Math]::Min(10, $_.ProcessName.Length)); Value = [math]::Round($_.WorkingSet / 1MB, 1) }
+}
 
-Add-UIStep -Name 'DataGridTest' -Title 'DataGrid Test' -Order 3 -Icon '&#xE8F1;' `
-    -Type "Dashboard" -Description 'DataGrid cards with refresh functionality'
+Add-UIChartCard -Step "Analytics" -Name "MemoryBarChart" `
+    -Title "Memory Usage by Process" `
+    -ChartType "Bar" `
+    -Data $memData `
+    -IconPath (Join-Path $iconBase 'icons8-stocks-growth-100.png') `
+    -Description "Top processes by RAM" `
+    -Category "Bar Charts"
 
-# Banner
-Add-UIBanner -Step "DataGridTest" -Name "DataGridBanner" `
-    -Title "DataGrid Refresh Test" `
-    -Subtitle "Tables with live data refresh capability" `
-    -BackgroundColor "#8764B8"
+# LINE CHART - Network Throughput
+$networkTrendData = @()
+for ($i = 12; $i -ge 0; $i--) {
+    $networkTrendData += @{ Label = "-$i min"; Value = [math]::Round((Get-Random -Minimum 150 -Maximum 300), 1) }
+}
 
-# Context card explaining DataGrids
-Add-UICard -Step "DataGridTest" -Name "DataGridInfo" `
+Add-UIChartCard -Step "Analytics" -Name "NetworkLineChart" `
+    -Title "Network Throughput" `
+    -ChartType "Line" `
+    -Data $networkTrendData `
+    -IconPath (Join-Path $iconBase 'icons8-network-cable-100.png') `
+    -Description "Bandwidth over time (Mbps)" `
+    -Category "Line Charts"
+
+# DONUT CHART - Service Distribution
+$serviceDistData = @(
+    @{ Label = 'Running'; Value = 145 }
+    @{ Label = 'Stopped'; Value = 78 }
+    @{ Label = 'Disabled'; Value = 32 }
+)
+
+Add-UIChartCard -Step "Analytics" -Name "ServiceDonut" `
+    -Title "Windows Services" `
+    -ChartType "Donut" `
+    -Data $serviceDistData `
+    -IconPath (Join-Path $iconBase 'icons8-gears-100.png') `
+    -Description "By status" `
+    -Category "Donut Charts"
+
+# ==============================================================================
+# PAGE 3: System Data - DataGrids and Tables
+# ==============================================================================
+
+Add-UIStep -Name 'SystemData' -Title 'System Data' -Order 3 `
+    -IconPath (Join-Path $iconBase 'icons8-system-report-100.png') `
+    -Type "Dashboard" -Description 'Tabular data views with DataGrid cards'
+
+# Carousel banner for System Data page
+$dataCarousel = @(
+    @{
+        Title = 'Tabular Data'
+        Subtitle = 'DataGrid cards for structured information'
+        BackgroundColor = '#4A5568'  # Steel Grey
+        IconPath = (Join-Path $iconBase 'icons8-system-report-100.png')
+    },
+    @{
+        Title = 'Sortable Columns'
+        Subtitle = 'Click headers to sort data'
+        BackgroundColor = '#1B3A57'  # Navy
+        IconPath = (Join-Path $iconBase 'icons8-create-document-100.png')
+    },
+    @{
+        Title = 'Live Updates'
+        Subtitle = 'Refresh to see current system state'
+        BackgroundColor = '#DC2626'  # Crimson Red
+        IconPath = (Join-Path $iconBase 'icons8-advance-100.png')
+    }
+)
+
+Add-UIBanner -Step "SystemData" -Name "DataBanner" `
+    -Title "System Data" `
+    -CarouselSlides $dataCarousel `
+    -AutoRotate $true `
+    -RotateInterval 4000 `
+    -Height 180
+
+# Context card
+Add-UICard -Step "SystemData" -Name "DataGridInfo" `
     -Title "DataGrid Cards" `
-    -Content "Add-UITableCard displays tabular data with sortable columns. Use ScriptBlocks in -Data for live refresh. The grid auto-sizes columns and supports scrolling for large datasets." `
-    -Category "Info"
+    -Content "**DataGrid cards** display structured tabular data with sortable columns. Click column headers to sort, and use the scroll bar for large datasets. Perfect for process lists, service status, and system information." `
+    -Category "Info" `
+    -IconPath (Join-Path $iconBase 'icons8-ask-question-100.png')
 
-# Process Count Metrics - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "DataGridTest" -Name "ProcessCountMetric" `
+# Summary Metrics
+Add-UIMetricCard -Step "SystemData" -Name "ProcessCountMetric" `
     -Title "Running Processes" `
-    -Value { (Get-Process).Count } `
+    -Value (Get-Process).Count `
     -Description "Total active processes" `
-    -Icon "&#xE9D9;" `
+    -IconPath (Join-Path $iconBase 'icons8-stocks-growth-100.png') `
     -Category "Metrics"
 
-# Thread Count Metric with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "DataGridTest" -Name "ThreadCountMetric" `
-    -Title "Total Threads" `
-    -Value { (Get-Process | Measure-Object -Property Threads -Sum).Sum } `
-    -Description "System-wide thread count" `
-    -Icon "&#xE9D9;" `
+Add-UIMetricCard -Step "SystemData" -Name "ServiceCountMetric" `
+    -Title "Running Services" `
+    -Value (Get-Service | Where-Object Status -eq 'Running').Count `
+    -Description "Active Windows services" `
+    -IconPath (Join-Path $iconBase 'icons8-gears-100.png') `
     -Category "Metrics"
 
-# Handle Count Metric with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "DataGridTest" -Name "HandleCountMetric" `
-    -Title "Total Handles" `
-    -Value { (Get-Process | Measure-Object -Property HandleCount -Sum).Sum } `
-    -Description "System-wide handle count" `
-    -Icon "&#xE9D9;" `
+Add-UIMetricCard -Step "SystemData" -Name "ConnectionsMetric" `
+    -Title "Network Connections" `
+    -Value (Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue).Count `
+    -Description "Established TCP connections" `
+    -IconPath (Join-Path $iconBase 'icons8-network-cable-100.png') `
     -Category "Metrics"
 
-# DATAGRID 1: Process Details with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UITableCard -Step "DataGridTest" -Name "ProcessDataGrid" `
-    -Title "Process Details (Refreshable)" `
-    -Data {
-        Get-Process | Select-Object -First 15 Name, Id, CPU, WorkingSet, Threads, HandleCount |
-            Select-Object Name, Id, 
-                @{N='CPU';E={[math]::Round($_.CPU, 2)}},
-                @{N='MemoryMB';E={[math]::Round($_.WorkingSet/1MB, 2)}},
-                @{N='Threads';E={$_.Threads.Count}},
-                @{N='Handles';E={$_.HandleCount}}
-    } `
-    -Icon "&#xE9D9;" `
+# DATAGRID 1: Process Details
+$processData = Get-Process | Select-Object -First 15 Name, Id, CPU, WorkingSet, Threads, HandleCount |
+    Select-Object Name, Id, 
+        @{N='CPU';E={[math]::Round($_.CPU, 2)}},
+        @{N='MemoryMB';E={[math]::Round($_.WorkingSet/1MB, 2)}},
+        @{N='Threads';E={$_.Threads.Count}},
+        @{N='Handles';E={$_.HandleCount}}
+
+Add-UITableCard -Step "SystemData" -Name "ProcessDataGrid" `
+    -Title "Process Details" `
+    -Data $processData `
+    -IconPath (Join-Path $iconBase 'icons8-stocks-growth-100.png') `
     -Category "Process Data"
 
-# DATAGRID 2: Services with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UITableCard -Step "DataGridTest" -Name "ServicesDataGrid" `
-    -Title "Windows Services (Refreshable)" `
-    -Data {
-        Get-Service | Select-Object -First 20 DisplayName, Status, StartType, Name |
-            Sort-Object Status -Descending
-    } `
-    -Icon "&#xE9D9;" `
+# DATAGRID 2: Services
+$serviceData = Get-Service | Select-Object -First 20 DisplayName, Status, StartType, Name |
+    Sort-Object Status -Descending
+
+Add-UITableCard -Step "SystemData" -Name "ServicesDataGrid" `
+    -Title "Windows Services" `
+    -Data $serviceData `
+    -IconPath (Join-Path $iconBase 'icons8-gears-100.png') `
     -Category "Service Data"
 
-# DATAGRID 3: Network Connections with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UITableCard -Step "DataGridTest" -Name "NetworkDataGrid" `
-    -Title "Network Connections (Refreshable)" `
-    -Data {
-        Get-NetTCPConnection -ErrorAction SilentlyContinue | 
-            Where-Object { $_.State -eq 'Established' } |
-            Select-Object -First 15 LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess
-    } `
-    -Icon "&#xE9D9;" `
+# DATAGRID 3: Network Connections
+$networkData = Get-NetTCPConnection -ErrorAction SilentlyContinue | 
+    Where-Object { $_.State -eq 'Established' } |
+    Select-Object -First 15 LocalAddress, LocalPort, RemoteAddress, RemotePort, State, OwningProcess
+
+Add-UITableCard -Step "SystemData" -Name "NetworkDataGrid" `
+    -Title "Network Connections" `
+    -Data $networkData `
+    -IconPath (Join-Path $iconBase 'icons8-network-cable-100.png') `
     -Category "Network Data"
 
-# PAGE 4: Storage & Info Cards
-# ------------------------------------------------------------
+# ==============================================================================
+# PAGE 4: Automation - Interactive Script Cards
+# ==============================================================================
 
-Add-UIStep -Name 'ScriptCardsTest' -Title 'Storage & Info' -Order 4 -Icon '&#xEDA2;' `
-    -Type "Dashboard" -Description 'Storage metrics, info cards, and additional monitoring'
+Add-UIStep -Name 'Automation' -Title 'Automation' -Order 4 `
+    -IconPath (Join-Path $iconBase 'icons8-powershell-100.png') `
+    -Type "Dashboard" -Description 'Interactive script execution with ScriptCards'
 
-# Banner
-Add-UIBanner -Step "ScriptCardsTest" -Name "StorageBanner" `
-    -Title "Storage & Info" `
-    -Subtitle "Additional metrics and information cards" `
-    -BackgroundColor "#D83B01"
+# Carousel banner for Automation page
+$automationCarousel = @(
+    @{
+        Title = 'Script Automation'
+        Subtitle = 'Execute PowerShell scripts from the dashboard'
+        BackgroundColor = '#DC2626'  # Crimson Red
+        IconPath = (Join-Path $iconBase 'icons8-powershell-100.png')
+    },
+    @{
+        Title = 'Parameter Input'
+        Subtitle = 'Dynamic forms for script parameters'
+        BackgroundColor = '#4A5568'  # Steel Grey
+        IconPath = (Join-Path $iconBase 'icons8-command-line-100.png')
+    },
+    @{
+        Title = 'Real-Time Output'
+        Subtitle = 'See script results instantly'
+        BackgroundColor = '#1B3A57'  # Navy
+        IconPath = (Join-Path $iconBase 'icons8-code-file-100.png')
+    }
+)
 
-# Context card explaining Info cards
-Add-UICard -Step "ScriptCardsTest" -Name "StorageInfo" `
-    -Title "Info Cards" `
-    -Content "Add-UICard creates informational text cards for context and guidance. Combine with Add-UIMetricCard for a complete dashboard experience showing both data and explanatory content." `
-    -Category "Info"
+Add-UIBanner -Step "Automation" -Name "AutomationBanner" `
+    -Title "Automation Dashboard" `
+    -CarouselSlides $automationCarousel `
+    -AutoRotate $true `
+    -RotateInterval 4000 `
+    -Height 180 `
+    -Style 'Success'
 
-# Disk Metrics - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "ScriptCardsTest" -Name "TotalCapacityMetric" `
-    -Title "Total Storage" `
-    -Value {
-        $disks = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
-        [math]::Round(($disks | Measure-Object -Property Size -Sum).Sum / 1GB, 1)
-    } `
-    -Unit "GB" `
-    -Description "Combined capacity of all drives" `
-    -Icon "&#xE9D9;" `
-    -Category "Storage"
-
-# Free Space Metric with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "ScriptCardsTest" -Name "TotalFreeMetric" `
-    -Title "Free Space" `
-    -Value {
-        $disks = Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"
-        [math]::Round(($disks | Measure-Object -Property FreeSpace -Sum).Sum / 1GB, 1)
-    } `
-    -Unit "GB" `
-    -Description "Total available space" `
-    -Icon "&#xE9D9;" `
-    -Category "Storage"
-
-# INFO CARD 1: System Information
-$os = Get-CimInstance Win32_OperatingSystem
-$cs = Get-CimInstance Win32_ComputerSystem
-$sysInfo = @"
-**Computer:** $($cs.Name)
-**OS:** $($os.Caption)
-**Version:** $($os.Version)
-**Memory:** $([math]::Round($cs.TotalPhysicalMemory/1GB, 2)) GB
-**Manufacturer:** $($cs.Manufacturer)
-"@
-Add-UICard -Step "ScriptCardsTest" -Name "SystemInfoCard" `
-    -Title "System Information" `
-    -Description "Current system details" `
-    -Content $sysInfo `
-    -Icon "&#xE9D9;" `
-    -Category "Info"
-
-# INFO CARD 2: Quick Tips
-Add-UICard -Step "ScriptCardsTest" -Name "TipsCard" `
-    -Title "Dashboard Tips" `
-    -Description "How to use this dashboard" `
-    -Content "Click the **refresh** button on any card to update its data. Charts and DataGrids support live refresh when a RefreshScript is defined." `
-    -Icon "&#xE9D9;" `
-    -Category "Info"
-
-# Additional Metrics with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIMetricCard -Step "ScriptCardsTest" -Name "NetworkMetric" `
-    -Title "Active Connections" `
-    -Value { (Get-NetTCPConnection -State Established -ErrorAction SilentlyContinue).Count } `
-    -Description "Established TCP connections" `
-    -Icon "&#xE9D9;" `
-    -Category "Network"
-
-Add-UIMetricCard -Step "ScriptCardsTest" -Name "ServicesMetric" `
-    -Title "Running Services" `
-    -Value { (Get-Service | Where-Object Status -eq 'Running').Count } `
-    -Description "Active Windows services" `
-    -Icon "&#xE9D9;" `
-    -Category "Services"
-
-# Disk Usage Bar Chart with Refresh - Using ScriptBlock (auto-generates RefreshScript)
-Add-UIChartCard -Step "ScriptCardsTest" -Name "DiskUsageChart" `
-    -Title "Disk Usage (GB)" `
-    -ChartType "Bar" `
-    -Data {
-        Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | ForEach-Object {
-            @{ Label = "$($_.DeviceID)"; Value = [math]::Round(($_.Size - $_.FreeSpace) / 1GB, 1) }
-        }
-    } `
-    -Icon "&#xE9D9;" `
-    -Description "Storage consumption per drive" `
-    -Category "Charts"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# PAGE 5: ScriptCards Demo - Interactive Script Execution
-# ═══════════════════════════════════════════════════════════════════════════════
-
-Add-UIStep -Name 'ScriptCardsDemo' -Title 'Script Cards' -Order 5 -Icon '&#xE8F1;' `
-    -Type "Dashboard" -Description 'Interactive script cards demonstrating various execution patterns and features'
-
-Add-UIBanner -Step "ScriptCardsDemo" -Name "ScriptCardsBanner" `
-    -Title "Script Cards Demo" `
-    -Subtitle "Interactive script execution and automation" `
-    -BackgroundColor "#0078D4"
-
-# Context card explaining Script Cards
-Add-UICard -Step "ScriptCardsDemo" -Name "ScriptCardsInfo" `
+# Context card
+Add-UICard -Step "Automation" -Name "AutomationInfo" `
     -Title "Script Cards" `
-    -Content "Add-UIScriptCard creates interactive cards that execute PowerShell scripts. Parameters are auto-discovered from the script and presented as input fields. Output appears in a console panel within the card." `
-    -Category "Info"
+    -Content "**ScriptCards** enable interactive PowerShell script execution directly from the dashboard. Parameters are auto-discovered and presented as input fields. Output appears in a console panel within the card. Perfect for automation tasks, diagnostics, and system management." `
+    -Category "Info" `
+    -IconPath (Join-Path $iconBase 'icons8-ask-question-100.png')
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# BASIC SCRIPT CARDS - Simple Actions
-# ═══════════════════════════════════════════════════════════════════════════════
 
-# Basic Message Box ScriptCard
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "HelloWorldScript" `
-    -Title "Hello World" `
-    -Description "Basic script card that shows a message box" `
-    -ScriptBlock {
-        [System.Windows.MessageBox]::Show("Hello from PoshUI ScriptCard!", "ScriptCard Demo", "OK", "Information") | Out-Null
-    } `
-    -Icon "&#xE9D9;" `
-    -Category "Basic"
 
-# System Info ScriptCard
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "SystemInfoScript" `
-    -Title "Show System Info" `
-    -Description "Display current system information in console" `
+# SCRIPT CARD 1: System Information
+Add-UIScriptCard -Step "Automation" -Name "SystemInfoScript" `
+    -Title "Get System Info" `
+    -Description "Display detailed system information" `
     -ScriptBlock {
         Write-Host "=== System Information ===" -ForegroundColor Cyan
-        Get-CimInstance Win32_ComputerSystem | Select-Object Name, Manufacturer, Model | Format-Table -AutoSize
-        Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, OSArchitecture | Format-Table -AutoSize
-        Write-Host "Memory: $([math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 2)) GB" -ForegroundColor Yellow
+        $os = Get-CimInstance Win32_OperatingSystem
+        $cs = Get-CimInstance Win32_ComputerSystem
+        Write-Host "`nComputer: $($cs.Name)" -ForegroundColor Yellow
+        Write-Host "OS: $($os.Caption)" -ForegroundColor Yellow
+        Write-Host "Version: $($os.Version)" -ForegroundColor Yellow
+        Write-Host "Memory: $([math]::Round($cs.TotalPhysicalMemory/1GB, 2)) GB" -ForegroundColor Yellow
+        Write-Host "Manufacturer: $($cs.Manufacturer)" -ForegroundColor Yellow
     } `
-    -Icon "&#xE9D9;" `
-    -Category "Basic"
+    -IconPath (Join-Path $iconBase 'icons8-system-report-100.png') `
+    -Category "Diagnostics"
 
-# ==============================================================================
-# PARAMETERIZED SCRIPT CARDS - User Input
-# ==============================================================================
 
-# File Operations ScriptCard with parameters
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "FileOpsScript" `
-    -Title "File Operations" `
-    -Description "Create and manage files with user parameters" `
-    -ScriptBlock {
-        param(
-            [Parameter(Mandatory=$true)]
-            [string]$FileName = "test.txt",
-            
-            [Parameter()]
-            [string]$Content = "Hello from ScriptCard!",
-            
-            [Parameter(Mandatory=$true)]
-            [ValidateSet("Create", "Read", "Delete")]
-            [string]$Action = "Create"
-        )
-
-        switch ($Action) {
-            "Create" {
-                $Content | Out-File -FilePath $FileName -Encoding UTF8
-                Write-Host "File '$FileName' created with content." -ForegroundColor Green
-            }
-            "Read" {
-                if (Test-Path $FileName) {
-                    $content = Get-Content $FileName -Raw
-                    Write-Host "File Content:" -ForegroundColor Cyan
-                    Write-Host $content
-                } else {
-                    Write-Host "File '$FileName' not found." -ForegroundColor Red
-                }
-            }
-            "Delete" {
-                if (Test-Path $FileName) {
-                    Remove-Item $FileName -Force
-                    Write-Host "File '$FileName' deleted." -ForegroundColor Yellow
-                } else {
-                    Write-Host "File '$FileName' not found." -ForegroundColor Red
-                }
-            }
-        }
-    } `
-    -DefaultParameters @{ FileName = "test.txt"; Content = "Hello from ScriptCard!"; Action = "Create" } `
-    -Icon "&#xE9D9;" `
-    -Category "Parameters"
-
-# Process Management ScriptCard
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "ProcessMgmtScript" `
+# SCRIPT CARD 2: Process Management
+Add-UIScriptCard -Step "Automation" -Name "ProcessMgmtScript" `
     -Title "Process Manager" `
-    -Description "Manage Windows processes" `
+    -Description "List or manage processes" `
     -ScriptBlock {
         param(
             [Parameter(Mandatory=$true)]
             [string]$ProcessName = "notepad",
             
             [Parameter(Mandatory=$true)]
-            [ValidateSet("Start", "Stop", "List")]
+            [ValidateSet("List", "Start", "Stop")]
             [string]$Action = "List"
         )
 
         switch ($Action) {
-            "Start" {
-                try {
-                    Start-Process $ProcessName
-                    Write-Host "Started process: $ProcessName" -ForegroundColor Green
-                } catch {
-                    Write-Host "Failed to start process: $($_.Exception.Message)" -ForegroundColor Red
-                }
-            }
-            "Stop" {
-                try {
-                    Stop-Process -Name $ProcessName -Force -ErrorAction Stop
-                    Write-Host "Stopped process: $ProcessName" -ForegroundColor Yellow
-                } catch {
-                    Write-Host "Failed to stop process: $($_.Exception.Message)" -ForegroundColor Red
-                }
-            }
             "List" {
                 $processes = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue
                 if ($processes) {
@@ -593,166 +552,131 @@ Add-UIScriptCard -Step "ScriptCardsDemo" -Name "ProcessMgmtScript" `
                     Write-Host "No processes found with name '$ProcessName'" -ForegroundColor Yellow
                 }
             }
+            "Start" {
+                try {
+                    Start-Process $ProcessName
+                    Write-Host "Started process: $ProcessName" -ForegroundColor Green
+                } catch {
+                    Write-Host "Failed to start: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
+            "Stop" {
+                try {
+                    Stop-Process -Name $ProcessName -Force -ErrorAction Stop
+                    Write-Host "Stopped process: $ProcessName" -ForegroundColor Yellow
+                } catch {
+                    Write-Host "Failed to stop: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
         }
     } `
     -DefaultParameters @{ ProcessName = "notepad"; Action = "List" } `
-    -Icon "&#xE9D9;" `
-    -Category "Parameters"
+    -IconPath (Join-Path $iconBase 'icons8-stocks-growth-100.png') `
+    -Category "Management"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# ADVANCED SCRIPT CARDS - Complex Operations
-# ═══════════════════════════════════════════════════════════════════════════════
 
-# Network Diagnostics ScriptCard
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "NetworkDiagScript" `
+# SCRIPT CARD 3: Network Diagnostics
+Add-UIScriptCard -Step "Automation" -Name "NetworkDiagScript" `
     -Title "Network Diagnostics" `
-    -Description "Comprehensive network connectivity testing" `
+    -Description "Test network connectivity" `
     -ScriptBlock {
         param(
             [Parameter(Mandatory=$true)]
             [string]$Target = "8.8.8.8",
             
             [Parameter(Mandatory=$true)]
-            [ValidateSet("Ping", "Trace", "DNS", "All")]
-            [string]$TestType = "All"
+            [ValidateSet("Ping", "DNS", "Both")]
+            [string]$TestType = "Both"
         )
 
         Write-Host "=== Network Diagnostics for $Target ===" -ForegroundColor Cyan
 
-        switch ($TestType) {
-            "Ping" {
-                Write-Host "`n--- Ping Test ---" -ForegroundColor Yellow
-                Test-Connection -ComputerName $Target -Count 3 -ErrorAction SilentlyContinue
-            }
-            "Trace" {
-                Write-Host "`n--- Trace Route ---" -ForegroundColor Yellow
-                tracert $Target
-            }
-            "DNS" {
-                Write-Host "`n--- DNS Resolution ---" -ForegroundColor Yellow
-                try {
-                    $dnsResult = Resolve-DnsName $Target -ErrorAction Stop
-                    $dnsResult | Select-Object Name, Type, IPAddress | Format-Table -AutoSize
-                } catch {
-                    Write-Host "DNS resolution failed: $($_.Exception.Message)" -ForegroundColor Red
-                }
-            }
-            "All" {
-                Write-Host "`n--- Ping Test ---" -ForegroundColor Yellow
-                Test-Connection -ComputerName $Target -Count 2 -ErrorAction SilentlyContinue
-                
-                Write-Host "`n--- DNS Resolution ---" -ForegroundColor Yellow
-                try {
-                    $dnsResult = Resolve-DnsName $Target -ErrorAction Stop
-                    $dnsResult | Select-Object Name, Type, IPAddress | Format-Table -AutoSize
-                } catch {
-                    Write-Host "DNS resolution failed: $($_.Exception.Message)" -ForegroundColor Red
-                }
+        if ($TestType -in @("Ping", "Both")) {
+            Write-Host "`n--- Ping Test ---" -ForegroundColor Yellow
+            Test-Connection -ComputerName $Target -Count 3 -ErrorAction SilentlyContinue
+        }
+
+        if ($TestType -in @("DNS", "Both")) {
+            Write-Host "`n--- DNS Resolution ---" -ForegroundColor Yellow
+            try {
+                $dnsResult = Resolve-DnsName $Target -ErrorAction Stop
+                $dnsResult | Select-Object Name, Type, IPAddress | Format-Table -AutoSize
+            } catch {
+                Write-Host "DNS resolution failed: $($_.Exception.Message)" -ForegroundColor Red
             }
         }
     } `
-    -DefaultParameters @{ Target = "8.8.8.8"; TestType = "All" } `
-    -Icon "&#xE9D9;" `
-    -Category "Advanced"
+    -DefaultParameters @{ Target = "8.8.8.8"; TestType = "Both" } `
+    -IconPath (Join-Path $iconBase 'icons8-network-cable-100.png') `
+    -Category "Diagnostics"
 
-# System Cleanup ScriptCard
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "SystemCleanupScript" `
-    -Title "System Cleanup" `
-    -Description "Clean temporary files and optimize system" `
-    -ScriptBlock {
-        param(
-            [Parameter()]
-            [bool]$CleanupTemp = $true,
-            
-            [Parameter()]
-            [bool]$CleanupRecycle = $false,
-            
-            [Parameter()]
-            [bool]$Defrag = $false
-        )
-
-        Write-Host "=== System Cleanup ===" -ForegroundColor Cyan
-
-        if ($CleanupTemp) {
-            Write-Host "`nCleaning temporary files..." -ForegroundColor Yellow
-            try {
-                $tempPath = [System.IO.Path]::GetTempPath()
-                Get-ChildItem $tempPath -File -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-                Write-Host "Temporary files cleaned." -ForegroundColor Green
-            } catch {
-                Write-Host "Error cleaning temp files: $($_.Exception.Message)" -ForegroundColor Red
-            }
-        }
-
-        if ($CleanupRecycle) {
-            Write-Host "`nEmptying Recycle Bin..." -ForegroundColor Yellow
-            try {
-                Clear-RecycleBin -Force -ErrorAction Stop
-                Write-Host "Recycle Bin emptied." -ForegroundColor Green
-            } catch {
-                Write-Host "Error emptying Recycle Bin: $($_.Exception.Message)" -ForegroundColor Red
-            }
-        }
-
-        if ($Defrag) {
-            Write-Host "`nDefragmenting C: drive..." -ForegroundColor Yellow
-            try {
-                defrag C: /O
-                Write-Host "Defragmentation completed." -ForegroundColor Green
-            } catch {
-                Write-Host "Error during defragmentation: $($_.Exception.Message)" -ForegroundColor Red
-            }
-        }
-
-        Write-Host "`nCleanup completed!" -ForegroundColor Green
-    } `
-    -DefaultParameters @{ CleanupTemp = $true; CleanupRecycle = $false; Defrag = $false } `
-    -Icon "&#xE9D9;" `
-    -Category "Advanced"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# INTERACTIVE SCRIPT CARDS - User Feedback
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# User Survey ScriptCard
-Add-UIScriptCard -Step "ScriptCardsDemo" -Name "SurveyScript" `
-    -Title "User Survey" `
-    -Description "Collect user feedback with interactive prompts" `
+# SCRIPT CARD 4: Service Management
+Add-UIScriptCard -Step "Automation" -Name "ServiceMgmtScript" `
+    -Title "Service Manager" `
+    -Description "Check and manage Windows services" `
     -ScriptBlock {
         param(
             [Parameter(Mandatory=$true)]
-            [ValidateRange(1,5)]
-            [int]$Rating = 5,
+            [string]$ServiceName = "Spooler",
             
-            [Parameter()]
-            [string]$Comments = ""
+            [Parameter(Mandatory=$true)]
+            [ValidateSet("Status", "Start", "Stop", "Restart")]
+            [string]$Action = "Status"
         )
 
-        Write-Host "=== Survey Response ===" -ForegroundColor Cyan
-        Write-Host "Rating: $Rating/5" -ForegroundColor Yellow
+        Write-Host "=== Service Management: $ServiceName ===" -ForegroundColor Cyan
 
-        if ($Comments) {
-            Write-Host "Comments: $Comments" -ForegroundColor White
-        } else {
-            Write-Host "No comments provided." -ForegroundColor Gray
+        switch ($Action) {
+            "Status" {
+                $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+                if ($service) {
+                    Write-Host "`nService: $($service.DisplayName)" -ForegroundColor Yellow
+                    Write-Host "Status: $($service.Status)" -ForegroundColor $(if ($service.Status -eq 'Running') { 'Green' } else { 'Red' })
+                    Write-Host "Start Type: $($service.StartType)" -ForegroundColor Yellow
+                } else {
+                    Write-Host "Service '$ServiceName' not found." -ForegroundColor Red
+                }
+            }
+            "Start" {
+                try {
+                    Start-Service -Name $ServiceName -ErrorAction Stop
+                    Write-Host "Service '$ServiceName' started successfully." -ForegroundColor Green
+                } catch {
+                    Write-Host "Failed to start service: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
+            "Stop" {
+                try {
+                    Stop-Service -Name $ServiceName -Force -ErrorAction Stop
+                    Write-Host "Service '$ServiceName' stopped successfully." -ForegroundColor Yellow
+                } catch {
+                    Write-Host "Failed to stop service: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
+            "Restart" {
+                try {
+                    Restart-Service -Name $ServiceName -Force -ErrorAction Stop
+                    Write-Host "Service '$ServiceName' restarted successfully." -ForegroundColor Green
+                } catch {
+                    Write-Host "Failed to restart service: $($_.Exception.Message)" -ForegroundColor Red
+                }
+            }
         }
-
-        Write-Host "`nThank you for your feedback!" -ForegroundColor Green
     } `
-    -DefaultParameters @{ Rating = 5; Comments = "" } `
-    -Icon "&#xE9D9;" `
-    -Category "Interactive"
+    -DefaultParameters @{ ServiceName = "Spooler"; Action = "Status" } `
+    -IconPath (Join-Path $iconBase 'icons8-gears-100.png') `
+    -Category "Management"
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # Show the multi-page dashboard
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 
-Write-Host "Launching Multi-Page Dashboard with Refresh Tests..." -ForegroundColor Green
-Write-Host "  - Page 1: System Overview with auto-refresh metrics" -ForegroundColor White
-Write-Host "  - Page 2: All chart types (Line, Bar, Area) with refresh" -ForegroundColor White
-Write-Host "  - Page 3: DataGrids with live data refresh" -ForegroundColor White
-Write-Host "  - Page 4: Storage & Info cards with refresh" -ForegroundColor White
-Write-Host "  - Page 5: ScriptCards with interactive execution" -ForegroundColor White
+Write-Host "Launching Multi-Page Dashboard - Complete Showcase..." -ForegroundColor Green
+Write-Host "  - Page 1: Performance Metrics (Gauges, Sparklines, Status Cards)" -ForegroundColor White
+Write-Host "  - Page 2: Analytics (Bar, Line, Donut, Pie Charts)" -ForegroundColor White
+Write-Host "  - Page 3: System Data (DataGrids and Tables)" -ForegroundColor White
+Write-Host "  - Page 4: Automation (Interactive Script Cards)" -ForegroundColor White
+Write-Host "  - Custom Navy/Grey/Red Theme Applied" -ForegroundColor Magenta
 Write-Host ""
 
 Show-PoshUIDashboard

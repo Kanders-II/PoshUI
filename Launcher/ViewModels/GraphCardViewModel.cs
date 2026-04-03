@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 using System;
@@ -167,7 +167,9 @@ namespace Launcher.ViewModels
                 {
                     _chartType = value;
                     OnPropertyChanged(nameof(ChartType));
-                    // WPF will automatically re-evaluate IsPieChart and IsCartesianChart
+                    OnPropertyChanged(nameof(IsPieChart));
+                    OnPropertyChanged(nameof(IsDonutChart));
+                    OnPropertyChanged(nameof(IsCartesianChart));
                     UpdateChartType();
                 }
             }
@@ -208,6 +210,20 @@ namespace Launcher.ViewModels
                 {
                     _icon = value;
                     OnPropertyChanged(nameof(Icon));
+                }
+            }
+        }
+
+        private string _iconPath = string.Empty;
+        public string IconPath
+        {
+            get => _iconPath;
+            set
+            {
+                if (_iconPath != value)
+                {
+                    _iconPath = value;
+                    OnPropertyChanged(nameof(IconPath));
                 }
             }
         }
@@ -330,6 +346,7 @@ namespace Launcher.ViewModels
                 {
                     _pieChartData = value;
                     OnPropertyChanged(nameof(PieChartData));
+                    OnPropertyChanged(nameof(FormattedTotal));
                 }
             }
         }
@@ -357,12 +374,27 @@ namespace Launcher.ViewModels
                 { 
                     _hasData = value; 
                     OnPropertyChanged(nameof(HasData));
+                    OnPropertyChanged(nameof(IsPieChart));
+                    OnPropertyChanged(nameof(IsDonutChart));
+                    OnPropertyChanged(nameof(IsCartesianChart));
                 } 
             } 
         }
         
-        public bool IsPieChart => HasData && ChartType.Equals("Pie", StringComparison.OrdinalIgnoreCase);
-        public bool IsCartesianChart => HasData && !ChartType.Equals("Pie", StringComparison.OrdinalIgnoreCase);
+        public bool IsPieChart => HasData && (ChartType.Equals("Pie", StringComparison.OrdinalIgnoreCase) || ChartType.Equals("Donut", StringComparison.OrdinalIgnoreCase));
+        public bool IsDonutChart => HasData && ChartType.Equals("Donut", StringComparison.OrdinalIgnoreCase);
+        public bool IsCartesianChart => HasData && !ChartType.Equals("Pie", StringComparison.OrdinalIgnoreCase) && !ChartType.Equals("Donut", StringComparison.OrdinalIgnoreCase);
+
+        public string FormattedTotal
+        {
+            get
+            {
+                if (_pieChartData == null || _pieChartData.Count == 0) return "0";
+                double total = 0;
+                foreach (var s in _pieChartData) total += s.Value;
+                return total.ToString("N0");
+            }
+        }
 
         #endregion
 
@@ -653,29 +685,53 @@ namespace Launcher.ViewModels
                 var values = new List<double>();
                 var labels = new List<string>();
                 
-                // Simple regex-based JSON parsing for arrays of objects
-                // Pattern: [{"Label":"...","Value":...}, ...]
-                var pattern = @"\{[^}]*""(?:Label|label)""\s*:\s*""([^""]*)""[^}]*""(?:Value|value)""\s*:\s*([0-9.]+)[^}]*\}";
-                var matches = Regex.Matches(jsonString, pattern);
+                // Format 1: {"Labels":["A","B","C"],"Values":[10,20,30]} from PowerShell hashtable
+                var labelsArrayMatch = Regex.Match(jsonString, @"""Labels""\s*:\s*\[([^\]]*)\]", RegexOptions.IgnoreCase);
+                var valuesArrayMatch = Regex.Match(jsonString, @"""Values""\s*:\s*\[([^\]]*)\]", RegexOptions.IgnoreCase);
                 
-                foreach (Match match in matches)
+                if (labelsArrayMatch.Success && valuesArrayMatch.Success)
                 {
-                    if (match.Groups.Count >= 3)
+                    // Parse labels array
+                    var labelEntries = Regex.Matches(labelsArrayMatch.Groups[1].Value, @"""([^""]*)""");
+                    foreach (Match m in labelEntries)
+                        labels.Add(m.Groups[1].Value);
+                    
+                    // Parse values array
+                    var valueEntries = Regex.Matches(valuesArrayMatch.Groups[1].Value, @"([0-9.]+)");
+                    foreach (Match m in valueEntries)
                     {
-                        var label = match.Groups[1].Value;
-                        double value;
-                        if (double.TryParse(match.Groups[2].Value, out value))
+                        double v;
+                        if (double.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out v))
+                            values.Add(v);
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"LoadFromJson: Parsed Labels/Values format: {labels.Count} labels, {values.Count} values");
+                }
+                
+                // Format 2: [{"Label":"A","Value":10}, ...] array of objects
+                if (values.Count == 0)
+                {
+                    var pattern = @"\{[^}]*""(?:Label|label)""\s*:\s*""([^""]*)""[^}]*""(?:Value|value)""\s*:\s*([0-9.]+)[^}]*\}";
+                    var matches = Regex.Matches(jsonString, pattern);
+                    
+                    foreach (Match match in matches)
+                    {
+                        if (match.Groups.Count >= 3)
                         {
-                            labels.Add(label);
-                            values.Add(value);
+                            var label = match.Groups[1].Value;
+                            double value;
+                            if (double.TryParse(match.Groups[2].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value))
+                            {
+                                labels.Add(label);
+                                values.Add(value);
+                            }
                         }
                     }
                 }
                 
-                // If regex didn't work, try a simpler approach - look for Label/Value pairs
+                // Format 3: Separate Label/Value regex fallback
                 if (values.Count == 0)
                 {
-                    // Try parsing as simple array: [{"Label":"A","Value":10}, ...]
                     var labelPattern = @"""Label""\s*:\s*""([^""]*)""";
                     var valuePattern = @"""Value""\s*:\s*([0-9.]+)";
                     
@@ -687,7 +743,7 @@ namespace Launcher.ViewModels
                     {
                         var label = labelMatches[i].Groups[1].Value;
                         double value;
-                        if (double.TryParse(valueMatches[i].Groups[1].Value, out value))
+                        if (double.TryParse(valueMatches[i].Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out value))
                         {
                             labels.Add(label);
                             values.Add(value);
@@ -697,7 +753,12 @@ namespace Launcher.ViewModels
                 
                 if (values.Count > 0)
                 {
+                    System.Diagnostics.Debug.WriteLine($"LoadFromJson: Creating series with {values.Count} data points");
                     CreateSeries(values.ToArray(), labels.ToArray());
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"LoadFromJson: No data parsed from: {jsonString.Substring(0, Math.Min(100, jsonString.Length))}");
                 }
             }
             catch (Exception ex)

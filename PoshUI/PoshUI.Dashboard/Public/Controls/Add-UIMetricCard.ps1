@@ -47,6 +47,11 @@ function Add-UIMetricCard {
     .PARAMETER Icon
     Optional icon glyph (e.g., '&#xE7C4;').
     
+    .PARAMETER IconPath
+    Optional path to a colored PNG icon file for the metric card.
+    When specified, the PNG image is displayed instead of the Segoe MDL2 glyph.
+    Supports PNG, ICO, and other image formats.
+    
     .PARAMETER Category
     Category for grouping/filtering cards.
     
@@ -105,6 +110,15 @@ function Add-UIMetricCard {
         [double]$Target,
         
         [Parameter()]
+        [double[]]$SparklineData,
+        
+        [Parameter()]
+        [switch]$ShowGauge,
+        
+        [Parameter()]
+        [switch]$ShowSparkline,
+        
+        [Parameter()]
         [double]$MinValue = 0,
         
         [Parameter()]
@@ -112,6 +126,9 @@ function Add-UIMetricCard {
         
         [Parameter()]
         [string]$Icon,
+        
+        [Parameter()]
+        [string]$IconPath,
         
         [Parameter()]
         [string]$Category = "General",
@@ -150,6 +167,9 @@ function Add-UIMetricCard {
             $control.SetProperty('CardDescription', $Description)
             $control.SetProperty('Category', $Category)
             
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
             if ($Icon) {
                 $control.SetProperty('Icon', $Icon)
             }
@@ -193,6 +213,21 @@ function Add-UIMetricCard {
             $control.SetProperty('ShowProgressBar', ($Target -gt 0))
             $control.SetProperty('ShowTrend', (-not [string]::IsNullOrEmpty($Trend)))
             $control.SetProperty('ShowTarget', ($Target -gt 0))
+            
+            # Handle sparkline data
+            if ($SparklineData -and $SparklineData.Count -gt 1) {
+                # Manual sparkline data takes precedence
+                $control.SetProperty('SparklineData', ($SparklineData | ConvertTo-Json -Compress))
+            }
+            elseif ($ShowSparkline -and $refreshScriptToUse) {
+                # Auto-sparkline: Just set the flag, C# will initialize and build history on refresh
+                $control.SetProperty('AutoSparkline', $true)
+                Write-Verbose "Auto-sparkline enabled for '$Name'. History will build on refresh."
+            }
+            
+            if ($ShowGauge) {
+                $control.SetProperty('ShowGauge', $true)
+            }
             
             if ($refreshScriptToUse) {
                 $scriptBlockContent = $refreshScriptToUse.ToString().Trim()

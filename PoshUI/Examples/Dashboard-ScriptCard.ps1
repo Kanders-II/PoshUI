@@ -256,7 +256,7 @@ Add-UIScriptCard -Step "Tools" -Name "ServiceStatus" `
             Write-Host ""
             Write-Host "Dependencies:" -ForegroundColor Cyan
             $service.DependentServices | ForEach-Object {
-                Write-Host "  → $($_.Name) ($($_.Status))"
+                Write-Host "  -> $($_.Name) ($($_.Status))"
             }
         }
         
@@ -316,9 +316,9 @@ Add-UIScriptCard -Step "Tools" -Name "EventLogs" `
         Write-Host "[OK] Event log query complete" -ForegroundColor Green
     }
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # SECOND CARDGRID STEP - Network & Security Tools
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 
 Add-UIStep -Name "Network" -Title "Network & Security" -Type "Dashboard" -Icon "&#xE968;"
 
@@ -444,16 +444,16 @@ Add-UIScriptCard -Step "Network" -Name "OpenPorts" `
             ForEach-Object {
                 $process = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue
                 $procName = if ($process) { $process.ProcessName } else { "Unknown" }
-                Write-Host "  Port $($_.LocalPort.ToString().PadRight(6)) → $procName"
+                Write-Host "  Port $($_.LocalPort.ToString().PadRight(6)) -> $procName"
             }
         
         Write-Host ""
         Write-Host "[OK] Port scan complete" -ForegroundColor Green
     }
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # THIRD CARDGRID STEP - User & Storage Tools  
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 
 Add-UIStep -Name "Storage" -Title "Users & Storage" -Type "Dashboard" -Icon "&#xE77B;"
 
@@ -565,9 +565,9 @@ Add-UIScriptCard -Step "Storage" -Name "RecycleBin" `
         Write-Host "[OK] Recycle bin info retrieved" -ForegroundColor Green
     }
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # CARD 14: External Script with Dynamic File Generation
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # This demonstrates how ScriptCard can use an external .ps1 file that is 
 # dynamically generated at runtime. PoshUI automatically discovers parameters
 # from the script's param() block, including ValidateScript attributes for
@@ -617,9 +617,9 @@ Add-UIScriptCard -Step "Tools" -Name "DynamicFileTool" `
     -Category "Advanced" `
     -ScriptPath $dynamicScriptPath
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 # LAUNCH DASHBOARD
-# ═══════════════════════════════════════════════════════════════════════════════
+# ===============================================================================
 
 Write-Host "`nLaunching CardGrid Dashboard..." -ForegroundColor Green
 Write-Host "   Each card can be clicked to open a dialog with parameters and execute the script." -ForegroundColor Gray

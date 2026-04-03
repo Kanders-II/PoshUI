@@ -29,6 +29,11 @@ function Add-UIStep {
     Optional icon for the step in the sidebar. Must be a Segoe MDL2 icon glyph.
     Format: '&#xE1D3;' (e.g., '&#xE968;' for Network, '&#xE72E;' for Shield)
     
+    .PARAMETER IconPath
+    Optional path to a colored PNG icon file for the step in the sidebar.
+    When specified, the colored PNG image is displayed instead of the Segoe MDL2 glyph.
+    Supports PNG, ICO, and other image formats.
+    
     .PARAMETER Skippable
     Whether this step can be skipped by the user.
     
@@ -72,6 +77,9 @@ function Add-UIStep {
         [string]$Icon,
         
         [Parameter()]
+        [string]$IconPath,
+        
+        [Parameter()]
         [switch]$Skippable
     )
     
@@ -105,7 +113,12 @@ function Add-UIStep {
             $step = [UIStep]::new($Name, $Title, $Order)
             $step.Description = $Description
             $step.Type = $Type
-            $step.Icon = $Icon
+            # IconPath (PNG file) takes priority over Icon (glyph)
+            if ($PSBoundParameters.ContainsKey('IconPath') -and -not [string]::IsNullOrEmpty($IconPath)) {
+                $step.Icon = $IconPath
+            } else {
+                $step.Icon = $Icon
+            }
             $step.Skippable = $Skippable.IsPresent
 
             # Initialize workflow container for Workflow steps

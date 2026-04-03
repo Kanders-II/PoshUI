@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.Generic;
@@ -23,6 +23,33 @@ namespace Launcher.ViewModels
         public string Subtitle { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Category { get; set; } = "General";
+        public string Style { get; set; } = string.Empty;  // Info, Success, Warning, Error (matches InfoCard styles)
+
+        /// <summary>
+        /// Returns the accent color based on Style property, consistent with InfoCard accent colors.
+        /// </summary>
+        public string AccentColor
+        {
+            get
+            {
+                switch ((Style ?? string.Empty).ToLowerInvariant())
+                {
+                    case "info": return "#0078D4";
+                    case "success": return "#107C10";
+                    case "warning": return "#CA5010";
+                    case "error": return "#D13438";
+                    default: return string.Empty;
+                }
+            }
+        }
+
+        /// <summary>
+        /// True when a typed style is set, enabling the accent bar display.
+        /// </summary>
+        public bool HasAccent
+        {
+            get { return !string.IsNullOrEmpty(AccentColor); }
+        }
 
         public BannerViewModel()
         {
@@ -366,7 +393,18 @@ namespace Launcher.ViewModels
         // ═══════════════════════════════════════════════════════════════════════════════
         // Carousel Properties
         // ═══════════════════════════════════════════════════════════════════════════════
-        public List<BannerSlide> CarouselItems { get; set; } = new List<BannerSlide>();
+        private List<BannerSlide> _carouselItems = new List<BannerSlide>();
+        public List<BannerSlide> CarouselItems
+        {
+            get { return _carouselItems; }
+            set
+            {
+                _carouselItems = value ?? new List<BannerSlide>();
+                OnPropertyChanged(nameof(CarouselItems));
+                OnPropertyChanged(nameof(IsCarousel));
+                OnPropertyChanged(nameof(CurrentSlide));
+            }
+        }
         
         public int CurrentSlideIndex 
         { 
@@ -505,6 +543,8 @@ namespace Launcher.ViewModels
         [DataMember]
         public string Icon { get; set; } = string.Empty;
         [DataMember]
+        public string IconPath { get; set; } = string.Empty;
+        [DataMember]
         public string BackgroundColor { get; set; } = "#2D2D30";
         [DataMember]
         public string BackgroundImagePath { get; set; } = string.Empty;
@@ -534,11 +574,49 @@ namespace Launcher.ViewModels
         public bool Clickable { get; set; } = false;
 
         /// <summary>
+        /// Restores sensible defaults after DataContractJsonSerializer deserialization.
+        /// DataContractJsonSerializer bypasses constructors and property initializers,
+        /// so int fields default to 0, strings to null, doubles to 0.0 instead of the
+        /// C# initializer values. This callback runs after deserialization to fix that.
+        /// </summary>
+        [OnDeserialized]
+        void OnDeserialized(StreamingContext context)
+        {
+            if (IconSize <= 0) IconSize = 64;
+            if (Height <= 0) Height = 180;
+            if (CornerRadius <= 0) CornerRadius = 12;
+            if (BackgroundImageOpacity <= 0) BackgroundImageOpacity = 0.3;
+            if (string.IsNullOrEmpty(BackgroundColor)) BackgroundColor = "#2D2D30";
+            if (string.IsNullOrEmpty(BackgroundImageStretch)) BackgroundImageStretch = "Uniform";
+            if (string.IsNullOrEmpty(IconColor)) IconColor = "#40FFFFFF";
+            if (string.IsNullOrEmpty(IconPosition)) IconPosition = "Right";
+            if (string.IsNullOrEmpty(TitleFontSize)) TitleFontSize = "32";
+            if (string.IsNullOrEmpty(SubtitleFontSize)) SubtitleFontSize = "16";
+            if (string.IsNullOrEmpty(TitleFontWeight)) TitleFontWeight = "Bold";
+        }
+
+        /// <summary>
         /// Returns true if this slide has a clickable link
         /// </summary>
         public bool HasLink
         {
             get { return Clickable && !string.IsNullOrEmpty(LinkUrl); }
+        }
+
+        /// <summary>
+        /// Returns true if IconPath (PNG file) is set for this slide
+        /// </summary>
+        public bool HasIconPath
+        {
+            get { return !string.IsNullOrEmpty(IconPath); }
+        }
+
+        /// <summary>
+        /// Returns true if Icon glyph is set but no IconPath (PNG takes priority)
+        /// </summary>
+        public bool HasIconGlyphOnly
+        {
+            get { return !string.IsNullOrEmpty(Icon) && string.IsNullOrEmpty(IconPath); }
         }
 
         /// <summary>

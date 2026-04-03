@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.ObjectModel;
@@ -65,6 +65,7 @@ namespace Launcher.ViewModels
         public string Title { get; set; }
         public string Content { get; set; }
         public string ImagePath { get; set; }
+        public string IconPath { get; set; }
         public string LinkUrl { get; set; }
     }
 }

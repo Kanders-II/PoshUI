@@ -2,9 +2,9 @@
     RootModule = 'PoshUI.Workflow.psm1'
     ModuleVersion = '1.0.0'
     GUID = 'b2c3d4e5-f6a7-8901-bcde-f23456789012'
-    Author = 'A Solution IT LLC'
-    CompanyName = 'A Solution IT LLC'
-    Copyright = '(c) 2025 A Solution IT LLC. All rights reserved.'
+    Author = 'Kanders-II'
+    CompanyName = 'Kanders-II'
+    Copyright = '(c) 2025 Kanders-II. All rights reserved.'
     Description = 'PoshUI.Workflow - PowerShell module for creating interactive workflow UIs with sequential task execution. Part of PoshUI suite.'
 
     PowerShellVersion = '5.1'
@@ -49,7 +49,11 @@
         'Resume-UIWorkflow',
         'Clear-PoshUIState',
         'Clear-PoshUIRegistryState',
-        'Clear-PoshUIFileState'
+        'Clear-PoshUIFileState',
+
+        # Auto-resume scheduled task
+        'Register-UIWorkflowResumeTask',
+        'Unregister-UIWorkflowResumeTask'
     )
     
     CmdletsToExport = @()

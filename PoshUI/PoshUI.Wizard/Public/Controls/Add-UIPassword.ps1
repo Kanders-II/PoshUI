@@ -111,7 +111,10 @@
         [int]$Width,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -158,6 +161,9 @@
             }
             if ($PSBoundParameters.ContainsKey('ShowRevealButton')) {
                 $control.SetProperty('ShowRevealButton', $ShowRevealButton)
+            }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
             
             # Add to step

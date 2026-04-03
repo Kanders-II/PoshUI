@@ -9,7 +9,7 @@
     This is the PoshUI Cmdlets equivalent of Demo-AllControls-Param.ps1.
 
 .NOTES
-    Company: A Solution IT LLC
+    Company: Kanders-II
     Style: Clean PowerShell with hashtable splatting (no backticks)
     
 .EXAMPLE
@@ -37,6 +37,49 @@ foreach ($assetPath in @($scriptIconPath, $sidebarIconPath, $colorLogoPath, $col
         throw "Branding asset not found: $assetPath"
     }
 }
+
+# ==============================================================================
+# ICON8 ICONS - Colorful PNG icons for steps and cards
+# ==============================================================================
+$iconBase = Join-Path $PSScriptRoot 'Icon8'
+
+# Step icons (numbered for sidebar)
+$iconStep1  = Join-Path $iconBase 'icons8-1st-100.png'          # Welcome
+$iconStep2  = Join-Path $iconBase 'icons8-abc-block-100.png'    # Text Inputs
+$iconStep3  = Join-Path $iconBase 'icons8-cursor-100.png'       # Selections
+$iconStep4  = Join-Path $iconBase 'icons8-circled-4-100.png'    # Numeric & Date
+$iconStep5  = Join-Path $iconBase 'icons8-circled-5-100.png'    # Options
+$iconStep6  = Join-Path $iconBase 'icons8-attach-100.png'       # Paths
+$iconStep7  = Join-Path $iconBase 'icons8-check-mark-100.png'   # Summary
+
+# Card icons
+$iconBrandNew    = Join-Path $iconBase 'icons8-brand-new-100.png'
+$iconCodeFile    = Join-Path $iconBase 'icons8-code-file-100.png'
+$iconChecked     = Join-Path $iconBase 'icons8-checked-radio-button-100.png'
+$iconDecrease    = Join-Path $iconBase 'icons8-decrease-100.png'
+$iconCertificate = Join-Path $iconBase 'icons8-certificate-100.png'
+$iconChevron     = Join-Path $iconBase 'icons8-chevron-100.png'
+$iconAdvance     = Join-Path $iconBase 'icons8-advance-100.png'
+$iconBookshop    = Join-Path $iconBase 'icons8-bookshop-100.png'
+
+# Control icons (displayed next to each control label)
+$iconCreateDoc   = Join-Path $iconBase 'icons8-create-document-100.png'
+$iconBunchKeys   = Join-Path $iconBase 'icons8-bunch-of-keys-100.png'
+$iconCommandLine = Join-Path $iconBase 'icons8-command-line-100.png'
+$iconAmerica     = Join-Path $iconBase 'icons8-america-100.png'
+$iconApi         = Join-Path $iconBase 'icons8-api-100.png'
+$iconConflict    = Join-Path $iconBase 'icons8-conflict-100.png'
+$iconBoxImport   = Join-Path $iconBase 'icons8-box-important-100.png'
+$iconCircled8    = Join-Path $iconBase 'icons8-circled-8-100.png'
+$iconCircled9    = Join-Path $iconBase 'icons8-circled-9-100.png'
+$iconCoffee      = Join-Path $iconBase 'icons8-coffee-cup-100.png'
+$iconChain       = Join-Path $iconBase 'icons8-chain-100.png'
+$iconBluetooth   = Join-Path $iconBase 'icons8-bluetooth-2-100.png'
+$iconBursts      = Join-Path $iconBase 'icons8-bursts-100.png'
+$iconCrane       = Join-Path $iconBase 'icons8-crane-100.png'
+$iconAiCode      = Join-Path $iconBase 'icons8-ai-generated-code-100.png'
+$iconBackTo      = Join-Path $iconBase 'icons8-back-to-100.png'
+$iconAskQuestion = Join-Path $iconBase 'icons8-ask-question-100.png'
 
 Write-Host @'
 
@@ -73,6 +116,60 @@ $brandingParams = @{
 }
 Set-UIBranding @brandingParams
 
+# ==============================================================================
+# DUAL-MODE CUSTOM THEMES - Sleek Indigo / Emerald
+# ==============================================================================
+
+$lightTheme = @{
+    AccentColor          = '#5C6BC0'
+    AccentDark           = '#3949AB'
+    AccentLight          = '#9FA8DA'
+    Background           = '#F5F7FA'
+    ContentBackground    = '#FFFFFF'
+    CardBackground       = '#FFFFFF'
+    SidebarBackground    = '#3F51B5'
+    SidebarText          = '#FFFFFF'
+    SidebarHighlight     = '#C5CAE9'
+    TextPrimary          = '#1A2035'
+    TextSecondary        = '#5C6784'
+    ButtonBackground     = '#5C6BC0'
+    ButtonForeground     = '#FFFFFF'
+    InputBackground      = '#FFFFFF'
+    InputBorder          = '#5C6BC0'
+    BorderColor          = '#DEE2E8'
+    TitleBarBackground   = '#3F51B5'
+    TitleBarText         = '#FFFFFF'
+    SuccessColor         = '#2E7D32'
+    WarningColor         = '#F57F17'
+    ErrorColor           = '#C62828'
+}
+
+$darkTheme = @{
+    AccentColor          = '#69F0AE'
+    AccentDark           = '#00C853'
+    AccentLight          = '#B9F6CA'
+    Background           = '#0D1117'
+    ContentBackground    = '#161B22'
+    CardBackground       = '#1C2333'
+    SidebarBackground    = '#0D1117'
+    SidebarText          = '#8B949E'
+    SidebarHighlight     = '#69F0AE'
+    TextPrimary          = '#E6EDF3'
+    TextSecondary        = '#8B949E'
+    ButtonBackground     = '#69F0AE'
+    ButtonForeground     = '#0D1117'
+    InputBackground      = '#161B22'
+    InputBorder          = '#30363D'
+    BorderColor          = '#21262D'
+    TitleBarBackground   = '#0D1117'
+    TitleBarText         = '#69F0AE'
+    SuccessColor         = '#69F0AE'
+    WarningColor         = '#FFA726'
+    ErrorColor           = '#EF5350'
+}
+
+Set-UITheme -Light $lightTheme -Dark $darkTheme
+
 # ========================================
 # STEP 1: Welcome
 # ========================================
@@ -82,6 +179,7 @@ $step1Params = @{
     Title = 'Welcome'
     Order = 1
     Icon = '&#xE8BC;'
+    IconPath = $iconStep1
     Description = 'Get started with this comprehensive demo'
 }
 Add-UIStep @step1Params
@@ -98,17 +196,15 @@ $carouselItems = @(
     @{
         Title = 'Complete Control Showcase'
         Subtitle = 'Explore all PoshUI control types in one comprehensive demo'
-
-        BackgroundColor = '#2D5A3D'
-        LinkUrl = 'https://asolutionit.github.io/PoshUI/'
+        BackgroundColor = '#303F9F'
+        LinkUrl = 'https://kanders-ii.github.io/PoshUI/'
         Clickable = $true
     },
     @{
         Title = 'Modern UI Design'
-        Subtitle = 'Beautiful Windows 11-style interfaces'
-       
-        BackgroundColor = '#4A90E2'
-        LinkUrl = 'https://asolutionit.github.io/PoshUI/'
+        Subtitle = 'Beautiful Windows 11-style interfaces powered by PowerShell'
+        BackgroundColor = '#1B5E20'
+        LinkUrl = 'https://kanders-ii.github.io/PoshUI/'
         Clickable = $true
     }
 )
@@ -127,6 +223,7 @@ Add-UIBanner @welcomeBannerParams
 $welcomeCardParams = @{
     Step = 'Welcome'
     Title = 'Welcome to PoshUI'
+    IconPath = $iconBrandNew
     Content = @"
 This wizard demonstrates every control type available in the PoshUI framework.
 
@@ -157,6 +254,7 @@ $step2Params = @{
     Title = 'Text Inputs'
     Order = 2
     Icon = '&#xE70F;'
+    IconPath = $iconStep2
     Description = 'Single-line, multi-line, and password fields'
 }
 Add-UIStep @step2Params
@@ -165,6 +263,7 @@ $textInfoCardParams = @{
     Step = 'TextInputs'
     Title = 'Text Input Controls'
     Type = 'Info'
+    IconPath = $iconCodeFile
     Content = @'
 PoshUI supports various text input types for different use cases.
 
@@ -183,6 +282,7 @@ $projectNameParams = @{
     Label = 'Project Name'
     Default = 'MyProject'
     Mandatory = $true
+    IconPath = $iconCreateDoc
 }
 Add-UITextBox @projectNameParams
 
@@ -192,6 +292,7 @@ $passwordParams = @{
     Name = 'AdminPassword'
     Label = 'Administrator Password'
     Mandatory = $true
+    IconPath = $iconBunchKeys
 }
 Add-UIPassword @passwordParams
 
@@ -202,6 +303,7 @@ $descriptionParams = @{
     Label = 'Project Description'
     Rows = 5
     Default = ''
+    IconPath = $iconCommandLine
 }
 Add-UIMultiLine @descriptionParams
 
@@ -214,6 +316,7 @@ $step3Params = @{
     Title = 'Selections'
     Order = 3
     Icon = '&#xE70F;'
+    IconPath = $iconStep3
     Description = 'Dropdown menus, list boxes, and radio button groups'
 }
 Add-UIStep @step3Params
@@ -222,6 +325,7 @@ $selectionsInfoCardParams = @{
     Step = 'Selections'
     Title = 'Selection Controls'
     Type = 'Info'
+    IconPath = $iconChecked
     Content = @'
 Choose from various selection patterns:
 
@@ -241,6 +345,7 @@ $regionParams = @{
     Choices = @('US-East', 'US-West', 'EU-Central', 'Asia-Pacific')
     Default = 'US-East'
     Mandatory = $true
+    IconPath = $iconAmerica
 }
 Add-UIDropdown @regionParams
 
@@ -253,6 +358,7 @@ $serverDropdownParams = @{
     Choices = $serverChoices
     Default = $serverChoices[0]
     Mandatory = $true
+    IconPath = $iconApi
 }
 Add-UIDropdown @serverDropdownParams
 
@@ -265,6 +371,7 @@ $environmentParams = @{
     Default = 'Development'
     Orientation = 'Horizontal'
     Mandatory = $true
+    IconPath = $iconConflict
 }
 Add-UIOptionGroup @environmentParams
 
@@ -276,6 +383,7 @@ $featuresParams = @{
     Choices = @('Web Server', 'Database', 'Cache', 'Queue', 'Monitoring', 'Logging')
     MultiSelect = $true
     Height = 150
+    IconPath = $iconBoxImport
 }
 Add-UIListBox @featuresParams
 
@@ -288,6 +396,7 @@ $step4Params = @{
     Title = 'Numeric & Date'
     Order = 4
     Icon = '&#xE787;'
+    IconPath = $iconStep4
     Description = 'Numeric spinners and date pickers with range validation'
 }
 Add-UIStep @step4Params
@@ -296,6 +405,7 @@ $numericInfoCardParams = @{
     Step = 'NumericDate'
     Title = 'Numeric and Date Controls'
     Type = 'Info'
+    IconPath = $iconDecrease
     Content = @'
 Advanced input controls for structured data:
 
@@ -317,6 +427,7 @@ $instanceCountParams = @{
     Default = 3
     Increment = 1  # Renamed from StepSize to avoid confusion with Step parameter
     Mandatory = $true
+    IconPath = $iconCircled8
 }
 Add-UINumeric @instanceCountParams
 
@@ -331,6 +442,7 @@ $memoryParams = @{
     Increment = 0.5  # Renamed from StepSize
     AllowDecimal = $true
     Mandatory = $true
+    IconPath = $iconCircled9
 }
 Add-UINumeric @memoryParams
 
@@ -344,6 +456,7 @@ $launchDateParams = @{
     Default = '2025-06-01'
     Format = 'yyyy-MM-dd'
     Mandatory = $true
+    IconPath = $iconCoffee
 }
 Add-UIDate @launchDateParams
 
@@ -356,6 +469,7 @@ $step5Params = @{
     Title = 'Options'
     Order = 5
     Icon = '&#xE73E;'
+    IconPath = $iconStep5
     Description = 'Checkboxes and toggle switches for yes/no options'
 }
 Add-UIStep @step5Params
@@ -364,6 +478,7 @@ $optionsInfoCardParams = @{
     Step = 'Options'
     Title = 'Boolean Controls'
     Type = 'Info'
+    IconPath = $iconCertificate
     Content = @'
 Two styles of boolean controls with different APIs:
 
@@ -383,6 +498,7 @@ $sslParams = @{
     Name = 'EnableSSL'
     Label = 'Enable SSL/TLS Encryption'
     Default = $true
+    IconPath = $iconChain
 }
 Add-UICheckbox @sslParams
 
@@ -392,6 +508,7 @@ $backupsParams = @{
     Name = 'EnableBackups'
     Label = 'Enable Automatic Backups'
     Default = $true
+    IconPath = $iconBackTo
 }
 Add-UICheckbox @backupsParams
 
@@ -401,6 +518,7 @@ $maintenanceParams = @{
     Name = 'MaintenanceMode'
     Label = 'Enable Maintenance Mode'
     Default = $false
+    IconPath = $iconCrane
 }
 Add-UIToggle @maintenanceParams
 
@@ -410,6 +528,7 @@ $notificationsParams = @{
     Name = 'SendNotifications'
     Label = 'Send Email Notifications'
     Default = $true
+    IconPath = $iconBursts
 }
 Add-UIToggle @notificationsParams
 
@@ -422,6 +541,7 @@ $step6Params = @{
     Title = 'Paths'
     Order = 6
     Icon = '&#xE8B7;'
+    IconPath = $iconStep6
     Description = 'File and folder path selectors with browse dialogs'
 }
 Add-UIStep @step6Params
@@ -430,6 +550,7 @@ $pathsInfoCardParams = @{
     Step = 'Paths'
     Name = 'PathsInfo'
     Title = 'Path Selectors'
+    IconPath = $iconChevron
     Content = @'
 Browse for files and folders with native dialogs:
 
@@ -445,6 +566,7 @@ $pathsInputCardParams = @{
     Step = 'Paths'
     Title = 'Path Inputs'
     Type = 'Info'
+    IconPath = $iconBookshop
     Content = @'
 Select the paths for your configuration:
 
@@ -464,6 +586,7 @@ $configFileParams = @{
     Label = 'Config File'
     DialogTitle = 'Select Configuration File'
     Mandatory = $false
+    IconPath = $iconAiCode
 }
 Add-UIFilePath @configFileParams
 
@@ -474,6 +597,7 @@ $dataDirectoryParams = @{
     Label = 'Data Directory'
     Default = 'C:\Windows'
     Mandatory = $false
+    IconPath = $iconBluetooth
 }
 Add-UIFolderPath @dataDirectoryParams
 
@@ -483,6 +607,7 @@ $logDirectoryParams = @{
     Name = 'LogDirectory'
     Label = 'Log Directory'
     Default = 'C:\Users'
+    IconPath = $iconAskQuestion
 }
 Add-UIFolderPath @logDirectoryParams
 
@@ -495,6 +620,7 @@ $step7Params = @{
     Title = 'Summary'
     Order = 7
     Icon = '&#xE73A;'
+    IconPath = $iconStep7
     Description = 'Review your configuration before proceeding'
 }
 Add-UIStep @step7Params
@@ -502,20 +628,21 @@ Add-UIStep @step7Params
 $summaryCardParams = @{
     Step = 'Summary'
     Title = 'Ready to Deploy'
+    IconPath = $iconAdvance
     Content = @'
 Configuration Complete!
 
 Your comprehensive PoshUI wizard is ready with:
 
 Form Data Collected:
-• All text inputs and selections captured
-• Validation rules applied successfully
-• Data formatted for processing
+- All text inputs and selections captured
+- Validation rules applied successfully
+- Data formatted for processing
 
 Next Steps:
-• Click Finish to generate deployment summary
-• Review the execution console output
-• All parameters are available for your script
+- Click Finish to generate deployment summary
+- Review the execution console output
+- All parameters are available for your script
 
 Pro Tip: The execution summary shows how to access
 all collected data in your PowerShell scripts.
@@ -529,9 +656,9 @@ Add-UICard @summaryCardParams
 
 $scriptBody = {
     Write-Host "`n" -NoNewline
-    Write-Host ('═' * 70) -ForegroundColor Cyan
+    Write-Host ('=' * 70) -ForegroundColor Cyan
     Write-Host "  PoshUI Demo - Configuration Summary" -ForegroundColor Cyan
-    Write-Host ('═' * 70) -ForegroundColor Cyan
+    Write-Host ('=' * 70) -ForegroundColor Cyan
     Write-Host ""
     
     Write-Host "TEXT INPUTS:" -ForegroundColor Yellow
@@ -566,10 +693,10 @@ $scriptBody = {
     Write-Host "  Log Directory       : $(if ($LogDirectory) { $LogDirectory } else { '(not specified)' })" -ForegroundColor White
     Write-Host ""
     
-    Write-Host ('═' * 70) -ForegroundColor Cyan
+    Write-Host ('=' * 70) -ForegroundColor Cyan
     Write-Host "  Configuration complete!" -ForegroundColor Green
     Write-Host "  Ready to deploy with these settings." -ForegroundColor Green
-    Write-Host ('═' * 70) -ForegroundColor Cyan
+    Write-Host ('=' * 70) -ForegroundColor Cyan
     Write-Host ""
 
     Return $DataDirectory

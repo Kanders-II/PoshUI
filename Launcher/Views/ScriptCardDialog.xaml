@@ -478,9 +478,21 @@
                     <ProgressBar Grid.Row="1"
                                  Value="{Binding Progress}"
                                  Maximum="100"
-                                 Height="4"
+                                 Height="6"
                                  Margin="0,8,0,0"
-                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}"/>
+                                 Background="{DynamicResource ProgressBackgroundBrush}"
+                                 Foreground="{DynamicResource ProgressForegroundBrush}"
+                                 BorderThickness="0"
+                                 Visibility="{Binding IsRunning, Converter={StaticResource BoolToVis}}">
+                        <ProgressBar.Template>
+                            <ControlTemplate TargetType="ProgressBar">
+                                <Grid>
+                                    <Border x:Name="PART_Track" CornerRadius="3" Background="{TemplateBinding Background}"/>
+                                    <Border x:Name="PART_Indicator" CornerRadius="3" Background="{TemplateBinding Foreground}" HorizontalAlignment="Left"/>
+                                </Grid>
+                            </ControlTemplate>
+                        </ProgressBar.Template>
+                    </ProgressBar>
                 </Grid>
             </Border>
         </Expander>

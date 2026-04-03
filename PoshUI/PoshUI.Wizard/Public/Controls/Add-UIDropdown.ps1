@@ -118,7 +118,10 @@
         [int]$Width,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -200,6 +203,9 @@
             # Set control-specific properties
             if ($Editable.IsPresent) {
                 $control.SetProperty('Editable', $true)
+            }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
             
             # Add to step

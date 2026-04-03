@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System.ComponentModel;
 using System.Windows.Input;
@@ -55,11 +55,17 @@ namespace Launcher.ViewModels
         }
         
         public string IconGlyph { get; set; }  // Fluent icon glyph for this step
+        public string IconPath { get; set; }   // File path to colored PNG icon for this step
         
         /// <summary>
         /// Returns true if IconGlyph is set (for XAML binding)
         /// </summary>
         public bool HasIconGlyph => !string.IsNullOrEmpty(IconGlyph);
+        
+        /// <summary>
+        /// Returns true if IconPath is set (colored PNG icon for XAML binding)
+        /// </summary>
+        public bool HasIconPath => !string.IsNullOrEmpty(IconPath);
         
         public bool ShowConnector { get; set; }
         public string Tag { get; set; }

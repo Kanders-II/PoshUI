@@ -4,6 +4,9 @@
 
 .DESCRIPTION
     This demo showcases:
+    - Custom dual theme (Set-UITheme with separate -Light and -Dark palettes)
+    - Carousel banner with PNG icons on each slide
+    - PNG icons on input controls
     - Inter-task data passing (SetData/GetData)
     - Task retry mechanism with configurable delay
     - Task timeout support
@@ -21,39 +24,149 @@
 # Import the workflow module
 Import-Module "$PSScriptRoot\..\PoshUI.Workflow\PoshUI.Workflow.psd1" -Force
 
+# Define icon paths for workflow tasks (using existing icons from Icon8 folder)
+$iconBase = "$PSScriptRoot\Icon8"
+$taskIconSystemCheck = Join-Path $iconBase 'icons8-system-report-100.png'
+$taskIconNetwork = Join-Path $iconBase 'icons8-network-cable-100.png'
+$taskIconTimeout = Join-Path $iconBase 'icons8-stopwatch-100.png'
+$taskIconDatabase = Join-Path $iconBase 'icons8-dns-100.png'
+$taskIconWebServer = Join-Path $iconBase 'icons8-website-100.png'
+$taskIconFileServer = Join-Path $iconBase 'icons8-folder-100.png'
+$taskIconComponents = Join-Path $iconBase 'icons8-gears-100.png'
+$taskIconConfig = Join-Path $iconBase 'icons8-settings-100.png'
+$taskIconApproval = Join-Path $iconBase 'icons8-checked-radio-button-100.png'
+$taskIconVerify = Join-Path $iconBase 'icons8-check-mark-100.png'
+$taskIconRollback = Join-Path $iconBase 'icons8-back-to-100.png'
+
+# Icon paths for wizard controls
+$wizardIconServerName = Join-Path $iconBase 'icons8-create-document-100.png'
+$wizardIconServerType = Join-Path $iconBase 'icons8-bunch-of-keys-100.png'
+$wizardIconEnvironment = Join-Path $iconBase 'icons8-america-100.png'
+$wizardIconSimulateFailure = Join-Path $iconBase 'icons8-conflict-100.png'
+$wizardIconSimulateTimeout = Join-Path $iconBase 'icons8-hourglass-100.png'
+
+# Icon paths for steps and banner
+$stepIconConfig = Join-Path $iconBase 'icons8-settings-100.png'
+$stepIconExecution = Join-Path $iconBase 'icons8-forward-button-100.png'
+$bannerIcon = Join-Path $iconBase 'icons8-workstation-100.png'
+
 # Initialize the workflow
 New-PoshUIWorkflow -Title "Workflow Features Demo" `
     -Description "Demonstrates all workflow capabilities" `
     -Theme Dark
 
 # ============================================================================
+# CUSTOM THEME: Separate light and dark color palettes
+# ============================================================================
+
+Set-UITheme -Dark @{
+    AccentColor        = '#00D4AA'
+    Background         = '#0B1120'
+    ContentBackground  = '#111827'
+    CardBackground     = '#1E293B'
+    SidebarBackground  = '#0F172A'
+    SidebarText        = '#94A3B8'
+    TextPrimary        = '#F1F5F9'
+    TextSecondary      = '#94A3B8'
+    InputBackground    = '#1E293B'
+    BorderColor        = '#334155'
+    TitleBarBackground = '#0B1120'
+    TitleBarText       = '#F1F5F9'
+    SuccessColor       = '#10B981'
+    ErrorColor         = '#EF4444'
+    WarningColor       = '#F59E0B'
+} -Light @{
+    AccentColor        = '#0891B2'
+    Background         = '#F0F9FF'
+    ContentBackground  = '#FFFFFF'
+    CardBackground     = '#F8FAFC'
+    SidebarBackground  = '#E0F2FE'
+    SidebarText        = '#334155'
+    TextPrimary        = '#0F172A'
+    TextSecondary      = '#64748B'
+    InputBackground    = '#FFFFFF'
+    BorderColor        = '#CBD5E1'
+    TitleBarBackground = '#E0F2FE'
+    TitleBarText       = '#0F172A'
+    SuccessColor       = '#059669'
+    ErrorColor         = '#DC2626'
+    WarningColor       = '#D97706'
+}
+
+# ============================================================================
 # WIZARD PHASE: Collect configuration from user
 # ============================================================================
 
-Add-UIStep -Name 'Config' -Title 'Configuration' -Order 1 -Icon '&#xE713;'
+Add-UIStep -Name 'Config' -Title 'Configuration' -Order 1 -IconPath $stepIconConfig `
+    -Description 'Configure server deployment parameters and workflow options'
+
+# Banner icon paths for carousel slides
+$slideIconWorkstation = Join-Path $iconBase 'icons8-workstation-100.png'
+$slideIconGears = Join-Path $iconBase 'icons8-gears-100.png'
+$slideIconShield = Join-Path $iconBase 'icons8-warning-shield-100.png'
+$slideIconCloud = Join-Path $iconBase 'icons8-upload-to-cloud-100.png'
+
+$carouselSlides = @(
+    @{
+        Title = 'Workflow Features Demo'
+        Subtitle = 'Inter-task data passing, retry, timeout, conditional execution, approval gates'
+        BackgroundColor = '#0F4C75'
+        IconPath = $slideIconWorkstation
+        IconSize = 56
+    },
+    @{
+        Title = 'Custom Themes & PNG Icons'
+        Subtitle = 'Dual light/dark themes with Set-UITheme and PNG icons on every control'
+        BackgroundColor = '#1B5E20'
+        IconPath = $slideIconGears
+        IconSize = 56
+    },
+    @{
+        Title = 'Rollback & Error Handling'
+        Subtitle = 'Automatic retry, task timeout, rollback scripts, and error recovery'
+        BackgroundColor = '#B71C1C'
+        IconPath = $slideIconShield
+        IconSize = 56
+    },
+    @{
+        Title = 'Approval Gates & Grouping'
+        Subtitle = 'Production approval workflows with task grouping and conditional skip'
+        BackgroundColor = '#4A148C'
+        IconPath = $slideIconCloud
+        IconSize = 56
+    }
+)
+
+Add-UIBanner -Step 'Config' `
+    -CarouselItems $carouselSlides `
+    -Height 150 `
+    -TitleFontSize 26 `
+    -SubtitleFontSize 14 `
+    -AutoRotate `
+    -RotateInterval 4000
 
 Add-UITextBox -Step 'Config' -Name 'ServerName' -Label 'Server Name' `
-    -Default 'DEMO-SERVER' -Mandatory
+    -Default 'DEMO-SERVER' -Mandatory -IconPath $wizardIconServerName
 
 Add-UIDropdown -Step 'Config' -Name 'ServerType' -Label 'Server Type' `
     -Choices @('WebServer', 'Database', 'FileServer', 'Application') `
-    -Default 'WebServer'
+    -Default 'WebServer' -IconPath $wizardIconServerType
 
 Add-UIDropdown -Step 'Config' -Name 'Environment' -Label 'Environment' `
     -Choices @('Development', 'Staging', 'Production') `
-    -Default 'Development'
+    -Default 'Development' -IconPath $wizardIconEnvironment
 
 Add-UICheckbox -Step 'Config' -Name 'SimulateFailure' -Label 'Simulate task failure (to demo retry)' `
-    -Default $false
+    -Default $false -IconPath $wizardIconSimulateFailure
 
 Add-UICheckbox -Step 'Config' -Name 'SimulateTimeout' -Label 'Simulate task timeout' `
-    -Default $false
+    -Default $false -IconPath $wizardIconSimulateTimeout
 
 # ============================================================================
 # WORKFLOW PHASE: Execute tasks with all features
 # ============================================================================
 
-Add-UIStep -Name 'Execution' -Title 'Deployment' -Order 2 -Type Workflow
+Add-UIStep -Name 'Execution' -Title 'Deployment' -Order 2 -Type Workflow -IconPath $stepIconExecution
 
 # ----------------------------------------------------------------------------
 # GROUP 1: Pre-flight Checks
@@ -63,6 +176,7 @@ Add-UIStep -Name 'Execution' -Title 'Deployment' -Order 2 -Type Workflow
 Add-UIWorkflowTask -Step 'Execution' -Name 'SystemCheck' -Title 'System Requirements Check' `
     -Group 'Pre-flight Checks' `
     -Description 'Verifies system meets requirements and stores results for later tasks' `
+    -IconPath $taskIconSystemCheck `
     -ScriptBlock {
         # Using WriteOutput pattern - progress auto-advances with each call
         $PoshUIWorkflow.WriteOutput("Checking system requirements...", "INFO")
@@ -92,6 +206,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'SystemCheck' -Title 'System Requirem
 Add-UIWorkflowTask -Step 'Execution' -Name 'NetworkCheck' -Title 'Network Connectivity Check' `
     -Group 'Pre-flight Checks' `
     -Description 'Checks network with automatic retry on failure' `
+    -IconPath $taskIconNetwork `
     -RetryCount 3 `
     -RetryDelaySeconds 2 `
     -ScriptBlock {
@@ -121,6 +236,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'NetworkCheck' -Title 'Network Connec
 Add-UIWorkflowTask -Step 'Execution' -Name 'TimeoutDemo' -Title 'Timeout Demonstration' `
     -Group 'Pre-flight Checks' `
     -Description 'Shows task timeout feature (5 second limit)' `
+    -IconPath $taskIconTimeout `
     -TimeoutSeconds 5 `
     -OnError Continue `
     -ScriptBlock {
@@ -146,6 +262,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'TimeoutDemo' -Title 'Timeout Demonst
 Add-UIWorkflowTask -Step 'Execution' -Name 'InstallSQL' -Title 'Install SQL Server' `
     -Group 'Installation' `
     -Description 'Only runs for Database server type' `
+    -IconPath $taskIconDatabase `
     -SkipCondition '$ServerType -ne "Database"' `
     -SkipReason 'Not a database server - SQL installation skipped' `
     -ScriptBlock {
@@ -167,6 +284,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'InstallSQL' -Title 'Install SQL Serv
 Add-UIWorkflowTask -Step 'Execution' -Name 'InstallIIS' -Title 'Install IIS Web Server' `
     -Group 'Installation' `
     -Description 'Only runs for WebServer type' `
+    -IconPath $taskIconWebServer `
     -SkipCondition '$ServerType -ne "WebServer"' `
     -SkipReason 'Not a web server - IIS installation skipped' `
     -ScriptBlock {
@@ -191,6 +309,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'InstallIIS' -Title 'Install IIS Web 
 Add-UIWorkflowTask -Step 'Execution' -Name 'InstallFileServices' -Title 'Install File Services' `
     -Group 'Installation' `
     -Description 'Only runs for FileServer type' `
+    -IconPath $taskIconFileServer `
     -SkipCondition '$ServerType -ne "FileServer"' `
     -SkipReason 'Not a file server - File Services installation skipped' `
     -ScriptBlock {
@@ -210,6 +329,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'InstallFileServices' -Title 'Install
 Add-UIWorkflowTask -Step 'Execution' -Name 'InstallCommon' -Title 'Install Common Components' `
     -Group 'Installation' `
     -Description 'Installs components needed by all server types' `
+    -IconPath $taskIconComponents `
     -ScriptBlock {
         # Using UpdateProgress pattern - explicit percentage control
         # FEATURE: Read data from previous tasks
@@ -242,6 +362,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'InstallCommon' -Title 'Install Commo
 Add-UIWorkflowTask -Step 'Execution' -Name 'ConfigureSQL' -Title 'Configure SQL Server' `
     -Group 'Configuration' `
     -Description 'Configures SQL if it was installed' `
+    -IconPath $taskIconConfig `
     -SkipCondition '$WorkflowData["SQLInstalled"] -ne $true' `
     -SkipReason 'SQL Server was not installed - skipping configuration' `
     -ScriptBlock {
@@ -262,6 +383,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'ConfigureSQL' -Title 'Configure SQL 
 Add-UIWorkflowTask -Step 'Execution' -Name 'ConfigureIIS' -Title 'Configure IIS' `
     -Group 'Configuration' `
     -Description 'Configures IIS if it was installed' `
+    -IconPath $taskIconConfig `
     -SkipCondition '$WorkflowData["IISInstalled"] -ne $true' `
     -SkipReason 'IIS was not installed - skipping configuration' `
     -ScriptBlock {
@@ -282,6 +404,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'ConfigureIIS' -Title 'Configure IIS'
 Add-UIWorkflowTask -Step 'Execution' -Name 'RollbackDemo' -Title 'Rollback Script Demo' `
     -Group 'Configuration' `
     -Description 'Demonstrates rollback script feature' `
+    -IconPath $taskIconRollback `
     -OnError Continue `
     -RollbackScriptBlock {
         # This would run if the main task fails
@@ -308,6 +431,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'RollbackDemo' -Title 'Rollback Scrip
 Add-UIWorkflowTask -Step 'Execution' -Name 'ProdApproval' -Title 'Production Approval' `
     -Group 'Approval & Verification' `
     -Description 'Requires approval for production deployments' `
+    -IconPath $taskIconApproval `
     -SkipCondition '$Environment -ne "Production"' `
     -SkipReason 'Not a production deployment - approval not required' `
     -TaskType ApprovalGate `
@@ -320,6 +444,7 @@ Add-UIWorkflowTask -Step 'Execution' -Name 'ProdApproval' -Title 'Production App
 Add-UIWorkflowTask -Step 'Execution' -Name 'Verify' -Title 'Final Verification' `
     -Group 'Approval & Verification' `
     -Description 'Verifies deployment using data from all previous tasks' `
+    -IconPath $taskIconVerify `
     -ScriptBlock {
         # Using WriteOutput pattern - progress auto-advances with each message
         $PoshUIWorkflow.WriteOutput("=== Deployment Summary ===", "INFO")

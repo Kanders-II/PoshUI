@@ -8,7 +8,7 @@
     CSV data sources, and dependency chains.
     
 .NOTES
-    Company: A Solution IT LLC
+    Company: Kanders-II
     Style: Clean PowerShell with hashtable splatting (no backticks)
     
 .EXAMPLE
@@ -24,14 +24,26 @@
 $modulePath = Join-Path $PSScriptRoot '..\PoshUI.Wizard\PoshUI.Wizard.psd1'
 Import-Module $modulePath -Force
 
+# PNG Icon Paths for Testing Colored PNG Support
 $scriptIconPath = Join-Path $PSScriptRoot 'Logo Files\Icons\browser.png'
 $sidebarIconPath = Join-Path $PSScriptRoot 'Logo Files\png\Color logo - no background.png'
+$colorLogoPath = Join-Path $PSScriptRoot 'Logo Files\png\Color logo with background.png'
+$whiteLogoPath = Join-Path $PSScriptRoot 'Logo Files\png\White logo - no background.png'
+$iconPath = Join-Path $PSScriptRoot 'Logo Files\Icons\icon.png'
 
-foreach ($assetPath in @($scriptIconPath, $sidebarIconPath)) {
+foreach ($assetPath in @($scriptIconPath, $sidebarIconPath, $colorLogoPath, $whiteLogoPath, $iconPath)) {
     if (-not (Test-Path $assetPath)) {
         throw "Branding asset not found: $assetPath"
     }
 }
+
+Write-Host "PNG Icons loaded for testing:" -ForegroundColor Cyan
+Write-Host "  Browser Icon: $scriptIconPath" -ForegroundColor Gray
+Write-Host "  Sidebar Logo: $sidebarIconPath" -ForegroundColor Gray
+Write-Host "  Color Logo: $colorLogoPath" -ForegroundColor Gray
+Write-Host "  White Logo: $whiteLogoPath" -ForegroundColor Gray
+Write-Host "  Icon: $iconPath" -ForegroundColor Gray
+Write-Host ""
 
 Write-Host @'
 
@@ -89,18 +101,70 @@ Write-Host ""
 $wizardParams = @{
     Title = 'Advanced Dynamic Controls Showcase'
     Description = 'Demonstrating cascading dependencies and dynamic data sources'
-    Theme = 'Auto'
+    Theme = 'Dark'
 }
 New-PoshUIWizard @wizardParams
+
+# ========================================
+# CUSTOM THEME DEFINITION
+# ========================================
+
+$customTheme = @{
+    # Accent Colors - Purple theme
+    AccentColor = '#7C3AED'
+    AccentDark = '#6D28D9'
+    AccentLight = '#A78BFA'
+    
+    # Backgrounds - Light gray palette
+    Background = '#F5F5F5'
+    ContentBackground = '#FFFFFF'
+    CardBackground = '#FAFAFA'
+    
+    # Sidebar - Black
+    SidebarBackground = '#000000'
+    SidebarText = '#E0E0E0'
+    SidebarHighlight = '#7C3AED'
+    
+    # Text Colors - Dark text on light backgrounds
+    TextPrimary = '#1F1F1F'
+    TextSecondary = '#6B6B6B'
+    
+    # Buttons
+    ButtonBackground = '#7C3AED'
+    ButtonForeground = '#FFFFFF'
+    
+    # Input Controls - Light gray
+    InputBackground = '#F9F9F9'
+    InputBorder = '#7C3AED'
+    
+    # Borders - Light gray
+    BorderColor = '#E0E0E0'
+    
+    # Title Bar - Light gray
+    TitleBarBackground = '#F0F0F0'
+    TitleBarText = '#1F1F1F'
+    
+    # Status Colors
+    SuccessColor = '#10B981'
+    WarningColor = '#F59E0B'
+    ErrorColor = '#EF4444'
+}
+
+Set-UITheme $customTheme
 
 $brandingParams = @{
     WindowTitle                  = 'Advanced Dynamic Controls Showcase'
     WindowTitleIcon              = $scriptIconPath
     SidebarHeaderText            = 'Dynamic Controls'
-    SidebarHeaderIcon            = $sidebarIconPath
+    SidebarHeaderIcon            = $colorLogoPath
     SidebarHeaderIconOrientation = 'Top'
 }
 Set-UIBranding @brandingParams
+
+Write-Host "Testing Colored PNG Icons:" -ForegroundColor Yellow
+Write-Host "  Sidebar Icon: Colored PNG logo" -ForegroundColor White
+Write-Host "  Banner Icons: Multiple colored PNGs" -ForegroundColor White
+Write-Host ""
 
 # ========================================
 # STEP 1: Welcome and Overview
@@ -110,7 +174,7 @@ $step1Params = @{
     Name = 'hello'
     Title = 'Welcome'
     Order = 1
-    Icon = '&#xE8BC;'
+    IconPath = $colorLogoPath
     Description = 'Introduction to dynamic controls'
 }
 Add-UIStep @step1Params
@@ -125,6 +189,8 @@ $welcomeBannerParams = @{
     BackgroundColor = '#7C3AED'
     GradientStart = '#7C3AED'
     GradientEnd = '#A78BFA'
+    IconPath = $colorLogoPath
+    IconPosition = 'Right'
     IconSize = 80
 }
 Add-UIBanner @welcomeBannerParams
@@ -133,6 +199,7 @@ $welcomeCardParams = @{
     Step = 'hello'
     Title = 'Advanced Dynamic Controls'
     Type = 'Info'
+    IconPath = $iconPath
     Content = @'
 This wizard demonstrates PoshUI\'s powerful dynamic control capabilities.
 
@@ -165,6 +232,11 @@ influence subsequent options, simulating real infrastructure choices.
 }
 Add-UICard @welcomeCardParams
 
+# Add a second card with different PNG icon to test colored PNG support
+Add-UICard -Step 'hello' -Title 'PNG Icon Testing' -Type 'Tip' `
+    -IconPath $colorLogoPath `
+    -Content 'This card demonstrates colored PNG icon support. The icon to the left is a full-color PNG image, not a monochrome glyph.'
+
 # ========================================
 # STEP 2: Environment Selection (Base)
 # ========================================
@@ -173,7 +245,7 @@ $step2Params = @{
     Name = 'Environment'
     Title = 'Environment'
     Order = 2
-    Icon = '&#xE77C;'
+    IconPath = $iconPath
     Description = 'Select target environment'
 }
 Add-UIStep @step2Params
@@ -199,6 +271,7 @@ $envInfoCardParams = @{
     Step = 'Environment'
     Title = 'Environment Selection'
     Type = 'Info'
+    IconPath = $whiteLogoPath
     Content = @'
 The environment you select will determine available regions and servers.
 
@@ -239,7 +312,7 @@ $step3Params = @{
     Name = 'Region'
     Title = 'Region'
     Order = 3
-    Icon = '&#xE909;'
+    IconPath = $scriptIconPath
     Description = 'Select deployment region (depends on environment)'
 }
 Add-UIStep @step3Params
@@ -265,24 +338,25 @@ $regionInfoCardParams = @{
     Step = 'Region'
     Title = 'Dynamic Region Selection'
     Type = 'Info'
+    IconPath = $scriptIconPath
     Content = @'
 Regions are filtered based on your environment selection.
 
 Dependency Chain:
-TargetEnvironment → Region
+ TargetEnvironment -> Region
 
 Environment-Based Logic:
 
 Production: Access to all global regions
-  • US-East-1, US-West-2, EU-Central-1, EU-West-1
-  • AP-Southeast-1, AP-Northeast-1
+  - US-East-1, US-West-2, EU-Central-1, EU-West-1
+  - AP-Southeast-1, AP-Northeast-1
 
 Staging: Limited to staging-approved regions
-  • US-East-1-Staging, EU-Central-1-Staging
-  • AP-Southeast-1-Staging
+  - US-East-1-Staging, EU-Central-1-Staging
+  - AP-Southeast-1-Staging
 
 Development: Local development regions only
-  • Dev-Local, Dev-Cloud-US, Dev-Cloud-EU
+  - Dev-Local, Dev-Cloud-US, Dev-Cloud-EU
 
 Technical Details:
 This is a ScriptBlock-driven dropdown with parameter dependency.
@@ -332,7 +406,7 @@ $step4Params = @{
     Name = 'Server'
     Title = 'Server'
     Order = 4
-    Icon = '&#xE9CE;'
+    IconPath = $whiteLogoPath
     Description = 'Select target server (depends on environment and region)'
 }
 Add-UIStep @step4Params
@@ -362,24 +436,24 @@ $serverInfoCardParams = @{
 Server list is dynamically generated based on BOTH environment and region.
 
 Dependency Chain:
-TargetEnvironment → Region → Server
+TargetEnvironment -> Region -> Server
 
 Dynamic Logic:
 
 Server Naming:
-• Environment prefix (PROD/STG/DEV)
-• Region code extraction
-• Sequential numbering (01, 02, etc.)
+- Environment prefix (PROD/STG/DEV)
+- Region code extraction
+- Sequential numbering (01, 02, etc.)
 
 Regional Filtering:
-• Server availability filtered by selected region
-• Realistic server naming conventions
-• Multiple server types per region
+- Server availability filtered by selected region
+- Realistic server naming conventions
+- Multiple server types per region
 
 Technical Implementation:
-• Multi-parameter ScriptBlock dependency
-• 500ms simulated discovery delay
-• Real infrastructure discovery simulation
+- Multi-parameter ScriptBlock dependency
+- 500ms simulated discovery delay
+- Real infrastructure discovery simulation
 
 Advanced Feature:
 This demonstrates multi-parameter dependencies in ScriptBlocks.
@@ -439,7 +513,7 @@ $step5Params = @{
     Name = 'Application'
     Title = 'Application'
     Order = 5
-    Icon = '&#xE8FD;'
+    IconPath = $colorLogoPath
     Description = 'Select application to deploy from CSV data'
 }
 Add-UIStep @step5Params
@@ -472,26 +546,26 @@ Data Source:
 PoshUI_applications.csv (temporarily created in %TEMP%)
 
 CSV Structure:
-• AppName - Application display name
-• AppType - Application category
-• RequiresDatabase - Database dependency flag
+- AppName - Application display name
+- AppType - Application category
+- RequiresDatabase - Database dependency flag
 
 This Demonstrates:
 
 External Data Source Integration:
-• Loading choices from external files
-• Real-time data import with Import-Csv
-• Dynamic choice population
+- Loading choices from external files
+- Real-time data import with Import-Csv
+- Dynamic choice population
 
 CSV Column Mapping:
-• Direct column-to-choice mapping
-• Flexible data structure
-• Easy maintenance and updates
+- Direct column-to-choice mapping
+- Flexible data structure
+- Easy maintenance and updates
 
 Real-World Data-Driven Wizards:
-• Production application catalogs
-• Environment-specific app lists
-• Dynamic inventory management
+- Production application catalogs
+- Environment-specific app lists
+- Dynamic inventory management
 
 Next Step:
 The CSV contains application metadata that will be used
@@ -523,7 +597,7 @@ $step6Params = @{
     Name = 'Database'
     Title = 'Database'
     Order = 6
-    Icon = '&#xE1D3;'
+    IconPath = $iconPath
     Description = 'Select target database'
 }
 Add-UIStep @step6Params
@@ -555,19 +629,19 @@ Databases are dynamically filtered based on your environment selection.
 Environment-Specific Database Options:
 
 Development Environment:
-• DevDB01 (50GB) - Small development database
-• DevDB02 (75GB) - Medium development database
-• Perfect for testing and development workflows
+- DevDB01 (50GB) - Small development database
+- DevDB02 (75GB) - Medium development database
+- Perfect for testing and development workflows
 
 Staging Environment:
-• StagingDB01 (100GB) - Pre-production testing
-• StagingDB02 (150GB) - Full staging environment
-• Mirrors production structure with smaller scale
+- StagingDB01 (100GB) - Pre-production testing
+- StagingDB02 (150GB) - Full staging environment
+- Mirrors production structure with smaller scale
 
 Production Environment:
-• ProductionDB01 (500GB) - Primary production database
-• ProductionDB02 (750GB) - High-capacity production
-• Enterprise-grade storage and performance
+- ProductionDB01 (500GB) - Primary production database
+- ProductionDB02 (750GB) - High-capacity production
+- Enterprise-grade storage and performance
 
 Dynamic Filtering:
 The database list updates automatically when you change the environment.
@@ -577,8 +651,8 @@ Go back and change the environment, then return here to see
 the database options update instantly!
 
 Related Examples:
-• Demo-DynamicParameters-Cascading.ps1
-• Demo-DynamicParameters-Dependencies.ps1
+- Demo-DynamicParameters-Cascading.ps1
+- Demo-DynamicParameters-Dependencies.ps1
 
 Learning: This demonstrates how environment-specific data
 can be filtered dynamically based on user selections.
@@ -620,7 +694,7 @@ $step7Params = @{
     Name = 'Options'
     Title = 'Options'
     Order = 7
-    Icon = '&#xE713;'
+    IconPath = $scriptIconPath
     Description = 'Select deployment features (multi-select, environment-dependent)'
 }
 Add-UIStep @step7Params
@@ -650,29 +724,29 @@ $optionsInfoCardParams = @{
 Available deployment features change based on environment.
 
 Dependency Chain:
-TargetEnvironment → FeatureList
+TargetEnvironment -> FeatureList
 
 Environment-Specific Logic:
 
 Production Environment:
 Security-focused features enabled
-• High Availability - Redundancy and failover
-• Auto-Scaling - Dynamic resource management
-• Disaster Recovery - Backup and restore capabilities
-• Security Hardening - Enhanced security measures
+- High Availability - Redundancy and failover
+- Auto-Scaling - Dynamic resource management
+- Disaster Recovery - Backup and restore capabilities
+- Security Hardening - Enhanced security measures
 
 Staging Environment:
 Testing and validation features
-• Integration Tests - Cross-system testing
-• Performance Testing - Load and stress testing
-• Load Testing - Capacity validation
+- Integration Tests - Cross-system testing
+- Performance Testing - Load and stress testing
+- Load Testing - Capacity validation
 
 Development Environment:
 Debug and development tools
-• Debug Mode - Enhanced logging and debugging
-• Hot Reload - Dynamic code updates
-• Detailed Logging - Comprehensive debug output
-• Developer Tools - Advanced development utilities
+- Debug Mode - Enhanced logging and debugging
+- Hot Reload - Dynamic code updates
+- Detailed Logging - Comprehensive debug output
+- Developer Tools - Advanced development utilities
 
 Technical Implementation:
 This demonstrates ScriptBlock-driven multi-select ListBox controls.
@@ -728,7 +802,7 @@ $step8Params = @{
     Name = 'Summary'
     Title = 'Summary'
     Order = 8
-    Icon = '&#xE73A;'
+    IconPath = $whiteLogoPath
     Description = 'Review your dynamic selections'
 }
 Add-UIStep @step8Params
@@ -760,19 +834,19 @@ Dynamic Dependencies Resolved!
 Your advanced configuration is complete with:
 
 Cascading Chain Results:
-• Environment → Region → Server selections linked
-• All dependencies properly resolved
-• Real-time data loading successful
+- Environment -> Region -> Server selections linked
+- All dependencies properly resolved
+- Real-time data loading successful
 
 Data Integration:
-• CSV-based application selection
-• Script-driven feature filtering
-• Multi-select options captured
+- CSV-based application selection
+- Script-driven feature filtering
+- Multi-select options captured
 
 Ready for Production:
-• Click Finish to see the complete configuration
-• Review how cascading data flows through your scripts
-• All dynamic parameters available for deployment
+- Click Finish to see the complete configuration
+- Review how cascading data flows through your scripts
+- All dynamic parameters available for deployment
 
 Learning Achieved:
 Mastered dynamic controls, dependencies, and real-time data!

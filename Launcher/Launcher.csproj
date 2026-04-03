@@ -19,17 +19,17 @@
     <AssemblyTitle>PoshUI</AssemblyTitle>
     <Product>PoshUI</Product>
     <Description>WPF application for creating interactive UI frontends for PowerShell scripts with modern Windows 11 UI (Legacy .NET 4.8 version)</Description>
-    <Company>A Solution IT LLC</Company>
-    <Authors>A Solution IT LLC</Authors>
-    <Copyright>Copyright 2025 A Solution IT LLC. All rights reserved.</Copyright>
+    <Company>Kanders-II</Company>
+    <Authors>Kanders-II</Authors>
+    <Copyright>Copyright 2025 Kanders-II. All rights reserved.</Copyright>
     <Version>1.0.0.0</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <NeutralLanguage>en-US</NeutralLanguage>
 
     <!-- Package/Repository Information -->
-    <PackageProjectUrl>https://github.com/asolutionit/PoshUI</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/asolutionit/PoshUI</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Kanders-II/PoshUI</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Kanders-II/PoshUI</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>PowerShell;UI;WPF;GUI;Windows;ModernUI</PackageTags>

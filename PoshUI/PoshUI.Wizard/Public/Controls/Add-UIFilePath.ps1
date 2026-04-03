@@ -80,7 +80,10 @@
         [switch]$ValidateExists,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -113,6 +116,9 @@
             }
             if ($ValidateExists.IsPresent) {
                 $control.SetProperty('ValidateExists', $true)
+            }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
             
             $wizardStep.AddControl($control)

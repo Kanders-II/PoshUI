@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Windows;
@@ -237,13 +237,31 @@ namespace Launcher
         private void ThemeToggle_Checked(object sender, RoutedEventArgs e)
         {
             // Switch to dark theme
-            ApplyTheme("/Assets/DarkTheme.xaml");
+            var viewModel = DataContext as MainWindowViewModel;
+            if (viewModel != null && viewModel.HasCustomThemeOverrides)
+            {
+                // Use ViewModel to re-apply custom overrides with the dark base theme
+                viewModel.ReapplyThemeOverrides(isDarkTheme: true);
+            }
+            else
+            {
+                ApplyTheme("/Assets/DarkTheme.xaml");
+            }
         }
 
         private void ThemeToggle_Unchecked(object sender, RoutedEventArgs e)
         {
             // Switch to light theme
-            ApplyTheme("/Assets/Fluent.xaml");
+            var viewModel = DataContext as MainWindowViewModel;
+            if (viewModel != null && viewModel.HasCustomThemeOverrides)
+            {
+                // Use ViewModel to re-apply custom overrides with the light base theme
+                viewModel.ReapplyThemeOverrides(isDarkTheme: false);
+            }
+            else
+            {
+                ApplyTheme("/Assets/Fluent.xaml");
+            }
         }
 
         private void SyncThemeToggleState()

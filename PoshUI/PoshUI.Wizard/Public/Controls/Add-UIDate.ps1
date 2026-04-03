@@ -81,7 +81,10 @@
         [int]$Width,
 
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
 
     begin {
@@ -128,6 +131,9 @@
             if ($Minimum.HasValue) { $control.SetProperty('Minimum', $Minimum.Value) }
             if ($Maximum.HasValue) { $control.SetProperty('Maximum', $Maximum.Value) }
             if ($Format) { $control.SetProperty('Format', $Format) }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
 
             $wizardStep.AddControl($control)
 

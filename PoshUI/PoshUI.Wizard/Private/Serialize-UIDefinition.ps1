@@ -37,6 +37,8 @@ function Serialize-UIDefinition {
             $branding['SidebarHeaderText'] = $Definition.SidebarHeaderText
         }
         if (-not [string]::IsNullOrEmpty($Definition.SidebarHeaderIcon)) {
+            # Set both fields for compatibility - C# loader uses SidebarHeaderIcon as primary
+            $branding['SidebarHeaderIcon'] = $Definition.SidebarHeaderIcon
             $branding['SidebarHeaderIconPath'] = $Definition.SidebarHeaderIcon
         }
         if (-not [string]::IsNullOrEmpty($Definition.SidebarHeaderIconOrientation)) {

@@ -129,15 +129,15 @@ Purpose:
 Use this selection to drive dependencies in later steps.
 
 How it works:
-• Static choices load instantly
-• No processing delay = no overlay
-• Serves as foundation for cascading dependencies
+- Static choices load instantly
+- No processing delay = no overlay
+- Serves as foundation for cascading dependencies
 
 Next Steps:
 Your Environment selection will influence:
-• Available regions in Step 3
-• Server options in Step 4
-• Application choices in Step 5
+- Available regions in Step 3
+- Server options in Step 4
+- Application choices in Step 5
 
 Learning: Static controls do not trigger overlays - only dynamic ones!
 '@
@@ -362,9 +362,9 @@ Add-UIMultiLine -Step 'Summary' -Name 'OverlayNotes' -Label 'Overlay Observation
 
 Show-PoshUIWizard -ScriptBody {
     Write-Host ''
-    Write-Host ('═' * 40) -ForegroundColor Green
+    Write-Host ('=' * 40) -ForegroundColor Green
     Write-Host 'Cascading Overlay Results' -ForegroundColor Green
-    Write-Host ('═' * 40) -ForegroundColor Green
+    Write-Host ('=' * 40) -ForegroundColor Green
     Write-Host "Environment: $TargetEnvironment" -ForegroundColor Cyan
     Write-Host "Region:      $TargetRegion" -ForegroundColor Cyan
     Write-Host "Server:      $TargetServer" -ForegroundColor Cyan

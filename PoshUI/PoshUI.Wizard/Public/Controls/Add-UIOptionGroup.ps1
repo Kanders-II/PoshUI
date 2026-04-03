@@ -80,7 +80,10 @@
         [int]$Width,
 
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
 
     begin {
@@ -120,6 +123,9 @@
             $control.HelpText = $HelpText
             $control.Width = $Width
             $control.SetProperty('Orientation', $Orientation)
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
 
             $wizardStep.AddControl($control)
 

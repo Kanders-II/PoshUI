@@ -112,12 +112,18 @@ function Show-PoshUIWorkflow {
                 $originalScriptName = [System.IO.Path]::GetFileNameWithoutExtension($originalScriptFullPath)
                 $originalScriptDirectory = [System.IO.Path]::GetDirectoryName($originalScriptFullPath)
 
-                $brandingUpdate = @{ OriginalScriptName = $originalScriptName }
+                $brandingUpdate = @{ 
+                    OriginalScriptName = $originalScriptName
+                    OriginalScriptFullPath = $originalScriptFullPath  # Full path for reboot resume
+                }
                 if ($originalScriptDirectory) {
                     $brandingUpdate.OriginalScriptPath = $originalScriptDirectory
                 }
                 $script:CurrentWorkflow.SetBranding($brandingUpdate)
                 Write-Verbose "Original script name for logging: $originalScriptName (from $originalScriptFullPath)"
+                
+                # Store full path in module scope for Save-UIWorkflowState to use
+                $script:OriginalCallingScriptPath = $originalScriptFullPath
             }
             
             # Generate PowerShell script for AST parsing

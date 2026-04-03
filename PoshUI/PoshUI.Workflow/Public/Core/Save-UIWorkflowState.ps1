@@ -76,7 +76,11 @@ function Save-UIWorkflowState {
             # Determine state file path (use .dat for encrypted, .json for plain)
             $extension = if ($NoEncryption) { '.json' } else { '.dat' }
             if (-not $Path) {
-                $stateDir = Join-Path $env:LOCALAPPDATA 'PoshUI'
+                # Guard against null env vars (e.g. WinPE has no LOCALAPPDATA)
+                $baseDir = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA }
+                           elseif ($env:PROGRAMDATA) { $env:PROGRAMDATA }
+                           else { 'X:\OSD\Temp' }
+                $stateDir = Join-Path $baseDir 'PoshUI'
                 if (-not (Test-Path $stateDir)) {
                     $dir = New-Item -Path $stateDir -ItemType Directory -Force
                     # Set restrictive ACL on directory
@@ -95,8 +99,16 @@ function Save-UIWorkflowState {
             # Get state from workflow
             $state = $Workflow.ToState()
 
+            # Determine the original script path (for reboot resume)
+            $scriptPath = $null
+            if ($script:OriginalCallingScriptPath) {
+                $scriptPath = $script:OriginalCallingScriptPath
+            } elseif ($Workflow.Branding -and $Workflow.Branding['OriginalScriptFullPath']) {
+                $scriptPath = $Workflow.Branding['OriginalScriptFullPath']
+            }
+
             # Add metadata
-            $state['ScriptPath'] = $MyInvocation.PSCommandPath
+            $state['ScriptPath'] = $scriptPath
             $state['SavedBy'] = $env:USERNAME
             $state['ComputerName'] = $env:COMPUTERNAME
             $state['IsEncrypted'] = (-not $NoEncryption)
@@ -116,6 +128,19 @@ function Save-UIWorkflowState {
 
             # Save to file
             $content | Out-File -FilePath $Path -Encoding UTF8 -Force
+
+            # Save a separate metadata file with script path (for C# to read without decryption)
+            if ($scriptPath) {
+                $metadataPath = $Path + '.meta'
+                $metadata = @{
+                    ScriptPath = $scriptPath
+                    SavedAt = (Get-Date).ToString('o')
+                    SavedBy = $env:USERNAME
+                    ComputerName = $env:COMPUTERNAME
+                } | ConvertTo-Json -Compress
+                $metadata | Out-File -FilePath $metadataPath -Encoding UTF8 -Force
+                Write-Verbose "Saved metadata to: $metadataPath"
+            }
 
             # Set restrictive ACL on file (current user only)
             Set-SecureFileACL -Path $Path

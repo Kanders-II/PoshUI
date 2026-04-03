@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.Generic;
@@ -46,6 +46,7 @@ namespace Launcher.ViewModels
         private string _description;
         private int _order;
         private string _icon;
+        private string _iconPath;
         private WorkflowTaskType _taskType;
         private WorkflowTaskStatus _status;
         private int _progressPercent;
@@ -109,10 +110,17 @@ namespace Launcher.ViewModels
         public string Icon
         {
             get { return _icon; }
-            set { _icon = value; OnPropertyChanged("Icon"); OnPropertyChanged("HasIcon"); }
+            set { _icon = value; OnPropertyChanged("Icon"); OnPropertyChanged("HasIcon"); OnPropertyChanged("HasIconPath"); }
         }
 
-        public bool HasIcon { get { return !string.IsNullOrEmpty(_icon); } }
+        public string IconPath
+        {
+            get { return _iconPath; }
+            set { _iconPath = value; OnPropertyChanged("IconPath"); OnPropertyChanged("HasIcon"); OnPropertyChanged("HasIconPath"); }
+        }
+
+        public bool HasIcon { get { return !string.IsNullOrEmpty(_icon) || !string.IsNullOrEmpty(_iconPath); } }
+        public bool HasIconPath { get { return !string.IsNullOrEmpty(_iconPath); } }
 
         public WorkflowTaskType TaskType
         {
@@ -798,13 +806,11 @@ namespace Launcher.ViewModels
         public ICommand ViewLogsCommand { get; set; }
         public ICommand CloseCommand { get; set; }
         public ICommand RebootNowCommand { get; set; }
-        public ICommand SimulateRebootCommand { get; set; }
-
+        
         public WorkflowViewModel()
         {
             Tasks = new ObservableCollection<WorkflowTaskViewModel>();
             ViewLogsCommand = new RelayCommand(_ => OpenLogFile());
-            SimulateRebootCommand = new RelayCommand(_ => ExecuteSimulateReboot());
             RebootNowCommand = new RelayCommand(_ => ExecuteRebootNow());
         }
 
@@ -814,7 +820,6 @@ namespace Launcher.ViewModels
             _description = description;
             Tasks = new ObservableCollection<WorkflowTaskViewModel>();
             ViewLogsCommand = new RelayCommand(_ => OpenLogFile());
-            SimulateRebootCommand = new RelayCommand(_ => ExecuteSimulateReboot());
             RebootNowCommand = new RelayCommand(_ => ExecuteRebootNow());
             
             // Note: Log service is initialized later via InitializeLogging() when script path is available
@@ -849,15 +854,6 @@ namespace Launcher.ViewModels
                     LoggingService.Info($"Could not access previous log file: {ex.Message}", component: "WorkflowViewModel");
                 }
             }
-        }
-
-        private void ExecuteSimulateReboot()
-        {
-            LoggingService.Info("Simulate reboot (close only) requested", component: "WorkflowViewModel");
-            WorkflowLogService.LogRebootRequest(_rebootReason ?? "Simulated reboot");
-            
-            // Close the window - state is already saved by the PowerShell module
-            System.Windows.Application.Current?.MainWindow?.Close();
         }
 
         private void ExecuteRebootNow()

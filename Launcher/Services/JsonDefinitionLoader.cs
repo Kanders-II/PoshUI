@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License.
 using System;
 using System.Collections.Generic;
@@ -61,8 +61,15 @@ namespace Launcher.Services
                 branding.SidebarHeaderText = definition.Branding.SidebarHeaderText;
                 branding.SidebarHeaderIcon = definition.Branding.SidebarHeaderIcon ?? definition.Branding.SidebarHeaderIconPath;
                 branding.SidebarHeaderIconOrientation = definition.Branding.SidebarHeaderIconOrientation ?? "Left";
+                branding.Theme = definition.Branding.Theme ?? "Auto";
+                branding.ThemeOverrides = definition.Branding.ThemeOverrides;
+                branding.ThemeOverridesLight = definition.Branding.ThemeOverridesLight;
+                branding.ThemeOverridesDark = definition.Branding.ThemeOverridesDark;
+                branding.DisableAnimations = definition.Branding.DisableAnimations;
                 branding.OriginalScriptName = definition.Branding.OriginalScriptName;
                 branding.OriginalScriptPath = definition.Branding.OriginalScriptPath;
+                branding.Navigation = definition.Branding.Navigation;
+                branding.GridColumns = definition.Branding.GridColumns;
             }
 
             return branding;
@@ -78,7 +85,25 @@ namespace Launcher.Services
             foreach (var stepJson in definition.Steps)
             {
                 var stepType = stepJson.Type ?? "Wizard";
-                string pageType = (stepType == "Dashboard" || stepType == "CardGrid") ? "CardGrid" : "GenericForm";
+                string pageType;
+                if (stepType == "Dashboard" || stepType == "CardGrid")
+                {
+                    pageType = "CardGrid";
+                }
+                else if (stepType == "Freeform")
+                {
+                    // Preserve Freeform identity so the ViewModel can detect Freeform mode
+                    // (no wizard step numbers, no Previous/Next/Finish buttons, free navigation)
+                    pageType = "Freeform";
+                }
+                else if (stepType == "Workflow")
+                {
+                    pageType = "Workflow";
+                }
+                else
+                {
+                    pageType = "GenericForm";
+                }
                 LoggingService.Info($"  Step '{stepJson.Title}': Type={stepType}, Banner={stepJson.Banner != null}, Cards={stepJson.Cards?.Count ?? 0}, Controls={stepJson.Controls?.Count ?? 0}", component: "JsonDefinitionLoader");
 
                 var step = new WizardStep
@@ -157,44 +182,115 @@ namespace Launcher.Services
                     if (!string.IsNullOrEmpty(cardJson.ScriptPath)) cardControl["ScriptPath"] = cardJson.ScriptPath;
                     if (!string.IsNullOrEmpty(cardJson.ScriptBlock)) cardControl["ScriptBlock"] = cardJson.ScriptBlock;
 
-                    // Map properties from Properties object if present
-                    if (cardJson.Properties != null)
+                    // Map properties from Properties dictionary if present
+                    // (UICardJson.Properties is Dictionary<string,object> for reliable deserialization)
+                    if (cardJson.Properties != null && cardJson.Properties.Count > 0)
                     {
                         var props = cardJson.Properties;
-                        if (!string.IsNullOrEmpty(props.CardTitle)) cardControl["CardTitle"] = props.CardTitle;
-                        if (!string.IsNullOrEmpty(props.CardDescription)) cardControl["CardDescription"] = props.CardDescription;
-                        if (!string.IsNullOrEmpty(props.Category)) cardControl["Category"] = props.Category;
-                        if (!string.IsNullOrEmpty(props.Icon)) cardControl["Icon"] = props.Icon;
-                        if (props.Value != null) cardControl["Value"] = props.Value;
-                        if (!string.IsNullOrEmpty(props.Unit)) cardControl["Unit"] = props.Unit;
-                        if (!string.IsNullOrEmpty(props.Format)) cardControl["Format"] = props.Format;
-                        if (!string.IsNullOrEmpty(props.Trend)) cardControl["Trend"] = props.Trend;
-                        if (props.TrendValue != null) cardControl["TrendValue"] = props.TrendValue;
-                        if (props.Target != null) cardControl["Target"] = props.Target;
-                        if (props.MinValue != null) cardControl["MinValue"] = props.MinValue;
-                        if (props.MaxValue != null) cardControl["MaxValue"] = props.MaxValue;
-                        cardControl["ShowProgressBar"] = props.ShowProgressBar;
-                        cardControl["ShowTrend"] = props.ShowTrend;
-                        cardControl["ShowTarget"] = props.ShowTarget;
-                        if (!string.IsNullOrEmpty(props.RefreshScript)) cardControl["RefreshScript"] = props.RefreshScript;
-                        if (!string.IsNullOrEmpty(props.ChartType)) cardControl["ChartType"] = props.ChartType;
-                        if (props.Data != null) cardControl["Data"] = props.Data;
-                        cardControl["ShowLegend"] = props.ShowLegend;
-                        cardControl["ShowTooltip"] = props.ShowTooltip;
-                        if (!string.IsNullOrEmpty(props.Content)) cardControl["Content"] = props.Content;
-                        else if (!string.IsNullOrEmpty(props.CardContent)) cardControl["Content"] = props.CardContent;
-                        if (!string.IsNullOrEmpty(props.ImageSource)) cardControl["ImageSource"] = props.ImageSource;
-                        if (props.Width != null) cardControl["Width"] = props.Width;
-                        if (props.Height != null) cardControl["Height"] = props.Height;
-                        if (!string.IsNullOrEmpty(props.BackgroundColor)) cardControl["BackgroundColor"] = props.BackgroundColor;
-                        if (!string.IsNullOrEmpty(props.TextColor)) cardControl["TextColor"] = props.TextColor;
-                        if (!string.IsNullOrEmpty(props.BorderColor)) cardControl["BorderColor"] = props.BorderColor;
-                        if (!string.IsNullOrEmpty(props.LinkUrl)) cardControl["LinkUrl"] = props.LinkUrl;
-                        if (!string.IsNullOrEmpty(props.ScriptBlock)) cardControl["ScriptBlock"] = props.ScriptBlock;
-                        if (!string.IsNullOrEmpty(props.ScriptPath)) cardControl["ScriptPath"] = props.ScriptPath;
-                        if (!string.IsNullOrEmpty(props.ScriptSource)) cardControl["ScriptSource"] = props.ScriptSource;
-                        if (!string.IsNullOrEmpty(props.ParameterControls)) cardControl["ParameterControls"] = props.ParameterControls;
-                        if (!string.IsNullOrEmpty(props.DefaultParameters)) cardControl["DefaultParameters"] = props.DefaultParameters;
+                        // Helper to get a string value from the dictionary
+                        Func<string, string> GetStr = (key) =>
+                            props.TryGetValue(key, out var v) && v != null ? v.ToString() : null;
+                        Func<string, object> GetObj = (key) =>
+                            props.TryGetValue(key, out var v) ? v : null;
+                        Func<string, bool> GetBool = (key) =>
+                        {
+                            if (!props.TryGetValue(key, out var v) || v == null) return false;
+                            if (v is bool b) return b;
+                            bool.TryParse(v.ToString(), out var result);
+                            return result;
+                        };
+
+                        // Common
+                        var pCardTitle = GetStr("CardTitle");
+                        if (!string.IsNullOrEmpty(pCardTitle)) cardControl["CardTitle"] = pCardTitle;
+                        var pCardDesc = GetStr("CardDescription");
+                        if (!string.IsNullOrEmpty(pCardDesc)) cardControl["CardDescription"] = pCardDesc;
+                        var pCategory = GetStr("Category");
+                        if (!string.IsNullOrEmpty(pCategory)) cardControl["Category"] = pCategory;
+                        var pIcon = GetStr("Icon");
+                        if (!string.IsNullOrEmpty(pIcon)) cardControl["Icon"] = pIcon;
+                        var pIconPath = GetStr("IconPath");
+                        if (!string.IsNullOrEmpty(pIconPath)) cardControl["IconPath"] = pIconPath;
+
+                        // MetricCard
+                        var pValue = GetObj("Value");
+                        if (pValue != null) cardControl["Value"] = pValue;
+                        var pUnit = GetStr("Unit");
+                        if (!string.IsNullOrEmpty(pUnit)) cardControl["Unit"] = pUnit;
+                        var pFormat = GetStr("Format");
+                        if (!string.IsNullOrEmpty(pFormat)) cardControl["Format"] = pFormat;
+                        var pTrend = GetStr("Trend");
+                        if (!string.IsNullOrEmpty(pTrend)) cardControl["Trend"] = pTrend;
+                        var pTrendValue = GetObj("TrendValue");
+                        if (pTrendValue != null) cardControl["TrendValue"] = pTrendValue;
+                        var pTarget = GetObj("Target");
+                        if (pTarget != null) cardControl["Target"] = pTarget;
+                        var pMinValue = GetObj("MinValue");
+                        if (pMinValue != null) cardControl["MinValue"] = pMinValue;
+                        var pMaxValue = GetObj("MaxValue");
+                        if (pMaxValue != null) cardControl["MaxValue"] = pMaxValue;
+                        cardControl["ShowProgressBar"] = GetBool("ShowProgressBar");
+                        cardControl["ShowTrend"] = GetBool("ShowTrend");
+                        cardControl["ShowTarget"] = GetBool("ShowTarget");
+                        cardControl["ShowGauge"] = GetBool("ShowGauge");
+                        cardControl["AutoSparkline"] = GetBool("AutoSparkline");
+                        var pSparkline = GetObj("SparklineData");
+                        if (pSparkline != null) cardControl["SparklineData"] = pSparkline;
+                        var pRefreshScript = GetStr("RefreshScript");
+                        if (!string.IsNullOrEmpty(pRefreshScript)) cardControl["RefreshScript"] = pRefreshScript;
+
+                        // GraphCard
+                        var pChartType = GetStr("ChartType");
+                        if (!string.IsNullOrEmpty(pChartType)) cardControl["ChartType"] = pChartType;
+                        var pData = GetObj("Data");
+                        if (pData != null) cardControl["Data"] = pData;
+                        cardControl["ShowLegend"] = GetBool("ShowLegend");
+                        cardControl["ShowTooltip"] = GetBool("ShowTooltip");
+
+                        // InfoCard - Content (try Content first, then CardContent)
+                        var pContent = GetStr("Content");
+                        var pCardContent = GetStr("CardContent");
+                        if (!string.IsNullOrEmpty(pContent)) cardControl["Content"] = pContent;
+                        else if (!string.IsNullOrEmpty(pCardContent)) cardControl["Content"] = pCardContent;
+
+                        var pImageSource = GetStr("ImageSource");
+                        if (!string.IsNullOrEmpty(pImageSource)) cardControl["ImageSource"] = pImageSource;
+                        var pWidth = GetObj("Width");
+                        if (pWidth != null) cardControl["Width"] = pWidth;
+                        var pHeight = GetObj("Height");
+                        if (pHeight != null) cardControl["Height"] = pHeight;
+                        var pBgColor = GetStr("BackgroundColor");
+                        if (!string.IsNullOrEmpty(pBgColor)) cardControl["BackgroundColor"] = pBgColor;
+                        var pTextColor = GetStr("TextColor");
+                        if (!string.IsNullOrEmpty(pTextColor)) cardControl["TextColor"] = pTextColor;
+                        var pBorderColor = GetStr("BorderColor");
+                        if (!string.IsNullOrEmpty(pBorderColor)) cardControl["BorderColor"] = pBorderColor;
+                        var pLinkUrl = GetStr("LinkUrl");
+                        if (!string.IsNullOrEmpty(pLinkUrl)) cardControl["LinkUrl"] = pLinkUrl;
+                        var pLinkText = GetStr("LinkText");
+                        if (!string.IsNullOrEmpty(pLinkText)) cardControl["LinkText"] = pLinkText;
+                        var pCardStyle = GetStr("CardStyle");
+                        if (!string.IsNullOrEmpty(pCardStyle)) cardControl["CardStyle"] = pCardStyle;
+                        var pSubtitle = GetStr("Subtitle");
+                        if (!string.IsNullOrEmpty(pSubtitle)) cardControl["Subtitle"] = pSubtitle;
+                        cardControl["Collapsible"] = GetBool("Collapsible");
+                        cardControl["IsExpanded"] = GetBool("IsExpanded");
+                        var pAccentColor = GetStr("AccentColor");
+                        if (!string.IsNullOrEmpty(pAccentColor)) cardControl["AccentColor"] = pAccentColor;
+                        var pButtonText = GetStr("ButtonText");
+                        if (!string.IsNullOrEmpty(pButtonText)) cardControl["ButtonText"] = pButtonText;
+
+                        // ScriptCard
+                        var pScriptBlock = GetStr("ScriptBlock");
+                        if (!string.IsNullOrEmpty(pScriptBlock)) cardControl["ScriptBlock"] = pScriptBlock;
+                        var pScriptPath = GetStr("ScriptPath");
+                        if (!string.IsNullOrEmpty(pScriptPath)) cardControl["ScriptPath"] = pScriptPath;
+                        var pScriptSource = GetStr("ScriptSource");
+                        if (!string.IsNullOrEmpty(pScriptSource)) cardControl["ScriptSource"] = pScriptSource;
+                        var pParamControls = GetStr("ParameterControls");
+                        if (!string.IsNullOrEmpty(pParamControls)) cardControl["ParameterControls"] = pParamControls;
+                        var pDefaultParams = GetStr("DefaultParameters");
+                        if (!string.IsNullOrEmpty(pDefaultParams)) cardControl["DefaultParameters"] = pDefaultParams;
                     }
 
                     controls.Add(new DynamicControl(cardControl));
@@ -462,11 +558,135 @@ namespace Launcher.Services
                     if (controlJson.Choices != null && controlJson.Choices.Count > 0)
                         param.ValidateSetChoices = new List<string>(controlJson.Choices);
                     break;
+                case "button":
+                    param.ParameterType = typeof(string);
+                    param.IsButton = true;
+                    param.ButtonStyle = GetProp("Style")?.ToString() ?? "Primary";
+                    param.ButtonIcon = GetProp("Icon")?.ToString();
+                    param.ButtonIconPath = GetProp("IconPath")?.ToString();
+                    param.ButtonCategory = !string.IsNullOrEmpty(controlJson.Category) ? controlJson.Category : GetProp("Category")?.ToString();
+                    param.OnClickScript = GetProp("OnClick")?.ToString();
+                    param.FlyoutScript = GetProp("FlyoutScript")?.ToString();
+                    param.FlyoutTitle = GetProp("FlyoutTitle")?.ToString();
+                    var showMd = GetProp("FlyoutShowMarkdown");
+                    if (showMd is bool mdBool) param.FlyoutShowMarkdown = mdBool;
+                    else if (showMd is string mdStr && bool.TryParse(mdStr, out bool mdParsed)) param.FlyoutShowMarkdown = mdParsed;
+                    break;
+                case "label":
+                    param.ParameterType = typeof(string);
+                    param.IsLabel = true;
+                    param.IsPlaceholder = true; // Labels don't collect data
+                    // Set DefaultValue from Text property so {Binding Value} displays the text
+                    var labelText = GetProp("Text")?.ToString();
+                    if (!string.IsNullOrEmpty(labelText))
+                        param.DefaultValue = labelText;
+                    else if (!string.IsNullOrEmpty(controlJson.Label))
+                        param.DefaultValue = controlJson.Label;
+                    var fs = GetProp("FontSize");
+                    if (fs != null && double.TryParse(fs.ToString(), out double fontSize)) param.FontSize = fontSize;
+                    param.FontWeight = GetProp("FontWeight")?.ToString();
+                    param.Foreground = GetProp("Foreground")?.ToString();
+                    break;
+                case "image":
+                    param.ParameterType = typeof(string);
+                    param.IsImage = true;
+                    param.IsPlaceholder = true; // Images don't collect data
+                    param.ImagePath = GetProp("Path")?.ToString();
+                    param.ImageStretch = GetProp("Stretch")?.ToString() ?? "Uniform";
+                    var imgH = GetProp("Height");
+                    if (imgH != null && double.TryParse(imgH.ToString(), out double imgHeight)) param.ControlHeight = imgHeight;
+                    break;
+                case "slider":
+                    param.ParameterType = typeof(double);
+                    param.IsSlider = true;
+                    param.IsNumeric = true; // Enable NumericValue binding
+                    param.NumericAllowDecimal = true;
+                    var sMin = GetProp("Min");
+                    if (sMin != null && double.TryParse(sMin.ToString(), out double slMin)) { param.SliderMin = slMin; param.NumericMinimum = slMin; }
+                    var sMax = GetProp("Max");
+                    if (sMax != null && double.TryParse(sMax.ToString(), out double slMax)) { param.SliderMax = slMax; param.NumericMaximum = slMax; }
+                    var sStep = GetProp("Step");
+                    if (sStep != null && double.TryParse(sStep.ToString(), out double slStep)) { param.SliderStep = slStep; param.NumericStep = slStep; }
+                    break;
+                case "progressbar":
+                    param.ParameterType = typeof(double);
+                    param.IsProgressBar = true;
+                    param.IsNumeric = true; // Enable NumericValue binding for XAML
+                    param.IsPlaceholder = true; // ProgressBars don't collect data
+                    param.NumericMinimum = 0;
+                    var pMax = GetProp("Max");
+                    if (pMax != null && double.TryParse(pMax.ToString(), out double prMax)) { param.ProgressMax = prMax; param.NumericMaximum = prMax; }
+                    else { param.ProgressMax = 100; param.NumericMaximum = 100; }
+                    var pIndet = GetProp("Indeterminate");
+                    if (pIndet is bool indBool) param.ProgressIndeterminate = indBool;
+                    else if (pIndet is string indStr && bool.TryParse(indStr, out bool indParsed)) param.ProgressIndeterminate = indParsed;
+                    break;
+                case "tabcontrol":
+                    // TabControl is not a parameter — it defines tab names for layout grouping.
+                    // Read Tabs from Properties, store them on ParameterInfo for the ViewModel to consume.
+                    param.ParameterType = typeof(string);
+                    param.IsPlaceholder = true;
+                    var tabsProp = GetProp("Tabs");
+                    if (tabsProp is IEnumerable<object> tabList)
+                        param.Tabs = tabList.Select(x => x.ToString()).ToList();
+                    else if (tabsProp is System.Collections.IEnumerable tabEnum)
+                    {
+                        var tabs = new List<string>();
+                        foreach (var item in tabEnum)
+                            if (item != null) tabs.Add(item.ToString());
+                        param.Tabs = tabs;
+                    }
+                    return param;
+                // Freeform card types that should be handled as dashboard cards (routed to Controls list)
+                case "metriccard":
+                case "chartcard":
+                case "tablecard":
+                case "scriptcard":
+                    // These are handled by MapBannersAndCards, return null to skip as parameter
+                    return null;
                 default:
                     param.ParameterType = typeof(string);
                     break;
             }
 
+            // Grid layout properties (Freeform) - apply to all control types
+            var rowProp = GetProp("Row");
+            if (rowProp != null && int.TryParse(rowProp.ToString(), out int gridRow)) param.GridRow = gridRow;
+            var colProp = GetProp("Column");
+            if (colProp != null && int.TryParse(colProp.ToString(), out int gridCol)) param.GridColumn = gridCol;
+            var colSpanProp = GetProp("ColumnSpan");
+            if (colSpanProp != null && int.TryParse(colSpanProp.ToString(), out int colSpan)) param.ColumnSpan = colSpan;
+            var rowSpanProp = GetProp("RowSpan");
+            if (rowSpanProp != null && int.TryParse(rowSpanProp.ToString(), out int rowSpan)) param.RowSpan = rowSpan;
+
+            // Settings UI category grouping - read from top-level first, then Properties dict
+            if (!string.IsNullOrEmpty(controlJson.Category))
+                param.Category = controlJson.Category;
+            else
+            {
+                var categoryProp = GetProp("Category");
+                if (categoryProp != null) param.Category = categoryProp.ToString();
+            }
+            if (!string.IsNullOrEmpty(controlJson.HelpText))
+                param.HelpText = controlJson.HelpText;
+            else
+            {
+                var helpTextProp = GetProp("HelpText");
+                if (helpTextProp != null) param.HelpText = helpTextProp.ToString();
+            }
+            if (string.IsNullOrEmpty(param.HelpText))
+            {
+                var descProp = GetProp("Description");
+                if (descProp != null) param.HelpText = descProp.ToString();
+            }
+
+            // Tab assignment - which tab this control belongs to
+            var tabProp = GetProp("Tab");
+            if (tabProp != null) param.Tab = tabProp.ToString();
+
+            // Control-level icon (displayed next to label)
+            var iconPathProp = GetProp("IconPath");
+            if (iconPathProp != null) param.IconPath = iconPathProp.ToString();
             return param;
         }
     }

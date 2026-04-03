@@ -84,7 +84,10 @@
         [int]$Width,
 
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
 
     begin {
@@ -117,6 +120,9 @@
 
             $control.SetProperty('Multiline', $true)
             $control.SetProperty('Rows', $Rows)
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
 
             $wizardStep.AddControl($control)
 

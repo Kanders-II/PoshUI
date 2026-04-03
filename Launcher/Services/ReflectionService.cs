@@ -1,4 +1,4 @@
-// Copyright (c) 2025 A Solution IT LLC. All rights reserved.
+// Copyright (c) 2025 Kanders-II. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 using System;
 using System.Collections.Generic;
@@ -99,6 +99,49 @@ namespace Launcher.Services
         
         // Workflow tasks JSON data (from WizardWorkflowTasks attribute)
         public string WorkflowTasksJson { get; set; }
+
+        // Freeform control properties
+        public bool IsButton { get; set; }
+        public string ButtonStyle { get; set; }  // Primary, Secondary, Danger
+        public string ButtonIcon { get; set; }
+        public string ButtonIconPath { get; set; }  // Path to custom icon image (PNG, ICO, etc.)
+        public string ButtonCategory { get; set; }  // Category name for grouping buttons within category cards
+        public string OnClickScript { get; set; }  // Script to execute on click
+        public bool IsLabel { get; set; }
+        public double? FontSize { get; set; }
+        public string FontWeight { get; set; }
+        public string Foreground { get; set; }
+        public bool IsImage { get; set; }
+        public string ImagePath { get; set; }
+        public string ImageStretch { get; set; }
+        public bool IsSlider { get; set; }
+        public double? SliderMin { get; set; }
+        public double? SliderMax { get; set; }
+        public double? SliderStep { get; set; }
+        public bool IsProgressBar { get; set; }
+        public double? ProgressMax { get; set; }
+        public bool ProgressIndeterminate { get; set; }
+        public double? ControlHeight { get; set; }
+
+        // Flyout script execution properties
+        public string FlyoutScript { get; set; }  // Script to run in flyout window
+        public string FlyoutTitle { get; set; }    // Flyout window title
+        public bool FlyoutShowMarkdown { get; set; }  // Render results as Markdown
+
+        // Grid layout properties (Freeform)
+        public int GridRow { get; set; } = -1;
+        public int GridColumn { get; set; } = -1;
+        public int ColumnSpan { get; set; } = 1;
+        public int RowSpan { get; set; } = 1;
+
+        // Settings UI category grouping
+        public string Category { get; set; }
+        public string HelpText { get; set; }
+        public string Tab { get; set; }
+        public List<string> Tabs { get; set; }
+
+        // Control-level icon (displayed next to label)
+        public string IconPath { get; set; }
     }
 
     public class WizardStep
@@ -168,11 +211,18 @@ namespace Launcher.Services
         public string SidebarHeaderIcon { get; set; }
         public string SidebarHeaderIconOrientation { get; set; }
         public string Theme { get; set; }  // Light, Dark, or Auto
+        public Dictionary<string, string> ThemeOverrides { get; set; }  // Flat color override dictionary from Set-UITheme
+        public Dictionary<string, string> ThemeOverridesLight { get; set; }  // Light-mode specific overrides (merged with base)
+        public Dictionary<string, string> ThemeOverridesDark { get; set; }  // Dark-mode specific overrides (merged with base)
+        public bool DisableAnimations { get; set; }  // Disable all UI animations
         public string OriginalScriptName { get; set; }  // For Module API: original calling script name for log files
         public string OriginalScriptPath { get; set; }  // For Module API: original calling script directory for per-execution logs
+        public string OriginalScriptFullPath { get; set; }  // For reboot resume: full path to original script
         public bool SkipToWorkflow { get; set; }  // For resume: skip wizard pages and go directly to workflow
         public string LogPath { get; set; }  // Custom log file path
         public string PreviousLogFilePath { get; set; }  // For resume: previous log file to restore content from
+        public string Navigation { get; set; }  // Freeform: None, Sidebar, Tabs
+        public int GridColumns { get; set; }  // Freeform: number of grid columns (1-6, default 0 = auto)
     }
 
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
@@ -185,8 +235,13 @@ namespace Launcher.Services
         public string SidebarHeaderIconPath { get; set; }  // Alias for SidebarHeaderIcon
         public string SidebarHeaderIconOrientation { get; set; }
         public string Theme { get; set; }  // Light, Dark, or Auto
+        public string ThemeOverridesJson { get; set; }  // JSON-serialized theme overrides from Set-UITheme
+        public string ThemeOverridesLightJson { get; set; }  // JSON-serialized light-mode theme overrides
+        public string ThemeOverridesDarkJson { get; set; }  // JSON-serialized dark-mode theme overrides
+        public string DisableAnimations { get; set; }  // Disable all UI animations
         public string OriginalScriptName { get; set; }  // For Module API: original calling script name
         public string OriginalScriptPath { get; set; }  // For Module API: original calling script directory
+        public string OriginalScriptFullPath { get; set; }  // For reboot resume: full path to original script
         public string SkipToWorkflow { get; set; }  // For resume: skip wizard pages
         public string LogPath { get; set; }  // Custom log file path
         public string PreviousLogFilePath { get; set; }  // For resume: previous log file
@@ -238,6 +293,7 @@ namespace Launcher.Services
     {
         public string Label { get; set; }
         public double ControlWidth { get; set; } = double.NaN;
+        public string IconPath { get; set; }
     }
 
     // Define the new attribute for path selection
@@ -369,6 +425,7 @@ namespace Launcher.Services
                 {
                     string paramLabel = null;
                     double? paramControlWidth = null;
+                    string paramIconPath = null;
                     bool isSwitch = false;
                     List<string> validateSetChoices = null;
                     string validationPattern = null;
@@ -552,11 +609,12 @@ namespace Launcher.Services
                             else if (attrTypeName == "WizardParameterDetails")
                             {
                                 paramLabel = GetAttributeValue<string>(attr, "Label");
+                                paramIconPath = GetAttributeValue<string>(attr, "IconPath");
                                 if (TryConvertToDouble(GetAttributeValue<object>(attr, "ControlWidth"), out double width))
                                             {
                                     paramControlWidth = width;
                                 }
-                                LoggingService.Trace($"  Found parameter details: Label='{paramLabel}', ControlWidth={paramControlWidth}", component: "ReflectionService");
+                                LoggingService.Trace($"  Found parameter details: Label='{paramLabel}', IconPath='{paramIconPath}', ControlWidth={paramControlWidth}", component: "ReflectionService");
                             }
                             else if (attrTypeName == "ValidateSet")
                             {
@@ -1061,6 +1119,7 @@ namespace Launcher.Services
                                 var theme = GetAttributeValue<string>(attr, "Theme");
                                 var osn = GetAttributeValue<string>(attr, "OriginalScriptName"); // For Module API log naming
                                 var osp = GetAttributeValue<string>(attr, "OriginalScriptPath");
+                                var osfp = GetAttributeValue<string>(attr, "OriginalScriptFullPath"); // For reboot resume
                                 if (!string.IsNullOrEmpty(wt)) branding.WindowTitleText = wt;
                                 if (!string.IsNullOrEmpty(wi)) branding.WindowTitleIcon = wi;
                                 if (!string.IsNullOrEmpty(st)) branding.SidebarHeaderText = st;
@@ -1068,8 +1127,74 @@ namespace Launcher.Services
                                 if (!string.IsNullOrEmpty(sip)) branding.SidebarHeaderIcon = sip; // Use Path if provided
                                 if (!string.IsNullOrEmpty(sio)) branding.SidebarHeaderIconOrientation = sio;
                                 if (!string.IsNullOrEmpty(theme)) branding.Theme = theme;
+                                
+                                // Deserialize ThemeOverrides from JSON string (Set-UITheme hashtable)
+                                var themeOverridesJson = GetAttributeValue<string>(attr, "ThemeOverridesJson");
+                                if (!string.IsNullOrEmpty(themeOverridesJson))
+                                {
+                                    LoggingService.Info($"  Raw ThemeOverridesJson attribute value (length={themeOverridesJson.Length}): {themeOverridesJson.Substring(0, Math.Min(200, themeOverridesJson.Length))}", component: "ReflectionService");
+                                    // Unescape PowerShell single quotes ('') -> (')
+                                    themeOverridesJson = themeOverridesJson.Replace("''", "'");
+                                    LoggingService.Info($"  After unescaping (length={themeOverridesJson.Length}): {themeOverridesJson.Substring(0, Math.Min(200, themeOverridesJson.Length))}", component: "ReflectionService");
+                                    try
+                                    {
+                                        branding.ThemeOverrides = DeserializeThemeOverrides(themeOverridesJson);
+                                        LoggingService.Info($"  Deserialized ThemeOverrides: {branding.ThemeOverrides?.Count ?? 0} slots", component: "ReflectionService");
+                                        if (branding.ThemeOverrides != null && branding.ThemeOverrides.Count > 0)
+                                        {
+                                            foreach (var kvp in branding.ThemeOverrides)
+                                            {
+                                                LoggingService.Info($"    ThemeOverride: {kvp.Key} = {kvp.Value}", component: "ReflectionService");
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LoggingService.Error($"  Failed to deserialize ThemeOverridesJson: {ex.Message}", component: "ReflectionService");
+                                    }
+                                }
+                                
+                                // Deserialize ThemeOverridesLight from JSON string
+                                var themeOverridesLightJson = GetAttributeValue<string>(attr, "ThemeOverridesLightJson");
+                                if (!string.IsNullOrEmpty(themeOverridesLightJson))
+                                {
+                                    themeOverridesLightJson = themeOverridesLightJson.Replace("''", "'");
+                                    try
+                                    {
+                                        branding.ThemeOverridesLight = DeserializeThemeOverrides(themeOverridesLightJson);
+                                        LoggingService.Info($"  Deserialized ThemeOverridesLight: {branding.ThemeOverridesLight?.Count ?? 0} slots", component: "ReflectionService");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LoggingService.Error($"  Failed to deserialize ThemeOverridesLightJson: {ex.Message}", component: "ReflectionService");
+                                    }
+                                }
+
+                                // Deserialize ThemeOverridesDark from JSON string
+                                var themeOverridesDarkJson = GetAttributeValue<string>(attr, "ThemeOverridesDarkJson");
+                                if (!string.IsNullOrEmpty(themeOverridesDarkJson))
+                                {
+                                    themeOverridesDarkJson = themeOverridesDarkJson.Replace("''", "'");
+                                    try
+                                    {
+                                        branding.ThemeOverridesDark = DeserializeThemeOverrides(themeOverridesDarkJson);
+                                        LoggingService.Info($"  Deserialized ThemeOverridesDark: {branding.ThemeOverridesDark?.Count ?? 0} slots", component: "ReflectionService");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        LoggingService.Error($"  Failed to deserialize ThemeOverridesDarkJson: {ex.Message}", component: "ReflectionService");
+                                    }
+                                }
+
+                                var disableAnim = GetAttributeValue<string>(attr, "DisableAnimations");
+                                if (!string.IsNullOrEmpty(disableAnim) && disableAnim.Equals("True", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    branding.DisableAnimations = true;
+                                    LoggingService.Info("  Animations disabled by branding", component: "ReflectionService");
+                                }
                                 if (!string.IsNullOrEmpty(osn)) branding.OriginalScriptName = osn;
                                 if (!string.IsNullOrEmpty(osp)) branding.OriginalScriptPath = osp;
+                                if (!string.IsNullOrEmpty(osfp)) branding.OriginalScriptFullPath = osfp;
                                 var skipToWorkflow = GetAttributeValue<string>(attr, "SkipToWorkflow");
                                 if (!string.IsNullOrEmpty(skipToWorkflow) && skipToWorkflow.Equals("true", StringComparison.OrdinalIgnoreCase))
                                 {
@@ -1134,6 +1259,7 @@ namespace Launcher.Services
                             ValidationPattern = validationPattern,
                             ValidationScript = validationScript,
                             ControlWidth = paramControlWidth,
+                            IconPath = paramIconPath,
                             IsSwitch = isSwitch,
                             PathType = paramPathType,
                             PathFilter = pathFilter,
@@ -1715,5 +1841,52 @@ namespace Launcher.Services
             
             return result;
         }
+        
+        /// <summary>
+        /// Deserialize ThemeOverrides JSON string to Dictionary.
+        /// Simple parser for flat key-value JSON objects.
+        /// </summary>
+        private static Dictionary<string, string> DeserializeThemeOverrides(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+            
+            try
+            {
+                var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                
+                // Remove outer braces and whitespace
+                json = json.Trim();
+                if (json.StartsWith("{")) json = json.Substring(1);
+                if (json.EndsWith("}")) json = json.Substring(0, json.Length - 1);
+                json = json.Trim();
+                
+                if (string.IsNullOrEmpty(json))
+                    return result;
+                
+                // Split by comma (simple parser for flat objects)
+                var pairs = json.Split(',');
+                foreach (var pair in pairs)
+                {
+                    var colonIndex = pair.IndexOf(':');
+                    if (colonIndex <= 0) continue;
+                    
+                    var key = pair.Substring(0, colonIndex).Trim().Trim('"');
+                    var value = pair.Substring(colonIndex + 1).Trim().Trim('"');
+                    
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        result[key] = value;
+                    }
+                }
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Error($"Failed to deserialize ThemeOverrides JSON: {ex.Message}", component: "ReflectionService");
+                return null;
+            }
+        }
     }
-} 
+}

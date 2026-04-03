@@ -66,7 +66,10 @@
         [int]$Width,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -98,6 +101,9 @@
             
             # Mark as switch type for proper rendering
             $control.SetProperty('IsSwitch', $true)
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
+            }
             
             # Add to step
             $wizardStep.AddControl($control)

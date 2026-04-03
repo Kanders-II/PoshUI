@@ -126,7 +126,10 @@
         [int]$Width,
         
         [Parameter()]
-        [string]$HelpText
+        [string]$HelpText,
+        
+        [Parameter()]
+        [string]$IconPath
     )
     
     begin {
@@ -231,6 +234,9 @@
             }
             if ($MultiSelect.IsPresent) {
                 $control.SetProperty('IsMultiSelect', $true)
+            }
+            if ($IconPath) {
+                $control.SetProperty('IconPath', $IconPath)
             }
             
             # Add to step

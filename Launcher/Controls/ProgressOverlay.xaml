@@ -6,13 +6,17 @@
         <!-- Bool to Visibility Converter -->
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         
-        <!-- Rotating animation for spinner -->
+        <!-- Rotating animation for spinner (smooth ease-in-out) -->
         <Storyboard x:Key="SpinnerAnimation" RepeatBehavior="Forever">
             <DoubleAnimation Storyboard.TargetName="SpinnerRotation"
                            Storyboard.TargetProperty="Angle"
                            From="0"
                            To="360"
-                           Duration="0:0:1.5"/>
+                           Duration="0:0:1.2">
+                <DoubleAnimation.EasingFunction>
+                    <CubicEase EasingMode="EaseInOut"/>
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
         </Storyboard>
     </UserControl.Resources>
 
@@ -47,12 +51,16 @@
             <StackPanel HorizontalAlignment="Center">
                 <!-- Animated spinner -->
                 <Grid Width="48" Height="48" Margin="0,0,0,16">
-                    <Ellipse Stroke="{DynamicResource BodyForegroundBrush}"
-                            StrokeThickness="4"
-                            StrokeDashArray="12 4"
-                            Width="48"
-                            Height="48"
-                            Opacity="0.7"
+                    <!-- Track ring (subtle background) -->
+                    <Ellipse Stroke="{DynamicResource BorderBrush}"
+                            StrokeThickness="3"
+                            Width="48" Height="48" Opacity="0.4"/>
+                    <!-- Active arc (accent colored, rotating) -->
+                    <Ellipse Stroke="{DynamicResource ProgressForegroundBrush}"
+                            StrokeThickness="3"
+                            StrokeDashArray="8 16"
+                            StrokeDashCap="Round"
+                            Width="48" Height="48"
                             RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <RotateTransform x:Name="SpinnerRotation" Angle="0"/>

@@ -42,7 +42,7 @@ Add-UICard -Step "Config" -Title "About This Demo" -Type Info `
     -TitleColor "#00D4AA" `
     -ContentColor "#e2e8f0" `
     -CornerRadius 12 `
-    -LinkUrl "https://asolutionit.github.io/PoshUI/" `
+    -LinkUrl "https://kanders-ii.github.io/PoshUI/" `
     -LinkText "View Documentation" `
     -Content @"
 This demo shows all workflow features:

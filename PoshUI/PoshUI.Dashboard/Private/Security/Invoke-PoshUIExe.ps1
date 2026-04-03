@@ -115,7 +115,8 @@ function Invoke-PoshUIExe {
         }
         
         # Verify exe signature if signature mode is enabled
-        $signatureMode = $env:POSHWIZARD_SIGNATURE_MODE
+        $signatureMode = $env:POSHUI_SIGNATURE_MODE
+        if (-not $signatureMode) { $signatureMode = $env:POSHWIZARD_SIGNATURE_MODE }
         if ($signatureMode -eq 'Enforce') {
             Write-Verbose "Signature mode is Enforce, verifying exe signature..."
             

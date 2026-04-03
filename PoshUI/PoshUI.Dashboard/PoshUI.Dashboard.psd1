@@ -2,9 +2,9 @@
     RootModule = 'PoshUI.Dashboard.psm1'
     ModuleVersion = '1.0.0'
     GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567892'
-    Author = 'A Solution IT LLC'
-    CompanyName = 'A Solution IT LLC'
-    Copyright = '(c) 2025 A Solution IT LLC. All rights reserved.'
+    Author = 'Kanders-II'
+    CompanyName = 'Kanders-II'
+    Copyright = '(c) 2025 Kanders-II. All rights reserved.'
     Description = 'PoshUI.Dashboard - PowerShell module for creating interactive dashboard UIs with visualization cards. Part of PoshUI suite.'
 
     PowerShellVersion = '5.1'
@@ -30,6 +30,7 @@
         'Add-UIMetricCard',
         'Add-UIChartCard',
         'Add-UITableCard',
+        'Add-UIStatusCard',
 
         # Configuration
         'Set-UIBranding',

@@ -118,8 +118,8 @@ function New-PoshUIWizard {
 
             Write-Verbose "Successfully created Wizard UI: $($wizard.ToString())"
 
-            # Return the UI object to support method chaining
-            return $wizard
+            # Output the UI object to support method chaining (don't use return as it affects variable assignment)
+            $wizard
         }
         catch {
             Write-Error "Failed to create Wizard UI: $($_.Exception.Message)"
