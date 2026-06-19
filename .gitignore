@@ -66,6 +66,10 @@ metadata.json
 # MSBuild Binary and Structured Log
 *.binlog
 
+# VitePress build artifacts (config.js is tracked; these are generated)
+Docs/.vitepress/cache/
+Docs/.vitepress/dist/
+
 # Build Results
 [Dd]ebugPS/
 [Rr]eleasePS/
