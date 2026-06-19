@@ -1,6 +1,6 @@
 @{
     RootModule = 'PoshUI.Workflow.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.3.1'
     GUID = 'b2c3d4e5-f6a7-8901-bcde-f23456789012'
     Author = 'Kanders-II'
     CompanyName = 'Kanders-II'

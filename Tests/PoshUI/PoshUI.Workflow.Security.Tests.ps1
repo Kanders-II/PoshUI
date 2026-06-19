@@ -7,8 +7,7 @@
 
 .DESCRIPTION
     Comprehensive security test suite validating:
-    - DPAPI encryption/decryption
-    - HMAC-SHA256 integrity validation
+    - DPAPI authenticated encryption/decryption (integrity + confidentiality)
     - File ACL restrictions
     - Secure wipe functionality
     - Tamper detection
@@ -56,7 +55,7 @@ Describe "Workflow State Encryption" -Tag "Security", "Encryption" {
             $rawContent = Get-Content -Path $statePath -Raw
             
             # Should have encryption header
-            $rawContent | Should -Match "^POSHUI_STATE_V1:"
+            $rawContent | Should -Match "^POSHUI_STATE_V2:"
             
             # Should not contain plain text JSON
             $rawContent | Should -Not -Match '"Title"'
@@ -102,8 +101,8 @@ Describe "Workflow State Encryption" -Tag "Security", "Encryption" {
         }
     }
     
-    Context "HMAC Integrity Validation" {
-        
+    Context "Integrity Validation (DPAPI)" {
+
         It "Should detect tampered encrypted files" {
             # Create and save state
             New-PoshUIWorkflow -Title "Tamper Test" -Description "Testing integrity"
@@ -123,7 +122,7 @@ Describe "Workflow State Encryption" -Tag "Security", "Encryption" {
             { Get-UIWorkflowState -Path $statePath -ErrorAction Stop } | Should -Throw
         }
         
-        It "Should validate HMAC signature on load" {
+        It "Should load a valid (untampered) encrypted file" {
             New-PoshUIWorkflow -Title "HMAC Test" -Description "Testing HMAC"
             Add-UIStep -Name "Test" -Title "Test Step" -Order 1 -Type Workflow
             
@@ -237,11 +236,11 @@ Describe "Workflow State Encryption" -Tag "Security", "Encryption" {
             $state.ComputerName | Should -Be $env:COMPUTERNAME
         }
         
-        It "Should include user context in HMAC key" {
-            # This is validated by the fact that HMAC uses USERNAME + COMPUTERNAME
-            # If these change, HMAC validation will fail
-            
-            New-PoshUIWorkflow -Title "HMAC Key Test" -Description "Testing HMAC key binding"
+        It "Should bind encryption to the current user via DPAPI" {
+            # DPAPI CurrentUser scope binds the ciphertext to this user/machine.
+            # Decryption from a different user context fails with a CryptographicException.
+
+            New-PoshUIWorkflow -Title "HMAC Key Test" -Description "Testing user key binding"
             Add-UIStep -Name "Test" -Title "Test Step" -Order 1 -Type Workflow
             
             $statePath = Join-Path $script:TestDataDir "hmac_key_test.dat"

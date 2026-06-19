@@ -170,10 +170,14 @@ function Show-PoshUIWizard {
             
             $generatedScript = ConvertTo-UIScript -Definition $script:CurrentWizard -ScriptBody $ScriptBody
 
-            # DEBUG: Save generated script for inspection
-            $debugPath = Join-Path $env:TEMP 'PoshUI_DebugGenerated.ps1'
-            Set-Content -Path $debugPath -Value $generatedScript -Force
-            Write-Verbose "DEBUG: Generated script saved to $debugPath"
+            # Persist the generated script for inspection ONLY when explicitly debugging.
+            # Use the hardened temp-file helper (random name + restrictive ACL) so the
+            # script - which can contain sensitive defaults - is never written to a
+            # predictable, world-readable path.
+            if ($AppDebug) {
+                $debugPath = New-SecureTempFile -Content $generatedScript -Extension '.ps1'
+                Write-Verbose "DEBUG: Generated script saved to $debugPath"
+            }
 
             # Create SECURE temporary script file (using security framework)
             Write-Verbose "Creating secure temporary script file"
@@ -184,6 +188,10 @@ function Show-PoshUIWizard {
                 $context['TempFiles'] = @()
             }
             $context.TempFiles += $tempScriptPath
+
+            # Capture any pre-existing signature policy so we can restore it afterward and
+            # never silently downgrade a stricter system/organization setting.
+            $priorSigMode = $env:POSHUI_SIGNATURE_MODE
 
             # Validate script signature if requested
             if ($RequireSignedScripts) {
@@ -217,9 +225,17 @@ Script Path: $tempScriptPath
                 # Set environment variable to enforce signature checking in the executable
                 $env:POSHUI_SIGNATURE_MODE = 'Enforce'
             } else {
-                Write-Verbose "Script signature verification disabled (use -RequireSignedScripts to enable)"
-                # Explicitly set to Disabled to override any system-level settings
-                $env:POSHUI_SIGNATURE_MODE = 'Disabled'
+                # Only default to Disabled when no signature policy is already in effect.
+                # Respect an existing POSHUI_SIGNATURE_MODE / POSHWIZARD_SIGNATURE_MODE so that
+                # calling Show without -RequireSignedScripts cannot silently weaken a stricter
+                # environment/organization setting.
+                if ([string]::IsNullOrEmpty($env:POSHUI_SIGNATURE_MODE) -and
+                    [string]::IsNullOrEmpty($env:POSHWIZARD_SIGNATURE_MODE)) {
+                    Write-Verbose "No signature policy set; defaulting to Disabled (use -RequireSignedScripts to enforce)"
+                    $env:POSHUI_SIGNATURE_MODE = 'Disabled'
+                } else {
+                    Write-Verbose "Respecting existing signature policy (POSHUI_SIGNATURE_MODE='$($env:POSHUI_SIGNATURE_MODE)')"
+                }
             }
 
             try {
@@ -227,8 +243,13 @@ Script Path: $tempScriptPath
                 Write-Verbose "Invoking PoshUI.exe with secure execution (AST parsing mode)"
                 $result = Invoke-PoshUIExe -DefinitionPath $tempScriptPath -Wait -AppDebug:$AppDebug
             } finally {
-                # Clear the environment variable
-                Remove-Item Env:\POSHUI_SIGNATURE_MODE -ErrorAction SilentlyContinue
+                # Restore the prior signature policy rather than unconditionally clearing it,
+                # so a system/organization-provided value is never wiped.
+                if ([string]::IsNullOrEmpty($priorSigMode)) {
+                    Remove-Item Env:\POSHUI_SIGNATURE_MODE -ErrorAction SilentlyContinue
+                } else {
+                    $env:POSHUI_SIGNATURE_MODE = $priorSigMode
+                }
             }
             
             if ($result.ExitCode -ne 0) {

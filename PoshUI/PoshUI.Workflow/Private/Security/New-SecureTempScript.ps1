@@ -39,29 +39,31 @@ function New-SecureTempScript {
 
         if (-not (Test-Path $tempDir)) {
             Write-Verbose "Creating PoshUI temp directory: $tempDir"
-            $dir = New-Item -Path $tempDir -ItemType Directory -Force -ErrorAction Stop
-            
-            # Set restrictive ACL on directory (current user only)
-            try {
-                $acl = Get-Acl $dir.FullName
-                $acl.SetAccessRuleProtection($true, $false)  # Disable inheritance
-                
-                $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-                $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-                    $identity.Name,
-                    [System.Security.AccessControl.FileSystemRights]::FullControl,
-                    [System.Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit',
-                    [System.Security.AccessControl.PropagationFlags]::None,
-                    [System.Security.AccessControl.AccessControlType]::Allow
-                )
-                $acl.AddAccessRule($rule)
-                Set-Acl -Path $dir.FullName -AclObject $acl
-                
-                Write-Verbose "Set restrictive ACL on temp directory"
-            } catch {
-                Write-Warning "Could not set ACL on temp directory: $_"
-                # Continue anyway - file-level ACL is more critical
-            }
+            New-Item -Path $tempDir -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        }
+
+        # Always (re)assert a restrictive ACL on the directory - not only when it is first
+        # created - so a pre-existing or previously-inherited directory cannot be left
+        # accessible to other users (e.g. a folder pre-created by an attacker in a shared TEMP).
+        try {
+            $acl = Get-Acl $tempDir
+            $acl.SetAccessRuleProtection($true, $false)  # Disable inheritance
+
+            $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+            $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+                $identity.Name,
+                [System.Security.AccessControl.FileSystemRights]::FullControl,
+                [System.Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit',
+                [System.Security.AccessControl.PropagationFlags]::None,
+                [System.Security.AccessControl.AccessControlType]::Allow
+            )
+            $acl.AddAccessRule($rule)
+            Set-Acl -Path $tempDir -AclObject $acl
+
+            Write-Verbose "Set restrictive ACL on temp directory"
+        } catch {
+            Write-Warning "Could not set ACL on temp directory: $_"
+            # Continue anyway - file-level ACL is more critical
         }
         
         # Generate cryptographically secure random filename

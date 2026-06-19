@@ -87,8 +87,10 @@ function Get-UIWorkflowState {
             # Read file content
             $content = Get-Content -Path $statePath -Raw -Encoding UTF8
 
-            # Check if content is encrypted (has POSHUI_STATE_V1: header)
-            if ($content.StartsWith("POSHUI_STATE_V1:")) {
+            # Check if content is encrypted (has a versioned POSHUI_STATE_V<n>: header).
+            # Match the version-agnostic prefix so both legacy V1 and current V2 are detected;
+            # Unprotect-WorkflowState dispatches on the specific version.
+            if ($content.StartsWith("POSHUI_STATE_V")) {
                 Write-Verbose "Decrypting encrypted state file..."
                 $json = Unprotect-WorkflowState -EncryptedData $content
             }

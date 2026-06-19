@@ -1,6 +1,55 @@
 # ConvertTo-UIScript.ps1 - Script generation engine for AST parsing
 # Converts UIDefinition to a PowerShell script that the EXE can AST-parse
 
+# --- Injection-safety helpers -------------------------------------------------
+# The generated script is built by string interpolation and is then executed by
+# the PoshUI executable. Every value embedded inside a single-quoted '...' literal
+# MUST pass through ConvertTo-SafeLiteral, and every value emitted UNQUOTED as an
+# identifier (parameter/placeholder name) MUST be validated with Assert-SafeIdentifier.
+# Otherwise a value containing a single quote (or other PowerShell syntax) could
+# break out of the literal and inject arbitrary code into the generated script.
+
+function ConvertTo-SafeLiteral {
+    [OutputType([string])]
+    param([Parameter(ValueFromPipeline)][AllowNull()][object]$Value)
+    process {
+        if ($null -eq $Value) { return '' }
+        $text = [string]$Value
+        if ($text -match '[\x00-\x08\x0B\x0C\x0E-\x1F]') {
+            throw "PoshUI security: value contains disallowed control characters and cannot be embedded in the generated script."
+        }
+        return $text.Replace("'", "''")
+    }
+}
+
+function Assert-SafeIdentifier {
+    [OutputType([string])]
+    param([AllowNull()][string]$Name, [string]$Context = 'name')
+    if ([string]::IsNullOrWhiteSpace($Name) -or $Name -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$') {
+        throw "PoshUI security: invalid $Context '$Name'. Must start with a letter or underscore and contain only letters, digits and underscores (max 64 characters)."
+    }
+    return $Name
+}
+
+function ConvertTo-SafeNumericLiteral {
+    [OutputType([string])]
+    param([AllowNull()][object]$Value)
+    $parsed = 0.0
+    if (-not [double]::TryParse([string]$Value, [System.Globalization.NumberStyles]::Float -bor [System.Globalization.NumberStyles]::AllowThousands, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$parsed)) {
+        throw "PoshUI security: numeric value '$Value' is not a valid number."
+    }
+    return $parsed.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+}
+
+function ConvertTo-SafeBoolLiteral {
+    [OutputType([string])]
+    param([AllowNull()][object]$Value)
+    if ($Value -is [bool]) { if ($Value) { return '$true' } else { return '$false' } }
+    $parsed = $false
+    if ([bool]::TryParse([string]$Value, [ref]$parsed)) { if ($parsed) { return '$true' } else { return '$false' } }
+    return '$false'
+}
+
 function ConvertTo-UIScript {
     <#
     .SYNOPSIS
@@ -62,7 +111,7 @@ function ConvertTo-UIScript {
             
             # Add WindowTitleText from wizard Title if not explicitly set
             if (-not $hasExplicitWindowTitle -and (-not [string]::IsNullOrEmpty($Definition.Title))) {
-                $brandingParts += "WindowTitleText = '$($Definition.Title)'"
+                $brandingParts += "WindowTitleText = '$(ConvertTo-SafeLiteral $Definition.Title)'"
             }
             
             # Track which keys we've already added
@@ -114,27 +163,31 @@ function ConvertTo-UIScript {
                 if ([string]::IsNullOrEmpty($value)) {
                     continue
                 }
-                $brandingParts += "$key = '$value'"
+                if ($key -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$') {
+                    Write-Warning "PoshUI: skipping branding key '$key' (not a safe identifier)."
+                    continue
+                }
+                $brandingParts += "$key = '$(ConvertTo-SafeLiteral $value)'"
                 $addedKeys[$key] = $true
             }
             
             # Add SidebarHeaderText if set
             if (-not $addedKeys.ContainsKey('SidebarHeaderText') -and 
                 -not [string]::IsNullOrEmpty($Definition.SidebarHeaderText)) {
-                $brandingParts += "SidebarHeaderText = '$($Definition.SidebarHeaderText)'"
+                $brandingParts += "SidebarHeaderText = '$(ConvertTo-SafeLiteral $Definition.SidebarHeaderText)'"
                 $addedKeys['SidebarHeaderText'] = $true
             }
             
             # Add SidebarHeaderIconPath if set
             if (-not $addedKeys.ContainsKey('SidebarHeaderIconPath') -and 
                 -not [string]::IsNullOrEmpty($Definition.SidebarHeaderIcon)) {
-                $brandingParts += "SidebarHeaderIconPath = '$($Definition.SidebarHeaderIcon)'"
+                $brandingParts += "SidebarHeaderIconPath = '$(ConvertTo-SafeLiteral $Definition.SidebarHeaderIcon)'"
                 $addedKeys['SidebarHeaderIconPath'] = $true
             }
             
             # Add Theme
             if (-not [string]::IsNullOrEmpty($Definition.Theme)) {
-                $brandingParts += "Theme = '$($Definition.Theme)'"
+                $brandingParts += "Theme = '$(ConvertTo-SafeLiteral $Definition.Theme)'"
             }
             
             $brandingAttribute = "[WizardBranding($($brandingParts -join ', '))]"
@@ -215,12 +268,12 @@ function Convert-UIFormStep {
         # First NON-CARD control gets the UIStep attribute
         if ($isFirstNonCardControl -and -not $isCard) {
             $lines += "    [Parameter(Mandatory=`$$($control.Mandatory.ToString().ToLower()))]" 
-            $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order)"
+            $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order)"
             if ($Step.Description) {
-                $stepAttribute += ", Description='$($Step.Description)'"
+                $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
             }
             if ($Step.Icon) {
-                $stepAttribute += ", IconPath='$($Step.Icon)'"
+                $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
             }
             $stepAttribute += ")]"
             $lines += "    $stepAttribute"
@@ -228,25 +281,25 @@ function Convert-UIFormStep {
         } elseif (-not $isCard) {
             # Subsequent non-card controls
             $lines += "    [Parameter(Mandatory=`$$($control.Mandatory.ToString().ToLower()))]"
-            $lines += "    [WizardStep('$($Step.Title)', $($Step.Order))]"
+            $lines += "    [WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order))]"
         } else {
             # Card controls
             if ($isFirstNonCardControl -and ($Step.Controls | Where-Object { $_.Type -ne 'Card' }).Count -eq 0) {
                 # Step has ONLY cards
                 $lines += "    [Parameter(Mandatory=`$false)]"
-                $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order)"
+                $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order)"
                 if ($Step.Description) {
-                    $stepAttribute += ", Description='$($Step.Description)'"
+                    $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
                 }
                 if ($Step.Icon) {
-                    $stepAttribute += ", IconPath='$($Step.Icon)'"
+                    $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
                 }
                 $stepAttribute += ")]"
                 $lines += "    $stepAttribute"
                 $isFirstNonCardControl = $false
             } else {
                 $lines += "    [Parameter(Mandatory=`$false)]"
-                $lines += "    [WizardStep('$($Step.Title)', $($Step.Order))]"
+                $lines += "    [WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order))]"
             }
         }
         
@@ -262,7 +315,7 @@ function Convert-UIControl {
     $lines = @()
     
     # Add parameter details attribute
-    $detailsAttribute = "[WizardParameterDetails(Label='$($Control.Label)'"
+    $detailsAttribute = "[WizardParameterDetails(Label='$(ConvertTo-SafeLiteral $Control.Label)'"
     if ($Control.Width -gt 0) {
         $detailsAttribute += ", ControlWidth=$($Control.Width)"
     }
@@ -277,7 +330,7 @@ function Convert-UIControl {
     
     # Add validation attributes (not for Password - SecureString does not support ValidatePattern)
     if ($Control.ValidationPattern -and $Control.Type -ne 'Password') {
-        $lines += "    [ValidatePattern('$($Control.ValidationPattern)')]"
+        $lines += "    [ValidatePattern('$(ConvertTo-SafeLiteral $Control.ValidationPattern)')]"
     }
     
     # Add type-specific attributes and parameter declaration
@@ -379,7 +432,7 @@ function Convert-UIControl {
             }
             # Fall back to static choices if no scriptblock
             elseif ($Control.Choices -and $Control.Choices.Count -gt 0) {
-                $choicesString = ($Control.Choices | ForEach-Object { "'$_'" }) -join ', '
+                $choicesString = ($Control.Choices | ForEach-Object { "'$(ConvertTo-SafeLiteral $_)'" }) -join ', '
                 $lines += "    [ValidateSet($choicesString)]"
             }
             $paramType = '[string]'
@@ -397,7 +450,7 @@ function Convert-UIControl {
             }
             # Fall back to static choices if no scriptblock
             elseif ($Control.Choices -and $Control.Choices.Count -gt 0) {
-                $choicesString = ($Control.Choices | ForEach-Object { "'$_'" }) -join ', '
+                $choicesString = ($Control.Choices | ForEach-Object { "'$(ConvertTo-SafeLiteral $_)'" }) -join ', '
                 $lines += "    [ValidateSet($choicesString)]"
             }
             $isMultiSelect = $Control.GetPropertyOrDefault('IsMultiSelect', $false)
@@ -466,7 +519,7 @@ function Convert-UIControl {
         }
         'OptionGroup' {
             if ($Control.Choices -and $Control.Choices.Count -gt 0) {
-                $choicesString = ($Control.Choices | ForEach-Object { "'$_'" }) -join ', '
+                $choicesString = ($Control.Choices | ForEach-Object { "'$(ConvertTo-SafeLiteral $_)'" }) -join ', '
                 $lines += "    [ValidateSet($choicesString)]"
             }
             
@@ -475,11 +528,11 @@ function Convert-UIControl {
             $orientation = $Control.GetPropertyOrDefault('Orientation', 'Vertical')
             $arguments = @()
             if ($Control.Choices) {
-                $arguments += ($Control.Choices | ForEach-Object { "'$_'" })
+                $arguments += ($Control.Choices | ForEach-Object { "'$(ConvertTo-SafeLiteral $_)'" })
             }
             
             $orientationArg = if ($orientation -and $orientation -ne 'Vertical') {
-                "Orientation='$orientation'"
+                "Orientation='$(ConvertTo-SafeLiteral $orientation)'"
             } else {
                 $null
             }
@@ -498,9 +551,8 @@ function Convert-UIControl {
                 }
             }
             
-        } else {
-                $lines += "    $optionAttribute"
-            }
+            $lines += "    $optionAttribute"
+        }
             'Card' {
                 $title = $Control.GetPropertyOrDefault('CardTitle', $null)
                 $content = $Control.GetPropertyOrDefault('CardContent', $null)
@@ -540,22 +592,22 @@ function Convert-UIControl {
                     if ($icon -match '&#x([0-9A-Fa-f]+);') {
                         $hexValue = $matches[1]
                         $unicodeChar = [char]::ConvertFromUtf32([int]"0x$hexValue")
-                        $namedArgs += "Icon='$unicodeChar'"
+                        $namedArgs += "Icon='$(ConvertTo-SafeLiteral $unicodeChar)'"
                     } else {
-                        $namedArgs += "Icon='$icon'"
+                        $namedArgs += "Icon='$(ConvertTo-SafeLiteral $icon)'"
                     }
                 }
-                if ($iconPath) { $namedArgs += "IconPath='$iconPath'" }
-                if ($imagePath) { $namedArgs += "ImagePath='$imagePath'" }
-                if ($linkUrl) { $namedArgs += "LinkUrl='$linkUrl'" }
-                if ($linkText -and $linkText -ne 'Learn more') { $namedArgs += "LinkText='$linkText'" }
-                if ($bgColor) { $namedArgs += "BackgroundColor='$bgColor'" }
+                if ($iconPath) { $namedArgs += "IconPath='$(ConvertTo-SafeLiteral $iconPath)'" }
+                if ($imagePath) { $namedArgs += "ImagePath='$(ConvertTo-SafeLiteral $imagePath)'" }
+                if ($linkUrl) { $namedArgs += "LinkUrl='$(ConvertTo-SafeLiteral $linkUrl)'" }
+                if ($linkText -and $linkText -ne 'Learn more') { $namedArgs += "LinkText='$(ConvertTo-SafeLiteral $linkText)'" }
+                if ($bgColor) { $namedArgs += "BackgroundColor='$(ConvertTo-SafeLiteral $bgColor)'" }
                 
                 # Add gradient properties
                 $gradientStart = $Control.GetPropertyOrDefault('CardGradientStart', $null)
                 $gradientEnd = $Control.GetPropertyOrDefault('CardGradientEnd', $null)
-                if ($gradientStart) { $namedArgs += "GradientStart='$gradientStart'" }
-                if ($gradientEnd) { $namedArgs += "GradientEnd='$gradientEnd'" }
+                if ($gradientStart) { $namedArgs += "GradientStart='$(ConvertTo-SafeLiteral $gradientStart)'" }
+                if ($gradientEnd) { $namedArgs += "GradientEnd='$(ConvertTo-SafeLiteral $gradientEnd)'" }
                 
                 # Add other styling properties
                 $titleColor = $Control.GetPropertyOrDefault('CardTitleColor', $null)
@@ -563,10 +615,10 @@ function Convert-UIControl {
                 $cornerRadius = $Control.GetPropertyOrDefault('CardCornerRadius', $null)
                 $imageOpacity = $Control.GetPropertyOrDefault('CardImageOpacity', $null)
                 
-                if ($titleColor) { $namedArgs += "TitleColor='$titleColor'" }
-                if ($contentColor) { $namedArgs += "ContentColor='$contentColor'" }
-                if ($cornerRadius) { $namedArgs += "CornerRadius=$cornerRadius" }
-                if ($imageOpacity) { $namedArgs += "ImageOpacity=$imageOpacity" }
+                if ($titleColor) { $namedArgs += "TitleColor='$(ConvertTo-SafeLiteral $titleColor)'" }
+                if ($contentColor) { $namedArgs += "ContentColor='$(ConvertTo-SafeLiteral $contentColor)'" }
+                if ($cornerRadius) { $namedArgs += "CornerRadius=$(ConvertTo-SafeNumericLiteral $cornerRadius)" }
+                if ($imageOpacity) { $namedArgs += "ImageOpacity=$(ConvertTo-SafeNumericLiteral $imageOpacity)" }
                 
                 if ($namedArgs.Count -gt 0) {
                     $lines += "    [WizardCard('$escapedTitle', '$escapedContent', $($namedArgs -join ', '))]"
@@ -647,7 +699,7 @@ function Convert-UIControl {
                 $dialogTitle = $Control.GetPropertyOrDefault('DialogTitle', $null)
                 
                 if ($filter) {
-                    $pathProps += "Filter='$filter'"
+                    $pathProps += "Filter='$(ConvertTo-SafeLiteral $filter)'"
                 }
                 if ($dialogTitle) {
                     $escapedTitle = $dialogTitle -replace "'", "''"
@@ -671,38 +723,39 @@ function Convert-UIControl {
         }
         
         # Add parameter declaration with proper default value formatting
-        $paramDeclaration = "    $paramType`$$($Control.Name)"
+        $paramDeclaration = "    $paramType`$$(Assert-SafeIdentifier $Control.Name 'control name')"
         if ($null -ne $Control.Default -and $Control.Default -ne '') {
             # Format default value based on type
             if ($Control.Type -in @('Checkbox', 'Toggle')) {
-                $paramDeclaration += " = `$$($Control.Default)"
+                $paramDeclaration += " = $(ConvertTo-SafeBoolLiteral $Control.Default)"
             }
             elseif ($Control.Type -eq 'Password') {
                 # SecureString types do not have defaults
             }
             elseif ($Control.Type -eq 'Numeric') {
-                $paramDeclaration += " = $($Control.Default.ToString([System.Globalization.CultureInfo]::InvariantCulture))"
+                $paramDeclaration += " = $(ConvertTo-SafeNumericLiteral $Control.Default)"
             }
             elseif ($Control.Type -eq 'Date') {
                 if ($Control.Default -is [DateTime]) {
                     $dateLiteral = $Control.Default.ToString('yyyy-MM-dd')
                     $paramDeclaration += " = '$dateLiteral'"
-                $paramDeclaration += " = '$($Control.Default)'"
+                } else {
+                    $paramDeclaration += " = '$(ConvertTo-SafeLiteral $Control.Default)'"
+                }
             }
-        }
         elseif ($Control.Type -eq 'ListBox' -and $paramType -eq '[string[]]') {
             if ($Control.Default -is [array]) {
-                $defaultArray = ($Control.Default | ForEach-Object { "'$_'" }) -join ', '
+                $defaultArray = ($Control.Default | ForEach-Object { "'$(ConvertTo-SafeLiteral $_)'" }) -join ', '
                 $paramDeclaration += " = @($defaultArray)"
             } else {
-                $paramDeclaration += " = @('$($Control.Default)')"
+                $paramDeclaration += " = @('$(ConvertTo-SafeLiteral $Control.Default)')"
             }
         }
         elseif ($Control.Type -eq 'Card') {
             # Cards do not have default values
         }
         else {
-            $paramDeclaration += " = '$($Control.Default)'"
+            $paramDeclaration += " = '$(ConvertTo-SafeLiteral $Control.Default)'"
         }
     }
     $paramDeclaration += ","

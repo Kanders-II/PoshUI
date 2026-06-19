@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.1] - 2026-06-18
+
+Security hardening and bug-fix release. No changes to the public cmdlet API.
+
+### Security
+
+- **Eliminated script injection in the script generator** - `ConvertTo-UIScript` (PoshUI.Wizard and PoshUI.Workflow) now escapes every interpolated definition value (titles, labels, choices, defaults, branding keys/values, step metadata, card/banner properties) for safe embedding in single-quoted PowerShell literals, and validates control/step names as safe identifiers. Previously a value containing a single quote - or one sourced from dynamic/external data - could break out of the generated string and execute arbitrary code when the wizard ran.
+- **Repaired the value escaper** - `ConvertTo-SafeScriptValue`'s boolean branch used `return if (...)`, which threw at runtime; fixed in all three modules.
+- **Removed predictable generated-script disclosure** - `Show-PoshUIWizard` / `Show-PoshUIWorkflow` no longer write the generated script to a fixed `%TEMP%\PoshUI_*.ps1` path on every run. The debug dump is now gated behind `-AppDebug` and written through the hardened secure-temp helper (cryptographically random filename + restrictive ACL).
+- **Stronger workflow-state integrity** - `Protect-WorkflowState` now relies on DPAPI authenticated encryption instead of an HMAC keyed on guessable values (username + computer name). New `POSHUI_STATE_V2` format; legacy `V1` state files are still read.
+- **No signature-policy downgrade** - calling `Show-*` without `-RequireSignedScripts` no longer forces `POSHUI_SIGNATURE_MODE=Disabled` over a stricter environment/organization setting; the prior value is respected and restored.
+- **Temp-directory hardening** - `New-SecureTempFile` / `New-SecureTempScript` re-assert the restrictive directory ACL on every run, not only when the directory is first created.
+- **Secret redaction in persisted state** - `Set-UIState` redacts secret-named fields (password/token/credential/etc.) and `SecureString` / `PSCredential` values before writing form data to the registry.
+- **Release tooling** - `Publish-PoshUIRelease` now zeroes and frees the unmanaged buffer holding the PowerShell Gallery API key.
+
+### Fixed
+
+- **Fixed OptionGroup attribute being dropped** - a stray `} else {` in `ConvertTo-UIScript` made the `[WizardOptionGroup(...)]` attribute (choices + orientation) unreachable; OptionGroup controls now render correctly.
+- **Fixed Date default double-append** - a `DateTime` default value was emitted twice, producing a malformed parameter default; date defaults now render exactly once (`DateTime` formatted as `yyyy-MM-dd`, string values passed through).
+- **Fixed verbose logging** - corrected `${var.Length}` string interpolation in workflow state encryption logging.
+
+### Notes
+
+- Workflow state files are now written in the `POSHUI_STATE_V2` format. The current modules read both `V1` and `V2`; files written by 1.3.1 cannot be read by earlier versions.
+
+---
+
 ## [1.3.0] - 2026-03-23
 
 ### Dual-Mode Custom Themes

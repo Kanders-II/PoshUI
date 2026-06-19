@@ -74,7 +74,22 @@ function Set-UIState {
             }
 
             if ($PSBoundParameters.ContainsKey('FormData')) {
-                $formDataJson = $FormData | ConvertTo-Json -Depth 10 -Compress
+                # Avoid persisting sensitive values as plaintext in the registry. Redact values
+                # whose key name suggests a secret, and never serialize SecureString / PSCredential.
+                $safeFormData = @{}
+                foreach ($entry in $FormData.GetEnumerator()) {
+                    if ($entry.Key -match '(?i)pass(word|phrase)?|secret|token|credential|apikey|api[_-]?key|pwd') {
+                        $safeFormData[$entry.Key] = '***REDACTED***'
+                    }
+                    elseif ($entry.Value -is [System.Security.SecureString] -or
+                            $entry.Value -is [System.Management.Automation.PSCredential]) {
+                        $safeFormData[$entry.Key] = '***REDACTED***'
+                    }
+                    else {
+                        $safeFormData[$entry.Key] = $entry.Value
+                    }
+                }
+                $formDataJson = $safeFormData | ConvertTo-Json -Depth 10 -Compress
                 Set-ItemProperty -Path $sessionPath -Name 'FormData' -Value $formDataJson
             }
 
