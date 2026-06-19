@@ -124,14 +124,17 @@
                 throw "Control with name '$Name' already exists in step '$Step'"
             }
 
-            if ($Minimum.HasValue -and $Maximum.HasValue -and $Minimum.Value -gt $Maximum.Value) {
+            # PowerShell unwraps [Nullable[double]] parameters to a plain [double]
+            # (or $null when unbound), so '$X.HasValue' never fires. Guard on
+            # '$null -ne $X' and use the bound value directly.
+            if (($null -ne $Minimum) -and ($null -ne $Maximum) -and ($Minimum -gt $Maximum)) {
                 throw "Minimum value $Minimum cannot exceed maximum value $Maximum."
             }
 
             # Determine the increment for the numeric spinner
             if ($PSBoundParameters.ContainsKey('Increment') -or $PSBoundParameters.ContainsKey('StepSize')) {
-                if ($Increment.HasValue) {
-                    $calculatedStep = [double]$Increment.Value
+                if ($null -ne $Increment) {
+                    $calculatedStep = [double]$Increment
                 } else {
                     # Increment parameter was passed but is null - use default
                     $calculatedStep = if ($AllowDecimal.IsPresent) { 0.1 } else { 1.0 }
@@ -145,21 +148,21 @@
                 throw "Step size must be greater than 0."
             }
 
-            if ($Default.HasValue) {
-                if ($Minimum.HasValue -and $Default.Value -lt $Minimum.Value) {
-                    throw "Default value $($Default.Value) is below the minimum $($Minimum.Value)."
+            if ($null -ne $Default) {
+                if (($null -ne $Minimum) -and ($Default -lt $Minimum)) {
+                    throw "Default value $Default is below the minimum $Minimum."
                 }
-                if ($Maximum.HasValue -and $Default.Value -gt $Maximum.Value) {
-                    throw "Default value $($Default.Value) exceeds the maximum $($Maximum.Value)."
+                if (($null -ne $Maximum) -and ($Default -gt $Maximum)) {
+                    throw "Default value $Default exceeds the maximum $Maximum."
                 }
-                if (-not $AllowDecimal.IsPresent -and ($Default.Value % 1) -ne 0) {
+                if (-not $AllowDecimal.IsPresent -and ($Default % 1) -ne 0) {
                     throw "Default value must be an integer when -AllowDecimal is not specified."
                 }
             }
 
             $control = [UIControl]::new($Name, $Label, 'Numeric')
-            if ($Default.HasValue) {
-                $control.Default = $Default.Value
+            if ($null -ne $Default) {
+                $control.Default = $Default
             }
             $control.Mandatory = $Mandatory.IsPresent
             $control.HelpText = $HelpText
