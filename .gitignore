@@ -2,6 +2,14 @@
 ## Copyright (c) 2025 A Solution IT LLC
 
 #################
+## Node.js
+#################
+
+node_modules/
+npm-debug.log*
+.npm/
+
+#################
 ## Visual Studio / .NET
 #################
 
