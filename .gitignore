@@ -134,6 +134,7 @@ coverage/
 
 # Exclude test projects
 Launcher.Tests/
+Tests/
 
 #################
 ## Sensitive Information
