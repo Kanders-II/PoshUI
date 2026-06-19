@@ -8,7 +8,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
+[![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -112,6 +112,7 @@ Show-PoshUIWizard -ScriptBody {
 - **PNG Icon Support** - Full-color PNG/ICO icons on steps, cards, banners, and branding *(v1.3.0)*
 - **Live Execution Console** - Real-time output display during script execution
 - **CMTrace Logging** - Enterprise-ready audit trails
+- **Security Hardened** - Injection-safe script generation, DPAPI-encrypted workflow state, ACL-restricted temp files, and optional signed-script enforcement *(v1.3.1)*
 - **Zero Dependencies** - No third-party libraries or NuGet packages
 
 ---

@@ -83,13 +83,13 @@ function ConvertTo-SafeScriptValue {
             { $_ -in @('Bool', 'Boolean') } {
                 # Convert to boolean
                 if ($Value -is [bool]) {
-                    return if ($Value) { '$true' } else { '$false' }
+                    if ($Value) { return '$true' } else { return '$false' }
                 }
-                
+
                 # Try parsing string representation
                 $boolValue = $false
                 if ([bool]::TryParse($Value, [ref]$boolValue)) {
-                    return if ($boolValue) { '$true' } else { '$false' }
+                    if ($boolValue) { return '$true' } else { return '$false' }
                 }
                 
                 # Default to false for safety

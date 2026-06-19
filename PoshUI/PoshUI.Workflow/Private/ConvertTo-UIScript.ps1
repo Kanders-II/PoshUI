@@ -1,6 +1,55 @@
 # ConvertTo-UIScript.ps1 - Script generation engine for Workflow AST parsing
 # Converts UIDefinition with workflow tasks to a PowerShell script that the EXE can AST-parse
 
+# --- Injection-safety helpers -------------------------------------------------
+# The generated script is built by string interpolation and is then executed by
+# the PoshUI executable. Every value embedded inside a single-quoted '...' literal
+# MUST pass through ConvertTo-SafeLiteral, and every value emitted UNQUOTED as an
+# identifier (parameter/placeholder name) MUST be validated with Assert-SafeIdentifier.
+# Otherwise a value containing a single quote (or other PowerShell syntax) could
+# break out of the literal and inject arbitrary code into the generated script.
+
+function ConvertTo-SafeLiteral {
+    [OutputType([string])]
+    param([Parameter(ValueFromPipeline)][AllowNull()][object]$Value)
+    process {
+        if ($null -eq $Value) { return '' }
+        $text = [string]$Value
+        if ($text -match '[\x00-\x08\x0B\x0C\x0E-\x1F]') {
+            throw "PoshUI security: value contains disallowed control characters and cannot be embedded in the generated script."
+        }
+        return $text.Replace("'", "''")
+    }
+}
+
+function Assert-SafeIdentifier {
+    [OutputType([string])]
+    param([AllowNull()][string]$Name, [string]$Context = 'name')
+    if ([string]::IsNullOrWhiteSpace($Name) -or $Name -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$') {
+        throw "PoshUI security: invalid $Context '$Name'. Must start with a letter or underscore and contain only letters, digits and underscores (max 64 characters)."
+    }
+    return $Name
+}
+
+function ConvertTo-SafeNumericLiteral {
+    [OutputType([string])]
+    param([AllowNull()][object]$Value)
+    $parsed = 0.0
+    if (-not [double]::TryParse([string]$Value, [System.Globalization.NumberStyles]::Float -bor [System.Globalization.NumberStyles]::AllowThousands, [System.Globalization.CultureInfo]::InvariantCulture, [ref]$parsed)) {
+        throw "PoshUI security: numeric value '$Value' is not a valid number."
+    }
+    return $parsed.ToString([System.Globalization.CultureInfo]::InvariantCulture)
+}
+
+function ConvertTo-SafeBoolLiteral {
+    [OutputType([string])]
+    param([AllowNull()][object]$Value)
+    if ($Value -is [bool]) { if ($Value) { return '$true' } else { return '$false' } }
+    $parsed = $false
+    if ([bool]::TryParse([string]$Value, [ref]$parsed)) { if ($parsed) { return '$true' } else { return '$false' } }
+    return '$false'
+}
+
 function ConvertTo-UIScript {
     <#
     .SYNOPSIS
@@ -52,7 +101,7 @@ function ConvertTo-UIScript {
                                      (-not [string]::IsNullOrEmpty($Definition.Branding['WindowTitleText']))
             
             if (-not $hasExplicitWindowTitle -and (-not [string]::IsNullOrEmpty($Definition.Title))) {
-                $brandingParts += "WindowTitleText = '$($Definition.Title)'"
+                $brandingParts += "WindowTitleText = '$(ConvertTo-SafeLiteral $Definition.Title)'"
             }
             
             $addedKeys = @{}
@@ -95,22 +144,26 @@ function ConvertTo-UIScript {
                 if ([string]::IsNullOrEmpty($value)) {
                     continue
                 }
-                $brandingParts += "$key = '$value'"
+                if ($key -notmatch '^[A-Za-z_][A-Za-z0-9_]{0,63}$') {
+                    Write-Warning "PoshUI: skipping branding key '$key' (not a safe identifier)."
+                    continue
+                }
+                $brandingParts += "$key = '$(ConvertTo-SafeLiteral $value)'"
                 $addedKeys[$key] = $true
             }
             
             if (-not $addedKeys.ContainsKey('SidebarHeaderText') -and 
                 -not [string]::IsNullOrEmpty($Definition.SidebarHeaderText)) {
-                $brandingParts += "SidebarHeaderText = '$($Definition.SidebarHeaderText)'"
+                $brandingParts += "SidebarHeaderText = '$(ConvertTo-SafeLiteral $Definition.SidebarHeaderText)'"
             }
             
             if (-not $addedKeys.ContainsKey('SidebarHeaderIconPath') -and 
                 -not [string]::IsNullOrEmpty($Definition.SidebarHeaderIcon)) {
-                $brandingParts += "SidebarHeaderIconPath = '$($Definition.SidebarHeaderIcon)'"
+                $brandingParts += "SidebarHeaderIconPath = '$(ConvertTo-SafeLiteral $Definition.SidebarHeaderIcon)'"
             }
             
             if (-not [string]::IsNullOrEmpty($Definition.Theme)) {
-                $brandingParts += "Theme = '$($Definition.Theme)'"
+                $brandingParts += "Theme = '$(ConvertTo-SafeLiteral $Definition.Theme)'"
             }
             
             # Check if this is a resume scenario - skip to workflow step
@@ -211,16 +264,16 @@ function Convert-UIWorkflowStep {
     if (-not $workflow -or $workflow.Tasks.Count -eq 0) {
         Write-Warning "Workflow step '$($Step.Name)' has no tasks"
         $lines += "    [Parameter(Mandatory=`$false)]"
-        $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order), PageType='Workflow'"
+        $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order), PageType='Workflow'"
         if ($Step.Description) {
-            $stepAttribute += ", Description='$($Step.Description)'"
+            $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
         }
         if ($Step.Icon) {
-            $stepAttribute += ", IconPath='$($Step.Icon)'"
+            $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
         }
         $stepAttribute += ")]"
         $lines += "    $stepAttribute"
-        $lines += "    [string]`$WorkflowPlaceholder_$($Step.Name),"
+        $lines += "    [string]`$WorkflowPlaceholder_$(Assert-SafeIdentifier $Step.Name 'step name'),"
         return $lines
     }
     
@@ -285,19 +338,19 @@ function Convert-UIWorkflowStep {
     $lines += "    [Parameter(Mandatory=`$false)]"
     
     # Add step attribute with Workflow type
-    $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order), PageType='Workflow'"
+    $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order), PageType='Workflow'"
     if ($Step.Description) {
-        $stepAttribute += ", Description='$($Step.Description)'"
+        $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
     }
     if ($Step.Icon) {
-        $stepAttribute += ", IconPath='$($Step.Icon)'"
+        $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
     }
     $stepAttribute += ")]"
     $lines += "    $stepAttribute"
-    
+
     # Add workflow tasks attribute with JSON
     $lines += "    [WizardWorkflowTasks('$escapedJson')]"
-    $lines += "    [string]`$WorkflowTasks_$($Step.Name),"
+    $lines += "    [string]`$WorkflowTasks_$(Assert-SafeIdentifier $Step.Name 'step name'),"
     
     return $lines
 }
@@ -319,12 +372,12 @@ function Convert-UIFormStep {
     if ($inputControls.Count -eq 0) {
         # Step has no input controls - create placeholder with display controls
         $lines += "    [Parameter(Mandatory=`$false)]"
-        $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order)"
+        $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order)"
         if ($Step.Description) {
-            $stepAttribute += ", Description='$($Step.Description)'"
+            $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
         }
         if ($Step.Icon) {
-            $stepAttribute += ", IconPath='$($Step.Icon)'"
+            $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
         }
         $stepAttribute += ")]"
         $lines += "    $stepAttribute"
@@ -334,19 +387,19 @@ function Convert-UIFormStep {
             $lines += Convert-UIDisplayControl -Control $dc
         }
         
-        $lines += "    [string]`$StepPlaceholder_$($Step.Name),"
+        $lines += "    [string]`$StepPlaceholder_$(Assert-SafeIdentifier $Step.Name 'step name'),"
         return $lines
     }
     
     # First, add a placeholder parameter for Banner/Card display controls
     if ($displayControls.Count -gt 0) {
         $lines += "    [Parameter(Mandatory=`$false)]"
-        $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order)"
+        $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order)"
         if ($Step.Description) {
-            $stepAttribute += ", Description='$($Step.Description)'"
+            $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
         }
         if ($Step.Icon) {
-            $stepAttribute += ", IconPath='$($Step.Icon)'"
+            $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
         }
         $stepAttribute += ")]"
         $lines += "    $stepAttribute"
@@ -356,7 +409,7 @@ function Convert-UIFormStep {
             $lines += Convert-UIDisplayControl -Control $dc
         }
         
-        $lines += "    [string]`$DisplayPlaceholder_$($Step.Name),"
+        $lines += "    [string]`$DisplayPlaceholder_$(Assert-SafeIdentifier $Step.Name 'step name'),"
         $lines += ""
     }
     
@@ -367,19 +420,19 @@ function Convert-UIFormStep {
         if ($isFirstControl -and $displayControls.Count -eq 0) {
             # Only add step attribute to first control if no display controls
             $lines += "    [Parameter(Mandatory=`$$($control.Mandatory.ToString().ToLower()))]" 
-            $stepAttribute = "[WizardStep('$($Step.Title)', $($Step.Order)"
+            $stepAttribute = "[WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order)"
             if ($Step.Description) {
-                $stepAttribute += ", Description='$($Step.Description)'"
+                $stepAttribute += ", Description='$(ConvertTo-SafeLiteral $Step.Description)'"
             }
             if ($Step.Icon) {
-                $stepAttribute += ", IconPath='$($Step.Icon)'"
+                $stepAttribute += ", IconPath='$(ConvertTo-SafeLiteral $Step.Icon)'"
             }
             $stepAttribute += ")]"
             $lines += "    $stepAttribute"
             $isFirstControl = $false
         } else {
             $lines += "    [Parameter(Mandatory=`$$($control.Mandatory.ToString().ToLower()))]"
-            $lines += "    [WizardStep('$($Step.Title)', $($Step.Order))]"
+            $lines += "    [WizardStep('$(ConvertTo-SafeLiteral $Step.Title)', $($Step.Order))]"
         }
         
         $lines += Convert-UIControl -Control $control
@@ -456,7 +509,7 @@ function Convert-UIDisplayControl {
         $cardParts = @()
         
         $title = $Control.GetPropertyOrDefault('CardTitle', $Control.Label)
-        if ($title) { $cardParts += "Title='$title'" }
+        if ($title) { $cardParts += "Title='$(ConvertTo-SafeLiteral $title)'" }
         
         $content = $Control.GetPropertyOrDefault('CardContent', $null)
         if ($content) { 
@@ -465,7 +518,7 @@ function Convert-UIDisplayControl {
         }
         
         $cardType = $Control.GetPropertyOrDefault('CardType', $null)
-        if ($cardType) { $cardParts += "Type='$cardType'" }
+        if ($cardType) { $cardParts += "Type='$(ConvertTo-SafeLiteral $cardType)'" }
         
         $icon = $Control.GetPropertyOrDefault('CardIcon', $null)
         if ($icon) {
@@ -475,38 +528,38 @@ function Convert-UIDisplayControl {
                 $charCode = [Convert]::ToInt32($hexValue, 16)
                 $icon = [char]$charCode
             }
-            $cardParts += "Icon='$icon'"
+            $cardParts += "Icon='$(ConvertTo-SafeLiteral $icon)'"
         }
         
         $iconPath = $Control.GetPropertyOrDefault('CardIconPath', $null)
-        if ($iconPath) { $cardParts += "IconPath='$iconPath'" }
+        if ($iconPath) { $cardParts += "IconPath='$(ConvertTo-SafeLiteral $iconPath)'" }
         
         $imagePath = $Control.GetPropertyOrDefault('CardImagePath', $null)
-        if ($imagePath) { $cardParts += "ImagePath='$imagePath'" }
+        if ($imagePath) { $cardParts += "ImagePath='$(ConvertTo-SafeLiteral $imagePath)'" }
         
         $linkUrl = $Control.GetPropertyOrDefault('CardLinkUrl', $null)
-        if ($linkUrl) { $cardParts += "LinkUrl='$linkUrl'" }
+        if ($linkUrl) { $cardParts += "LinkUrl='$(ConvertTo-SafeLiteral $linkUrl)'" }
         
         $linkText = $Control.GetPropertyOrDefault('CardLinkText', $null)
-        if ($linkText) { $cardParts += "LinkText='$linkText'" }
+        if ($linkText) { $cardParts += "LinkText='$(ConvertTo-SafeLiteral $linkText)'" }
         
         $bgColor = $Control.GetPropertyOrDefault('CardBackgroundColor', $null)
-        if ($bgColor) { $cardParts += "BackgroundColor='$bgColor'" }
+        if ($bgColor) { $cardParts += "BackgroundColor='$(ConvertTo-SafeLiteral $bgColor)'" }
         
         $titleColor = $Control.GetPropertyOrDefault('CardTitleColor', $null)
-        if ($titleColor) { $cardParts += "TitleColor='$titleColor'" }
+        if ($titleColor) { $cardParts += "TitleColor='$(ConvertTo-SafeLiteral $titleColor)'" }
         
         $contentColor = $Control.GetPropertyOrDefault('CardContentColor', $null)
-        if ($contentColor) { $cardParts += "ContentColor='$contentColor'" }
+        if ($contentColor) { $cardParts += "ContentColor='$(ConvertTo-SafeLiteral $contentColor)'" }
         
         $cornerRadius = $Control.GetPropertyOrDefault('CardCornerRadius', $null)
-        if ($cornerRadius) { $cardParts += "CornerRadius=$cornerRadius" }
+        if ($cornerRadius) { $cardParts += "CornerRadius=$(ConvertTo-SafeNumericLiteral $cornerRadius)" }
         
         $gradientStart = $Control.GetPropertyOrDefault('CardGradientStart', $null)
-        if ($gradientStart) { $cardParts += "GradientStart='$gradientStart'" }
+        if ($gradientStart) { $cardParts += "GradientStart='$(ConvertTo-SafeLiteral $gradientStart)'" }
         
         $gradientEnd = $Control.GetPropertyOrDefault('CardGradientEnd', $null)
-        if ($gradientEnd) { $cardParts += "GradientEnd='$gradientEnd'" }
+        if ($gradientEnd) { $cardParts += "GradientEnd='$(ConvertTo-SafeLiteral $gradientEnd)'" }
         
         $cardAttr += ($cardParts -join ', ') + ")]"
         $lines += "    $cardAttr"
@@ -521,7 +574,7 @@ function Convert-UIControl {
     $lines = @()
     
     # Add parameter details attribute
-    $detailsAttribute = "[WizardParameterDetails(Label='$($Control.Label)'"
+    $detailsAttribute = "[WizardParameterDetails(Label='$(ConvertTo-SafeLiteral $Control.Label)'"
     if ($Control.Width -gt 0) {
         $detailsAttribute += ", ControlWidth=$($Control.Width)"
     }
@@ -547,7 +600,7 @@ function Convert-UIControl {
         }
         'Dropdown' {
             if ($Control.Choices -and $Control.Choices.Count -gt 0) {
-                $choicesString = ($Control.Choices | ForEach-Object { "'$_'" }) -join ', '
+                $choicesString = ($Control.Choices | ForEach-Object { "'$(ConvertTo-SafeLiteral $_)'" }) -join ', '
                 $lines += "    [ValidateSet($choicesString)]"
             }
         }
@@ -562,16 +615,16 @@ function Convert-UIControl {
     }
     
     # Add parameter declaration
-    $paramDeclaration = "    $paramType`$$($Control.Name)"
+    $paramDeclaration = "    $paramType`$$(Assert-SafeIdentifier $Control.Name 'control name')"
     if ($null -ne $Control.Default -and $Control.Default -ne '') {
         if ($Control.Type -in @('Checkbox', 'Toggle')) {
-            $paramDeclaration += " = `$$($Control.Default)"
+            $paramDeclaration += " = $(ConvertTo-SafeBoolLiteral $Control.Default)"
         }
         elseif ($Control.Type -eq 'Numeric') {
-            $paramDeclaration += " = $($Control.Default)"
+            $paramDeclaration += " = $(ConvertTo-SafeNumericLiteral $Control.Default)"
         }
         elseif ($Control.Type -ne 'Password') {
-            $paramDeclaration += " = '$($Control.Default)'"
+            $paramDeclaration += " = '$(ConvertTo-SafeLiteral $Control.Default)'"
         }
     }
     $paramDeclaration += ","

@@ -1,6 +1,6 @@
 @{
     RootModule = 'PoshUI.Wizard.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.3.1'
     GUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567891'
     Author = 'Kanders-II'
     CompanyName = 'Kanders-II'
