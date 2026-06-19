@@ -107,29 +107,32 @@
                 throw "Control with name '$Name' already exists in step '$Step'"
             }
 
-            if ($Minimum.HasValue -and $Maximum.HasValue -and $Minimum.Value -gt $Maximum.Value) {
+            # PowerShell unwraps [Nullable[DateTime]] parameters to a plain [DateTime]
+            # (or $null when unbound), so '$X.HasValue' never fires. Guard on
+            # '$null -ne $X' and use the bound value directly.
+            if (($null -ne $Minimum) -and ($null -ne $Maximum) -and ($Minimum -gt $Maximum)) {
                 throw "Minimum date $Minimum cannot be later than maximum date $Maximum."
             }
 
-            if ($Default.HasValue) {
-                if ($Minimum.HasValue -and $Default.Value -lt $Minimum.Value) {
-                    throw "Default date $($Default.Value) precedes the minimum $($Minimum.Value)."
+            if ($null -ne $Default) {
+                if (($null -ne $Minimum) -and ($Default -lt $Minimum)) {
+                    throw "Default date $Default precedes the minimum $Minimum."
                 }
-                if ($Maximum.HasValue -and $Default.Value -gt $Maximum.Value) {
-                    throw "Default date $($Default.Value) exceeds the maximum $($Maximum.Value)."
+                if (($null -ne $Maximum) -and ($Default -gt $Maximum)) {
+                    throw "Default date $Default exceeds the maximum $Maximum."
                 }
             }
 
             $control = [UIControl]::new($Name, $Label, 'Date')
-            if ($Default.HasValue) {
-                $control.Default = $Default.Value
+            if ($null -ne $Default) {
+                $control.Default = $Default
             }
             $control.Mandatory = $Mandatory.IsPresent
             $control.HelpText = $HelpText
             $control.Width = $Width
 
-            if ($Minimum.HasValue) { $control.SetProperty('Minimum', $Minimum.Value) }
-            if ($Maximum.HasValue) { $control.SetProperty('Maximum', $Maximum.Value) }
+            if ($null -ne $Minimum) { $control.SetProperty('Minimum', $Minimum) }
+            if ($null -ne $Maximum) { $control.SetProperty('Maximum', $Maximum) }
             if ($Format) { $control.SetProperty('Format', $Format) }
             if ($IconPath) {
                 $control.SetProperty('IconPath', $IconPath)

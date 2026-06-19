@@ -26,6 +26,7 @@ Security hardening and bug-fix release. No changes to the public cmdlet API.
 
 - **Fixed OptionGroup attribute being dropped** - a stray `} else {` in `ConvertTo-UIScript` made the `[WizardOptionGroup(...)]` attribute (choices + orientation) unreachable; OptionGroup controls now render correctly.
 - **Fixed Date default double-append** - a `DateTime` default value was emitted twice, producing a malformed parameter default; date defaults now render exactly once (`DateTime` formatted as `yyyy-MM-dd`, string values passed through).
+- **Fixed `Add-UIDate` / `Add-UINumeric` silently ignoring optional values** - `-Default`, `-Minimum`, `-Maximum` (and Numeric `-Increment`) were dropped because PowerShell unwraps `[Nullable[T]]` parameters, so the `$X.HasValue` guards never fired. The guards now test `$null -ne $X`, so defaults, bounds, and increment are applied (and the associated range validation runs again).
 - **Fixed verbose logging** - corrected `${var.Length}` string interpolation in workflow state encryption logging.
 
 ### Notes
