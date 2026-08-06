@@ -35,6 +35,35 @@ msbuild UIFramework.sln /p:Configuration=Release
 
 :::
 
+## Create Your First Canvas App *(new in v1.4.0)*
+
+Canvas is the free-form module: no fixed shell, and the script *is* the application. Start here if you want to
+lay things out yourself rather than fit an opinionated frame.
+
+```powershell
+# Import the Canvas module
+Import-Module .\PoshUI\PoshUI.Canvas\PoshUI.Canvas.psd1 -Force
+
+New-PoshUICanvas -Title 'My First Canvas App' -Theme Dark -Width 640 -Height 420
+Add-UICanvasPage -Title 'Home' -Layout VStack
+
+Add-UICanvasLabel 'What is your name?' -FontSize 18 -FontWeight Bold
+Add-UICanvasTextBox -Name who -Value 'World'
+Add-UICanvasButton 'Greet' -Style Accent -Action {
+    Show-UICanvasToast -Message ("Hello, " + (Get-UICanvasValue -Name who)) -Severity success
+}
+
+Show-PoshUICanvas
+```
+
+::: tip Save as UTF-8 **with BOM**
+If your script contains any non-ASCII character (—, ●, emoji, accents), save it as UTF-8 **with** a BOM.
+Windows PowerShell 5.1 misreads UTF-8 without one and the app breaks.
+:::
+
+More: [About Canvas](./canvas/about.md) · [Capability Reference](./Canvas-Reference.md) ·
+runnable demos in `PoshUI\Examples\Canvas-*.ps1`
+
 ## Create Your First Wizard
 
 ```powershell

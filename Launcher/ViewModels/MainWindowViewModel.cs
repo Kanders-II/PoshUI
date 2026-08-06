@@ -36,6 +36,9 @@ namespace Launcher.ViewModels
         private string _nextButtonText = "Next";
         private bool _canGoBack = false;
         private string _scriptPath;
+        private Launcher.Controls.CanvasBridge _canvasBridge;   // shared in-proc runtime for Canvas pages
+        private bool _canvasProgrammaticClose;                  // set by Submit-UICanvas to skip the close prompt
+        private bool _canvasNoBack;                             // Lock-UICanvasNavigation: block backward page nav
         private readonly ReflectionService _reflectionService;
         private readonly IDialogService _dialogService;
         private List<WizardStep> _wizardSteps = new List<WizardStep>();
@@ -180,6 +183,99 @@ namespace Launcher.ViewModels
         }
 
         /// <summary>
+        /// True when a multi-page freeform (Canvas) app uses Navigation='Top' — shows a horizontal
+        /// tab strip above the content instead of a sidebar.
+        /// </summary>
+        private bool _showTopNavigation;
+        public bool ShowTopNavigation
+        {
+            get => _showTopNavigation;
+            set
+            {
+                if (_showTopNavigation == value) return;
+                _showTopNavigation = value;
+                OnPropertyChanged(nameof(ShowTopNavigation));
+            }
+        }
+
+        /// <summary>Whether the custom title bar strip is shown. Set false (branding.HideTitleBar) for a chromeless
+        /// window where a Canvas toolbar is the top chrome; the window stays drag/resizable via WindowChrome.</summary>
+        private bool _showTitleBar = true;
+        public bool ShowTitleBar
+        {
+            get => _showTitleBar;
+            set { if (_showTitleBar == value) return; _showTitleBar = value; OnPropertyChanged(nameof(ShowTitleBar)); }
+        }
+
+        /// <summary>Canvas (freeform) Navigation mode: None / Sidebar / Compact / Top. Persisted so the
+        /// sidebar/top-nav state can be re-applied after each page navigation (UpdateCurrentPage resets it).</summary>
+        private string _canvasNavigation;
+
+        /// <summary>Re-applies the freeform sidebar/top-nav state from the stored Navigation mode.
+        /// Called after UpdateCurrentPage's reset so navigating between canvas pages keeps the chosen chrome.</summary>
+        /// <summary>Applies explicit window size/min-size from branding (New-PoshUICanvas -Width/-Height/...),
+        /// capped to the screen work area and re-centered. 0 leaves the XAML default.</summary>
+        private void ApplyBrandingWindowSize(WizardBranding branding)
+        {
+            if (branding == null) return;
+            if (branding.WindowWidth <= 0 && branding.WindowHeight <= 0 && branding.WindowMinWidth <= 0 && branding.WindowMinHeight <= 0) return;
+            var app = System.Windows.Application.Current;
+            if (app == null) return;
+            // Defer until the window exists/shown (branding is applied before MainWindow is assigned).
+            app.Dispatcher.BeginInvoke(new System.Action(() => ApplyBrandingWindowSizeNow(branding)), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private void ApplyBrandingWindowSizeNow(WizardBranding branding)
+        {
+            try
+            {
+                var win = System.Windows.Application.Current?.MainWindow;
+                if (win == null) return;
+                var wa = System.Windows.SystemParameters.WorkArea;
+                if (branding.WindowMinWidth > 0) win.MinWidth = branding.WindowMinWidth;
+                if (branding.WindowMinHeight > 0) win.MinHeight = branding.WindowMinHeight;
+                if (branding.WindowWidth > 0) win.Width = System.Math.Min(branding.WindowWidth, wa.Width);
+                if (branding.WindowHeight > 0) win.Height = System.Math.Min(branding.WindowHeight, wa.Height);
+                if (branding.WindowWidth > 0 || branding.WindowHeight > 0)
+                {
+                    win.Left = wa.Left + System.Math.Max(0, (wa.Width - win.Width) / 2);
+                    win.Top = wa.Top + System.Math.Max(0, (wa.Height - win.Height) / 2);
+                }
+                LoggingService.Info($"Branding window size applied: {win.Width}x{win.Height} (min {win.MinWidth}x{win.MinHeight})", component: "MainWindowViewModel");
+            }
+            catch (System.Exception ex) { LoggingService.Warn("ApplyBrandingWindowSize failed: " + ex.Message, component: "MainWindowViewModel"); }
+        }
+
+        private void ReapplyFreeformNavigationState()
+        {
+            if (!IsFreeformMode || string.IsNullOrEmpty(_canvasNavigation)) return;
+            string nav = _canvasNavigation.Trim();
+            bool singlePage = _wizardSteps != null && _wizardSteps.Count <= 1;
+            if (singlePage || nav.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                IsSidebarHidden = true;
+                ShowTopNavigation = false;
+            }
+            else if (nav.Equals("Compact", StringComparison.OrdinalIgnoreCase))
+            {
+                IsSidebarHidden = false;
+                IsSidebarCollapsed = true;
+                ShowTopNavigation = false;
+            }
+            else if (nav.Equals("Top", StringComparison.OrdinalIgnoreCase))
+            {
+                IsSidebarHidden = true;
+                ShowTopNavigation = true;
+            }
+            else // Sidebar (full)
+            {
+                IsSidebarHidden = false;
+                IsSidebarCollapsed = false;
+                ShowTopNavigation = false;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets whether the sidebar should be completely hidden.
         /// True when in Workflow mode (sidebar not needed during task execution).
         /// </summary>
@@ -279,6 +375,8 @@ namespace Launcher.ViewModels
                     return "Workflow";
                 case "freeform":
                     return "Freeform";
+                case "canvas":
+                    return "Canvas";
                 default:
                     return "Wizard"; // Default to Wizard
             }
@@ -298,7 +396,72 @@ namespace Launcher.ViewModels
         /// </summary>
         private static bool IsFreeformType(string pageType)
         {
-            return NormalizePageType(pageType) == "Freeform";
+            var n = NormalizePageType(pageType);
+            // Canvas pages use the same free navigation chrome as Freeform (sidebar, no wizard step numbers).
+            return n == "Freeform" || n == "Canvas";
+        }
+
+        /// <summary>Lazily creates the shared Canvas runtime bridge (one runspace + control registry per app).</summary>
+        private Launcher.Controls.CanvasBridge EnsureCanvasBridge()
+        {
+            if (_canvasBridge == null)
+            {
+                _canvasBridge = new Launcher.Controls.CanvasBridge(System.Windows.Application.Current.Dispatcher, _scriptPath);
+                _canvasBridge.PageNavigator = NavigateToCanvasPage;
+                _canvasBridge.NavLocker = on => _canvasNoBack = on;
+                _canvasBridge.Submitter = () =>
+                {
+                    // Submit-UICanvas is an intentional completion — close without the "Are you sure?" prompt.
+                    _canvasProgrammaticClose = true;
+                    try { if (System.Windows.Application.Current.MainWindow != null) System.Windows.Application.Current.MainWindow.Close(); }
+                    catch { }
+                };
+            }
+            return _canvasBridge;
+        }
+
+        /// <summary>Tears down the Canvas runtime (stops live-refresh timers, disposes the runspace).</summary>
+        public void ShutdownCanvas()
+        {
+            try { _canvasBridge?.Shutdown(); } catch { }
+        }
+
+        /// <summary>Navigates the canvas to a page by Title, numeric index, or a relative keyword
+        /// (next / prev / previous / back / first / last) — from Show-UICanvasPage or a button's NavigateTo.</summary>
+        public void NavigateToCanvasPage(string nameOrIndex)
+        {
+            if (string.IsNullOrWhiteSpace(nameOrIndex) || _parsedData == null || _parsedData.WizardSteps == null) return;
+            int count = _parsedData.WizardSteps.Count;
+            int idx;
+            string token = nameOrIndex.Trim();
+
+            switch (token.ToLowerInvariant())
+            {
+                case "next": case "forward":  idx = _currentPageIndex + 1; break;
+                case "prev": case "previous": case "back": idx = _currentPageIndex - 1; break;
+                case "first": idx = 0; break;
+                case "last":  idx = count - 1; break;
+                default:
+                    if (!int.TryParse(token, out idx))
+                    {
+                        idx = _parsedData.WizardSteps.FindIndex(s =>
+                            s != null && string.Equals(s.Title, token, System.StringComparison.OrdinalIgnoreCase));
+                    }
+                    break;
+            }
+
+            // No-backtracking lock (after a workflow step completes): refuse navigation to an earlier page.
+            if (_canvasNoBack && idx >= 0 && idx < _currentPageIndex)
+            {
+                LoggingService.Info($"Canvas navigation locked: back to index {idx} from {_currentPageIndex} blocked.", component: "MainWindowViewModel");
+                return;
+            }
+
+            if (idx >= 0 && idx < count)
+            {
+                _currentPageIndex = idx;
+                UpdateCurrentPage();
+            }
         }
 
         /// <summary>
@@ -372,6 +535,17 @@ namespace Launcher.ViewModels
         public double ProgressPercentage => TotalSteps > 0 ? ((double)CurrentStep / TotalSteps) * 100.0 : 0.0;
 
         public string ProgressText => $"Step {CurrentStep} of {TotalSteps}";
+
+        /// <summary>True when an icon token is a file path (separators / drive / image extension) rather than a
+        /// friendly glyph name or MDL2 char — so nav icons accept both -Icon 'home' and -Icon 'C:\ic.png'.</summary>
+        private static bool IconTokenLooksLikePath(string token)
+        {
+            if (string.IsNullOrEmpty(token)) return false;
+            if (token.IndexOfAny(new[] { '\\', '/', ':' }) >= 0) return true;
+            foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".ico", ".bmp", ".gif" })
+                if (token.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
 
         private string ResolvePathRelativeToScript(string path)
         {
@@ -608,7 +782,7 @@ namespace Launcher.ViewModels
                     
                     // Prioritize IconGlyph property if set
                     string glyphSource = !string.IsNullOrEmpty(step.IconGlyph) ? step.IconGlyph : step.IconPath;
-                    
+
                     if (!string.IsNullOrEmpty(glyphSource) && glyphSource.StartsWith("&#x") && glyphSource.EndsWith(";"))
                     {
                         try
@@ -622,11 +796,16 @@ namespace Launcher.ViewModels
                             LoggingService.Error($"Failed to convert icon glyph: {glyphSource}", ex, component: "MainWindowViewModel");
                         }
                     }
-                    else if (!string.IsNullOrEmpty(step.IconPath) && !step.IconPath.StartsWith("&#x"))
+                    else if (!string.IsNullOrEmpty(glyphSource) && IconTokenLooksLikePath(glyphSource))
                     {
                         // It's a file path (PNG icon), resolve relative to script
-                        iconFilePath = ResolvePathRelativeToScript(step.IconPath);
+                        iconFilePath = ResolvePathRelativeToScript(glyphSource);
                         LoggingService.Info($"Step '{step.Title}' using PNG icon: {iconFilePath}", component: "MainWindowViewModel");
+                    }
+                    else if (!string.IsNullOrEmpty(glyphSource))
+                    {
+                        // A friendly glyph name ('home','server'), a hex code point (0xE80F), or a raw MDL2 glyph.
+                        iconGlyph = Launcher.Controls.CanvasControlFactory.ResolveGlyph(glyphSource);
                     }
                     
                     int currentStepNum = stepNumber; // Capture for closure
@@ -704,8 +883,17 @@ namespace Launcher.ViewModels
         {
             LoggingService.Trace(">>> UpdateCurrentPage START", component: "MainWindowViewModel");
             
-            // Reset sidebar visibility - will be set to true if navigating to workflow page
-            IsSidebarHidden = false;
+            // Reset sidebar visibility - will be set to true if navigating to workflow page.
+            // For freeform (Canvas) apps, re-apply the chosen Navigation chrome directly so it
+            // survives page changes without a hide/show flicker.
+            if (IsFreeformMode && !string.IsNullOrEmpty(_canvasNavigation))
+            {
+                ReapplyFreeformNavigationState();
+            }
+            else
+            {
+                IsSidebarHidden = false;
+            }
             
             if (_parsedData == null || _parsedData.WizardSteps == null || _currentPageIndex < 0 || _currentPageIndex >= _parsedData.WizardSteps.Count)
             {
@@ -858,7 +1046,7 @@ namespace Launcher.ViewModels
 
             object newPage = null; // Variable to hold the created page
 
-            if (IsWizardType(currentStepInfo.PageType) || IsFreeformType(currentStepInfo.PageType) || currentStepInfo.PageType == "GenericForm")
+            if (currentStepInfo.PageType != "Canvas" && (IsWizardType(currentStepInfo.PageType) || IsFreeformType(currentStepInfo.PageType) || currentStepInfo.PageType == "GenericForm"))
             {
                 LoggingService.Trace($"  - Creating GenericFormViewModel for step \'{currentStepInfo.Title}\'", component: "MainWindowViewModel");
                 bool isFreeform = IsFreeformType(currentStepInfo.PageType);
@@ -1132,6 +1320,11 @@ namespace Launcher.ViewModels
                 SetupWorkflowCommands(workflowVm, currentStepInfo);
                 
                 newPage = workflowVm;
+            }
+            else if (currentStepInfo.PageType == "Canvas")
+            {
+                LoggingService.Trace("  - Creating Canvas page for step", component: "MainWindowViewModel");
+                newPage = new CanvasViewModel(currentStepInfo, EnsureCanvasBridge());
             }
             else
             {
@@ -2532,6 +2725,7 @@ namespace Launcher.ViewModels
                 if (branding != null)
                 {
                     LoggingService.Info("Applying WizardBranding from script", component: "MainWindowViewModel");
+                    ShowTitleBar = !branding.HideTitleBar;   // chromeless when a Canvas toolbar is the top chrome
                     // Apply explicit texts first
                     if (!string.IsNullOrWhiteSpace(branding.WindowTitleText))
                     {
@@ -2601,17 +2795,16 @@ namespace Launcher.ViewModels
                         LoggingService.Info($"Branding GridColumns set to {_brandingGridColumns}", component: "MainWindowViewModel");
                     }
 
-                    // Freeform: hide sidebar when Navigation='None' (default) or single page
+                    // Freeform (Canvas): honor Navigation mode (None / Sidebar / Compact / Top).
                     if (IsFreeformMode)
                     {
-                        string nav = (branding.Navigation ?? "None").Trim();
-                        bool singlePage = _wizardSteps != null && _wizardSteps.Count <= 1;
-                        if (singlePage || nav.Equals("None", StringComparison.OrdinalIgnoreCase))
-                        {
-                            IsSidebarHidden = true;
-                            LoggingService.Info($"Freeform sidebar hidden: Navigation='{nav}', Pages={_wizardSteps?.Count ?? 0}", component: "MainWindowViewModel");
-                        }
+                        _canvasNavigation = (branding.Navigation ?? "None").Trim();
+                        ReapplyFreeformNavigationState();
+                        LoggingService.Info($"Freeform navigation: Navigation='{_canvasNavigation}', Pages={_wizardSteps?.Count ?? 0}, SidebarHidden={IsSidebarHidden}, SidebarCollapsed={IsSidebarCollapsed}, TopNav={ShowTopNavigation}", component: "MainWindowViewModel");
                     }
+
+                    // Optional explicit window sizing from New-PoshUICanvas -Width/-Height/-MinWidth/-MinHeight.
+                    ApplyBrandingWindowSize(branding);
                 }
 
                 // --- NEW: Directly initialize CurrentPage for the first step --- 
@@ -2636,7 +2829,7 @@ namespace Launcher.ViewModels
                     _currentPageIndex = startIndex; // Set index before creating page
                     var firstStepInfo = _wizardSteps[startIndex];
                     LoggingService.Trace($"Directly creating initial page (Index 0): Title='{firstStepInfo.Title}', Type='{firstStepInfo.PageType}'", component: "MainWindowViewModel");
-                    if (IsWizardType(firstStepInfo.PageType) || IsFreeformType(firstStepInfo.PageType) || firstStepInfo.PageType == "GenericForm")
+                    if (firstStepInfo.PageType != "Canvas" && (IsWizardType(firstStepInfo.PageType) || IsFreeformType(firstStepInfo.PageType) || firstStepInfo.PageType == "GenericForm"))
                     {
                         // Initial page creation - handle cards properly
                         bool isFreeformInit = IsFreeformType(firstStepInfo.PageType);
@@ -2881,7 +3074,12 @@ namespace Launcher.ViewModels
                         SetupWorkflowCommands(workflowVm, firstStepInfo);
                         CurrentPage = workflowVm;
                     }
-                    else 
+                    else if (firstStepInfo.PageType == "Canvas")
+                    {
+                        LoggingService.Trace("  - Creating initial Canvas page", component: "MainWindowViewModel");
+                        CurrentPage = new CanvasViewModel(firstStepInfo, EnsureCanvasBridge());
+                    }
+                    else
                     {
                         LoggingService.Error($"Unsupported first page type: {firstStepInfo.PageType}", component: "MainWindowViewModel");
                         CurrentPage = new ErrorViewModel($"Unsupported first page type: {firstStepInfo.PageType}");
@@ -3793,7 +3991,12 @@ namespace Launcher.ViewModels
         public bool CanClose(out string message)
         {
             message = null;
-            
+
+            // Canvas Submit-UICanvas (or other programmatic close) bypasses the confirmation prompt.
+            if (_canvasProgrammaticClose) return true;
+            // Freeform/canvas apps close freely (no data-loss confirmation like the wizard).
+            if (IsFreeformMode) return true;
+
             // Show themed confirmation dialog when user tries to close
             return Views.MessageDialog.ShowConfirmation(
                 "Are you sure you want to close the application?",

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.4.0.0" name="PoshUI.app" />
+
+  <!-- Declare compatibility with modern Windows so OS feature/version detection behaves correctly. -->
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+      <!-- Windows 8.1 -->
+      <supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}" />
+    </application>
+  </compatibility>
+
+  <!--
+    Per-Monitor V2 DPI awareness.
+
+    Without this the app is only System-DPI-aware: it renders crisply at the primary monitor's scaling, but
+    Windows bitmap-stretches it (blurry text/controls) the moment the window moves to a monitor using a
+    different scale factor, and it cannot adapt when display scaling changes at runtime.
+
+    With PerMonitorV2 the window re-renders at the target monitor's DPI, so it stays crisp on every monitor,
+    adapts live to scaling changes, and scales its non-client area (title bar/borders) and child dialogs too.
+
+    NOTE: on .NET Framework WPF this manifest is only half of the opt-in - it also requires the companion
+    AppContext switch in app.config:
+        Switch.System.Windows.DoNotScaleForDpiChanges=false
+    'dpiAware' is the legacy fallback honored by OS builds that predate the 'dpiAwareness' setting.
+  -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/PM</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+    </windowsSettings>
+  </application>
+</assembly>

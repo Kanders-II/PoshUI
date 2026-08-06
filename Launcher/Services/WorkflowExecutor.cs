@@ -185,6 +185,20 @@ namespace Launcher.Services
             }
             return null;
         }
+
+        /// <summary>Reads a Canvas control's value by Name (e.g. a form field) — $wf.GetValue('cfgAdmin').
+        /// Returns null when the workflow isn't hosted on a Canvas.</summary>
+        public object GetValue(string controlName)
+        {
+            return _executor != null ? _executor.GetCanvasValue(controlName) : null;
+        }
+
+        /// <summary>Updates a Canvas control's value by Name (e.g. append to a log) — $wf.SetValue('dep_log', $text).
+        /// No-op when the workflow isn't hosted on a Canvas.</summary>
+        public void SetValue(string controlName, object value)
+        {
+            if (_executor != null) _executor.SetCanvasValue(controlName, value);
+        }
     }
 
     /// <summary>
@@ -199,6 +213,16 @@ namespace Launcher.Services
         private readonly Action<WorkflowTaskViewModel, Exception> _onTaskFailed;
         private readonly Action<string> _onRebootRequested;
         private readonly string _scriptPath;
+
+        // Canvas interop (set when hosted by a Canvas Workflow control): let steps read/write canvas control
+        // values through $wf.GetValue/$wf.SetValue, and persist resume state to a caller-chosen path.
+        private readonly Func<string, object> _getCanvasValue;
+        private readonly Action<string, object> _setCanvasValue;
+        private readonly string _stateFilePath;
+        // Optional runspace seeding (Canvas host): variables + a preamble script applied to the executor's
+        // runspace so step bodies get the bridge cmdlets (Set-UICanvasValue, etc.) and run unchanged.
+        private readonly Dictionary<string, object> _runspaceVariables;
+        private readonly string _runspacePreamble;
 
         private Runspace _runspace;
         private PowerShell _powerShell;
@@ -239,7 +263,12 @@ namespace Launcher.Services
             Action<WorkflowTaskViewModel> onTaskCompleted = null,
             Action<WorkflowTaskViewModel, Exception> onTaskFailed = null,
             Action<string> onRebootRequested = null,
-            string scriptPath = null)
+            string scriptPath = null,
+            Func<string, object> getCanvasValue = null,
+            Action<string, object> setCanvasValue = null,
+            string stateFilePath = null,
+            Dictionary<string, object> runspaceVariables = null,
+            string runspacePreamble = null)
         {
             if (workflow == null) throw new ArgumentNullException("workflow");
             _workflow = workflow;
@@ -249,7 +278,18 @@ namespace Launcher.Services
             _onTaskFailed = onTaskFailed;
             _onRebootRequested = onRebootRequested;
             _scriptPath = scriptPath;
+            _getCanvasValue = getCanvasValue;
+            _setCanvasValue = setCanvasValue;
+            _stateFilePath = stateFilePath;
+            _runspaceVariables = runspaceVariables;
+            _runspacePreamble = runspacePreamble;
         }
+
+        /// <summary>Reads a Canvas control value (via the hosting bridge) — backs $wf.GetValue. Null off-Canvas.</summary>
+        public object GetCanvasValue(string name) { return _getCanvasValue != null ? _getCanvasValue(name) : null; }
+
+        /// <summary>Writes a Canvas control value (via the hosting bridge) — backs $wf.SetValue. No-op off-Canvas.</summary>
+        public void SetCanvasValue(string name, object value) { if (_setCanvasValue != null) _setCanvasValue(name, value); }
 
         #region Shared Workflow Data Store
 
@@ -345,8 +385,11 @@ namespace Launcher.Services
                         continue;
                     }
 
-                    // Check skip condition before executing
-                    if (ShouldSkipTask(task))
+                    // Check skip condition before executing. MUST run off the UI thread: ShouldSkipTask invokes
+                    // the condition synchronously on the executor's runspace, and a Canvas-hosted condition
+                    // typically calls a bridge cmdlet (e.g. Get-UICanvasValue) which marshals back to the UI
+                    // thread. Evaluating it inline would block the UI thread on that marshal and deadlock the run.
+                    if (await Task.Run(() => ShouldSkipTask(task)))
                     {
                         var app = Application.Current;
                         if (app != null)
@@ -682,6 +725,7 @@ namespace Launcher.Services
                     _powerShell.Commands.Clear();
 
                     _powerShell.Runspace.SessionStateProxy.SetVariable("PoshUIWorkflow", context);
+                    _powerShell.Runspace.SessionStateProxy.SetVariable("wf", context);   // short alias
 
                     foreach (var kvp in _wizardResults)
                     {
@@ -933,16 +977,29 @@ namespace Launcher.Services
         {
             try
             {
-                var stateDir = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "PoshUI");
-                
-                if (!System.IO.Directory.Exists(stateDir))
+                // A Canvas host can pin state to a non-volatile path (e.g. the target disk in WinPE); otherwise
+                // default to LOCALAPPDATA\PoshUI.
+                string statePath;
+                if (!string.IsNullOrEmpty(_stateFilePath))
                 {
-                    System.IO.Directory.CreateDirectory(stateDir);
+                    statePath = _stateFilePath;
+                    var dir = System.IO.Path.GetDirectoryName(statePath);
+                    if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+                    {
+                        System.IO.Directory.CreateDirectory(dir);
+                    }
                 }
-
-                var statePath = System.IO.Path.Combine(stateDir, "PoshUI_Workflow_State.json");
+                else
+                {
+                    var stateDir = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                        "PoshUI");
+                    if (!System.IO.Directory.Exists(stateDir))
+                    {
+                        System.IO.Directory.CreateDirectory(stateDir);
+                    }
+                    statePath = System.IO.Path.Combine(stateDir, "PoshUI_Workflow_State.json");
+                }
 
                 // Build state JSON manually for PowerShell compatibility
                 var sb = new System.Text.StringBuilder();
@@ -1037,6 +1094,13 @@ namespace Launcher.Services
         {
             try
             {
+                // Clear a Canvas host's pinned state file, if any.
+                if (!string.IsNullOrEmpty(_stateFilePath) && System.IO.File.Exists(_stateFilePath))
+                {
+                    System.IO.File.Delete(_stateFilePath);
+                    LoggingService.Info(string.Format("Cleared workflow state file: {0}", _stateFilePath), component: "WorkflowExecutor");
+                }
+
                 // Clear from LOCALAPPDATA
                 var localPath = System.IO.Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -1075,6 +1139,36 @@ namespace Launcher.Services
             return null;
         }
 
+        /// <summary>Resume support: pre-marks the already-completed steps on <paramref name="vm"/> from a state
+        /// file written by a prior run (SaveWorkflowState), so a fresh ExecuteAsync skips them and continues.
+        /// Reads only CurrentTaskIndex (steps 0..index-1 were done) — robust to the rest of the state shape.</summary>
+        public static void LoadState(string stateFilePath, WorkflowViewModel vm)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(stateFilePath) || vm == null || !System.IO.File.Exists(stateFilePath)) return;
+                var json = System.IO.File.ReadAllText(stateFilePath);
+                var m = System.Text.RegularExpressions.Regex.Match(json, "\"CurrentTaskIndex\"\\s*:\\s*(\\d+)");
+                if (!m.Success) return;
+                int done = int.Parse(m.Groups[1].Value);
+                if (done < 0) done = 0;
+                if (done > vm.Tasks.Count) done = vm.Tasks.Count;
+                for (int i = 0; i < done; i++)
+                {
+                    vm.Tasks[i].Status = WorkflowTaskStatus.Completed;
+                    vm.Tasks[i].ProgressPercent = 100;
+                    vm.Tasks[i].ProgressMessage = "Completed (resumed)";
+                }
+                vm.CurrentTaskIndex = done - 1;
+                vm.UpdateProgress();
+                LoggingService.Info(string.Format("Resumed workflow: {0}/{1} steps already complete", done, vm.Tasks.Count), component: "WorkflowExecutor");
+            }
+            catch (Exception ex)
+            {
+                LoggingService.Warn("Workflow LoadState failed: " + ex.Message, component: "WorkflowExecutor");
+            }
+        }
+
         public void Cancel()
         {
             if (_cancellationTokenSource != null)
@@ -1092,6 +1186,19 @@ namespace Launcher.Services
             var iss = InitialSessionState.CreateDefault2();
             _runspace = RunspaceFactory.CreateRunspace(iss);
             _runspace.Open();
+            // Canvas host seeding: bind $__PoshUICanvasBridge + define Set-UICanvasValue/etc so step bodies
+            // (and their Set-<name>Progress / WLog helpers) drive canvas controls exactly as in the bridge runspace.
+            if (_runspaceVariables != null)
+                foreach (var kv in _runspaceVariables)
+                    _runspace.SessionStateProxy.SetVariable(kv.Key, kv.Value);
+            if (!string.IsNullOrEmpty(_runspacePreamble))
+            {
+                using (var ps = PowerShell.Create())
+                {
+                    ps.Runspace = _runspace;
+                    ps.AddScript(_runspacePreamble).Invoke();
+                }
+            }
             _powerShell = PowerShell.Create();
             _powerShell.Runspace = _runspace;
         }

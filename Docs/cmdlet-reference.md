@@ -4,6 +4,48 @@ Complete reference for all PoshUI cmdlets organized by module.
 
 ---
 
+## PoshUI.Canvas *(new in v1.4.0)*
+
+Canvas exports **~85 cmdlets** — too many to inline here, and they follow a single consistent shape rather than
+needing individual write-ups:
+
+```
+New-PoshUICanvas → [Set-UITheme] → Add-UICanvasPage → Add-UICanvas* … → Show-PoshUICanvas
+```
+
+Nearly every control cmdlet accepts the same core parameters: `-Name` (addressable at runtime), `-Value` /
+`-Label`, `-X/-Y/-Width/-Height`, `-Tooltip`, `-Visible/-Enabled`, `-Refresh <sec>`, `-Action { }` /
+`-OnChange { }`, and a `-Properties @{ }` bag for styling and layout hints.
+
+Full listings live in the Canvas docs:
+
+| Reference | Covers |
+|---|---|
+| **[Capability Reference](./Canvas-Reference.md)** | Every control, the runtime cmdlets, charts, theming, flow modes, layout/chrome controls — terse and complete |
+| **[About Canvas](./canvas/about.md)** | What Canvas is, how it works, the four execution substrates, sizing/DPI, the XAML escape hatch |
+| **Agent Authoring Guide** (`Docs/agent/`) | Per-cmdlet signatures with examples, plus a terse cheatsheet — written to be handed to an AI assistant |
+
+Quick orientation by category:
+
+- **App & pages** — `New-PoshUICanvas`, `Add-UICanvasPage`, `Set-UITheme`, `Show-PoshUICanvas`, `Submit-UICanvas`
+- **Input** — `Add-UICanvasTextBox`, `-MultiLine`, `-Password`, `-Number`, `-Dropdown`, `-ListBox`,
+  `-RadioGroup`, `-Checkbox`, `-Toggle`, `-Slider`, `-DatePicker`, `-TimePicker`, `-ColorPicker`, `-Rating`,
+  `-AutoSuggest`, `-FilePicker`, `-FolderPicker`
+- **Display** — `Add-UICanvasLabel`, `-Icon`, `-Badge`, `-Banner`, `-ProgressBar`, `-ProgressRing`, `-Console`,
+  `-Image`, `-Hyperlink`, `-Markdown`, `-Separator`
+- **Layout & chrome** — `Add-UICanvasPanel`, `-Card`, `-Expander`, `-Tabs`/`-Tab`, `-Viewbox`, `-GridSplitter`,
+  `-Toolbar`, `-Footer`, `-Menu`
+- **Data** — `Add-UICanvasDataGrid`, `-TreeView`, `-Repeater`, `-ChartCard`, `-MetricCard`, `-StatusCard`,
+  `-TableCard`, `-ScriptCard`
+- **Flows** — `Add-UICanvasWorkflowStep`, `Add-UICanvasWorkflow` (`-Engine`), `Add-UICanvasWizardNav`,
+  `Add-UICanvasWizardSteps`
+- **Runtime** (inside `-Action`/`-OnChange`/`-Refresh`) — `Get-/Set-UICanvasValue`, `Set-UICanvasProperty`,
+  `New-/Watch-/Get-/Set-UICanvasState`, `Show-UICanvasPage`, `Show-UICanvasToast`/`-Dialog`/`-Flyout`,
+  `Start-UICanvasAsync`, `Set-UICanvasAnimate`, `Lock-/Unlock-UICanvasNavigation`
+- **Escape hatch** — `Add-UICanvasXaml` (splice raw WPF; `x:Name`'d elements stay drivable)
+
+---
+
 ## PoshUI.Wizard
 
 Build step-by-step guided interfaces for configuration, deployment, and setup tasks.
@@ -818,6 +860,7 @@ Clear-UIWorkflowState
 ## Next Steps
 
 - [Get Started Guide](./get-started.md)
+- [About Canvas](./canvas/about.md) and the [Canvas Capability Reference](./Canvas-Reference.md)
 - [Wizard Controls](./controls/about.md)
 - [Dashboard Cards](./dashboard-cards-reference.md)
 - [Workflow Tasks](./workflows/tasks.md)

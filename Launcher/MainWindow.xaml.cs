@@ -302,7 +302,10 @@ namespace Launcher
                         Views.MessageDialog.ShowWarning(message, "Validation Error", this);
                     }
                     e.Cancel = true;
+                    return;
                 }
+                // Window is really closing — tear down the canvas runspace + live-refresh timers.
+                viewModel.ShutdownCanvas();
             }
         }
 

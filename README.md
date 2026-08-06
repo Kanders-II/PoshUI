@@ -8,7 +8,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
+[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -24,16 +24,48 @@ PoshUI is a PowerShell UI framework that brings professional interfaces to your 
 This is my contribution to the PowerShell community, combining the flexibility of PowerShell with the polish of WPF to create something that IT professionals can actually use in their daily work. Built with object-oriented programming principles, it focuses on maintainable, modular code while keeping the end-user experience simple and intuitive.
 
 **What PoshUI Does:**  
-Turn your PowerShell automation into professional Windows 11-style wizards, dashboards, and workflows—using familiar PowerShell cmdlets. No WPF, XAML, or C# knowledge required.
+Turn your PowerShell automation into professional Windows 11-style wizards, dashboards, workflows, and free-form apps—using familiar PowerShell cmdlets. No WPF, XAML, or C# knowledge required.
 
 **Who It's For:**  
 IT professionals, system administrators, and DevOps engineers who want to make their automation accessible to help desk teams, colleagues, and end users who prefer a GUI over a command line.
 
 ---
 
-## Three PowerShell Modules
+## Four PowerShell Modules
 
-PoshUI provides three independent modules, each designed for a specific use case:
+PoshUI provides four independent modules, each designed for a specific use case:
+
+### PoshUI.Canvas *(new in v1.4.0)*
+**Free-form apps** — lay out anything, anywhere, with no fixed shell. Where the other three modules give you an
+opinionated frame, Canvas gives you a blank page and ~85 cmdlets.
+
+A single `.ps1` **is** the application — no XAML, no MVVM, no project scaffolding, no build step:
+
+```powershell
+Import-Module PoshUI.Canvas
+New-PoshUICanvas -Title 'Hello' -Theme Dark
+Add-UICanvasPage -Title 'Home' -Layout VStack
+Add-UICanvasTextBox -Name who -Value 'World'
+Add-UICanvasButton 'Greet' -Style Accent -Action {
+    Show-UICanvasToast -Message ("Hello, " + (Get-UICanvasValue -Name who))
+}
+Show-PoshUICanvas
+```
+
+Canvas can express all three of the patterns below in one page — plus tabs, menus, splitters, live reactive
+state, charts, animation, secondary windows, and a raw-XAML escape hatch for anything the cmdlets don't cover.
+
+Its **engine-native workflow runner** (`-Engine`) runs steps on their own runspace, so progress and elapsed time
+stay live during a long step, with per-step retry, timeouts, skip conditions and reboot-resume.
+
+**Two real-world apps ship in `Examples/`** — not mockups. `Endpoint-TaskOrchestrator.ps1` triages and
+orchestrates Windows scheduled tasks (every failed/missed/stale task in one view, with decoded result codes);
+`Endpoint-SupportDesk.ps1` is end-user self-service diagnostics, fixes, and a support bundle for a ticket. Both
+are useful without administrator rights.
+
+Because it's flat, declarative, single-file and build-free, Canvas is also an unusually good target to develop
+for **with an AI assistant** — see the [Agent Authoring Guide](Docs/agent/README.md), a context pack written to
+be handed to a model. → **[About Canvas](Docs/canvas/about.md)**
 
 ### PoshUI.Wizard
 **Step-by-step guided interfaces** for configuration, deployment, and setup tasks.  
@@ -113,6 +145,14 @@ Show-PoshUIWizard -ScriptBody {
 - **Live Execution Console** - Real-time output display during script execution
 - **CMTrace Logging** - Enterprise-ready audit trails
 - **Security Hardened** - Injection-safe script generation, DPAPI-encrypted workflow state, ACL-restricted temp files, and optional signed-script enforcement *(v1.3.1)*
+- **Free-Form Canvas** - Build any layout from ~85 cmdlets in a single script, no XAML or build step *(v1.4.0)*
+- **Engine-Native Workflow Runner** - Steps run on their own runspace with live progress, retry, timeouts, skip conditions, and reboot-resume *(v1.4.0)*
+- **Off-Gate Script Cards** - Long-running tasks stream output live without freezing the rest of the app *(v1.4.0)*
+- **Declarative Cascading Fields** - Dropdown/ListBox options recompute from other fields with no event wiring *(v1.4.0)*
+- **Tabs, Menus, Splitters & Viewbox** - Native cmdlets for the layout chrome that used to require raw XAML *(v1.4.0)*
+- **Master/Detail Grids** - `Add-UICanvasDataGrid -OnChange` fires on row select so a grid can drive a detail pane *(v1.4.0)*
+- **Per-Monitor V2 DPI** - Stays crisp when moved between monitors with different scaling *(v1.4.0)*
+- **Raw XAML Escape Hatch** - Splice any WPF control in and still drive it with the Canvas cmdlets *(v1.4.0)*
 - **Zero Dependencies** - No third-party libraries or NuGet packages
 
 ---
@@ -123,9 +163,12 @@ Show-PoshUIWizard -ScriptBody {
 
 The complete documentation includes:
 - **Cmdlet Reference** - All PowerShell cmdlets with examples
-- **Module Guides** - Wizards, Dashboards, and Workflows
+- **Module Guides** - Canvas, Wizards, Dashboards, and Workflows
 - **Control Library** - 12+ input and visualization controls
 - **Examples** - Real-world use cases and patterns
+
+**Canvas:** [About Canvas](Docs/canvas/about.md) · [Capability Reference](Docs/Canvas-Reference.md) ·
+[Agent Authoring Guide](Docs/agent/README.md) (context pack for building Canvas apps with an AI assistant)
 
 ---
 

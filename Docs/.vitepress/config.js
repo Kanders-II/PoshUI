@@ -3,6 +3,15 @@ export default {
   description: 'Build beautiful PowerShell wizards and dashboards',
   base: '/PoshUI/',
   appearance: 'dark',
+  // Safety net: VitePress publishes EVERY .md under the docs root, whether or not it is in the sidebar.
+  // Internal planning/status notes live outside Docs/ (see ..\internal\); these patterns make sure any that
+  // land here by accident are never built into the public site.
+  srcExclude: [
+    '**/internal/**',
+    '**/*-Plan.md',
+    '**/*-Status.md',
+    '**/TROUBLESHOOTING_LOCAL_DEV.md'
+  ],
   vite: {
     server: {
       host: '0.0.0.0',
@@ -15,6 +24,7 @@ export default {
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Get Started', link: '/get-started' },
+      { text: 'Canvas', link: '/canvas/about' },
       { text: 'Cmdlet Reference', link: '/cmdlet-reference' }
     ],
     sidebar: [
@@ -28,6 +38,14 @@ export default {
           { text: 'Licensing', link: '/licensing' },
           { text: 'System Requirements', link: '/system-requirements' },
           { text: 'Cmdlet Reference', link: '/cmdlet-reference' }
+        ]
+      },
+      {
+        text: 'Canvas',
+        items: [
+          { text: 'About Canvas', link: '/canvas/about' },
+          { text: 'Capability Reference', link: '/Canvas-Reference' },
+          { text: 'Agent Authoring Guide (AI)', link: '/agent/README' }
         ]
       },
       {

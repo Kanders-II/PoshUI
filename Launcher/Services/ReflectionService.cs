@@ -161,6 +161,13 @@ namespace Launcher.Services
         
         // Controls added via Add-WizardBanner, Add-WizardVisualizationCard, etc.
         public System.Collections.IList Controls { get; set; }
+
+        // Canvas page-layout root (null/"Canvas" = absolute free-form; Dock/Grid/VStack/HStack/Wrap = responsive).
+        public string PageLayout { get; set; }
+        public int PageColumns { get; set; }
+        public string PageColumnWidths { get; set; }
+        public double PageSpacing { get; set; }
+        public string PagePadding { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
@@ -207,6 +214,7 @@ namespace Launcher.Services
     {
         public string WindowTitleText { get; set; }
         public string WindowTitleIcon { get; set; }
+        public bool HideTitleBar { get; set; }   // chromeless window: a Canvas toolbar is the top chrome
         public string SidebarHeaderText { get; set; }
         public string SidebarHeaderIcon { get; set; }
         public string SidebarHeaderIconOrientation { get; set; }
@@ -223,6 +231,10 @@ namespace Launcher.Services
         public string PreviousLogFilePath { get; set; }  // For resume: previous log file to restore content from
         public string Navigation { get; set; }  // Freeform: None, Sidebar, Tabs
         public int GridColumns { get; set; }  // Freeform: number of grid columns (1-6, default 0 = auto)
+        public double WindowWidth { get; set; }   // 0 = use XAML default
+        public double WindowHeight { get; set; }
+        public double WindowMinWidth { get; set; }
+        public double WindowMinHeight { get; set; }
     }
 
     [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]

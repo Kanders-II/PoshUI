@@ -2,9 +2,26 @@
 
 PoshUI enables IT professionals to build professional Windows 11-style interfaces using PowerShell cmdlets—no WPF, XAML, or C# knowledge required.
 
-## Three PowerShell Modules
+## Four PowerShell Modules
 
-PoshUI provides three independent modules that can be used separately or together:
+PoshUI provides four independent modules that can be used separately or together:
+
+### Canvas *(new in v1.4.0)*
+**Free-form apps** — a blank page and ~85 cmdlets instead of a fixed shell. A single `.ps1` is the application:
+no XAML, no MVVM, no project scaffolding, no build step. Canvas can express the wizard, dashboard and workflow
+patterns below in one page.
+
+**Core Capabilities:**
+- The full WPF panel set (Grid, VStack, HStack, Wrap, Dock, absolute X/Y) with Card / Panel / Expander / **Tabs**
+  / **Viewbox** containers and a **GridSplitter** for resizable panes
+- ~55 control types, plus **menu bars**, charts, reactive state, animation, secondary windows and shortcuts
+- **Engine-native workflow runner** (`-Engine`) — steps run on their own runspace with live progress, per-step
+  retry, timeouts, skip conditions and reboot-resume
+- **Off-gate script cards** — long jobs stream output live without freezing the rest of the app
+- **Declarative cascading fields** (`-DependsOn` / `-OptionsScript`) and **master/detail grids** (`-OnChange`)
+- **Raw XAML escape hatch** for anything the cmdlets don't cover, still drivable from PowerShell
+
+→ [About Canvas](./canvas/about.md) · [Capability Reference](./Canvas-Reference.md) · [Agent Authoring Guide](./agent/README.md)
 
 ### Wizards
 Step-by-step guided interfaces for configuration, deployment, and setup tasks. Perfect for server provisioning, application deployment, and user onboarding.

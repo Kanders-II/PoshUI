@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - Unreleased
+
+Adds **PoshUI.Canvas**, a fourth module for free-form apps, and an engine-native workflow runner. Additive
+release: existing Wizard, Dashboard and Workflow scripts are unaffected, and the new workflow execution mode is
+opt-in via `-Engine`.
+
+### Added
+
+- **PoshUI.Canvas module** - free-form app authoring: ~85 cmdlets, the full WPF panel set (Grid, VStack, HStack, Wrap, Dock, absolute X/Y), ~55 control types, reactive state, charts, animation, secondary windows and theming. A single `.ps1` is the application - no XAML, no MVVM, no project scaffolding, no build step.
+- **Engine-native workflow runner** - `Add-UICanvasWorkflow -Engine` runs steps on the engine's `WorkflowExecutor` in its own runspace, off the app's serialized gate, so progress and elapsed time stay live during a long step. Adds per-step `-Retry`, `-TimeoutSeconds`, `-SkipWhen` and `-ExpectedSeconds`, engine-managed reboot-resume via `-StateFile`, and a `$wf` step context (`UpdateProgress`, `WriteOutput`, `GetValue`/`SetValue`, `SetData`/`GetData`, `SkipTask`, `RequestReboot`).
+- **`Add-UICanvasScriptCard`** - dashboard card that runs its script off the UI gate in its own runspace, streaming output live so a long job never freezes live cards.
+- **Native layout controls** - `Add-UICanvasTabs`/`Add-UICanvasTab`, `Add-UICanvasMenu`, `Add-UICanvasGridSplitter`, `Add-UICanvasViewbox`. Previously these required raw XAML.
+- **Declarative cascading fields** - `-DependsOn` / `-OptionsScript` on `Add-UICanvasDropdown` and `Add-UICanvasListBox` recompute options when a parent field changes, with no event wiring.
+- **`Add-UICanvasDataGrid -OnChange`** - selecting a row now raises `ValueChanged`, enabling master/detail.
+- **Per-Monitor V2 DPI awareness** - windows re-render at the target monitor's DPI instead of being bitmap-stretched when moved between monitors with different scaling, and adapt live to scaling changes.
+- **Two real-world example apps** - `Endpoint-TaskOrchestrator.ps1` (Task Scheduler triage, orchestration and security audit) and `Endpoint-SupportDesk.ps1` (end-user self-service diagnostics, fixes and support bundle), plus the shared `Examples/Lib/EndpointUI.ps1`.
+- **Agent authoring guide** (`Docs/agent/`) - a self-contained context pack for building Canvas apps with an AI assistant.
+
+### Fixed
+
+- **Cross-page value reads returned `$null`** - `Get-UICanvasValue` only searched the currently rendered page, so a field entered on an earlier page read as empty from a later page's action. It now falls back to the persisted cross-page snapshot.
+- **Dynamic string lists rendered as `System.Data.DataRowView`** - setting a control's `ItemsSource` at runtime to a list of strings wrapped each item in a DataView, because a string exposes a `Length` property and looked like a single-column row. Scalars now pass through as plain items.
+- **`-SkipWhen` conditions deadlocked the UI** - skip conditions were evaluated synchronously on the UI thread, so a condition calling a bridge cmdlet (the documented pattern) blocked forever. They now evaluate off-thread.
+- Per-step progress bars and the overall gauge no longer attempt a two-way binding against read-only sources.
+- **CI reported success without running any tests** - the Pester task passed when it discovered zero tests, which it always did on a clean clone because `Tests/` is excluded. It now fails loudly when the test path is missing or empty.
+
 ## [1.3.1] - 2026-06-18
 
 Security hardening and bug-fix release. No changes to the public cmdlet API.

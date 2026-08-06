@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'Docs/**'
+      - '**/*.md'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Build · Lint · Test · Security · Examples
+    runs-on: windows-latest      # Windows is required: WPF engine (net48) + Windows PowerShell 5.1 examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Cache PowerShell modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~\Documents\PowerShell\Modules
+            ~\Documents\WindowsPowerShell\Modules
+          key: psmodules-${{ runner.os }}-pester5-pssa1
+
+      - name: Run pipeline (build.ps1 -Task CI)
+        shell: pwsh
+        run: ./build.ps1 -Task CI -Configuration Release -InstallDependencies
+
+      - name: Upload test + lint results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-results
+          path: |
+            artifacts/pester.xml
+            artifacts/security.xml
+            artifacts/analyzer.xml
+            artifacts/build.log
+          if-no-files-found: ignore
+
+      - name: Publish test report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Pester results
+          path: artifacts/*.xml
+          reporter: java-junit
+          fail-on-error: false

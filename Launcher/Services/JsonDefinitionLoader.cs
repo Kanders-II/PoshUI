@@ -58,6 +58,7 @@ namespace Launcher.Services
             {
                 branding.WindowTitleText = definition.Branding.WindowTitleText ?? definition.Title ?? "PoshUI";
                 branding.WindowTitleIcon = definition.Branding.WindowTitleIcon;
+                branding.HideTitleBar = definition.Branding.HideTitleBar;
                 branding.SidebarHeaderText = definition.Branding.SidebarHeaderText;
                 branding.SidebarHeaderIcon = definition.Branding.SidebarHeaderIcon ?? definition.Branding.SidebarHeaderIconPath;
                 branding.SidebarHeaderIconOrientation = definition.Branding.SidebarHeaderIconOrientation ?? "Left";
@@ -70,6 +71,10 @@ namespace Launcher.Services
                 branding.OriginalScriptPath = definition.Branding.OriginalScriptPath;
                 branding.Navigation = definition.Branding.Navigation;
                 branding.GridColumns = definition.Branding.GridColumns;
+                branding.WindowWidth = definition.Branding.WindowWidth;
+                branding.WindowHeight = definition.Branding.WindowHeight;
+                branding.WindowMinWidth = definition.Branding.WindowMinWidth;
+                branding.WindowMinHeight = definition.Branding.WindowMinHeight;
             }
 
             return branding;
@@ -100,6 +105,10 @@ namespace Launcher.Services
                 {
                     pageType = "Workflow";
                 }
+                else if (stepType == "Canvas")
+                {
+                    pageType = "Canvas";
+                }
                 else
                 {
                     pageType = "GenericForm";
@@ -113,8 +122,16 @@ namespace Launcher.Services
                     Order = stepJson.Order > 0 ? stepJson.Order : ++order,
                     PageType = pageType,
                     IconPath = stepJson.Icon,
-                    Parameters = MapControls(stepJson),
-                    Controls = MapBannersAndCards(stepJson)
+                    // Canvas pages carry their raw control definitions (absolute X/Y) straight through;
+                    // the CanvasView renders them via CanvasControlFactory.
+                    Parameters = pageType == "Canvas" ? new List<ParameterInfo>() : MapControls(stepJson),
+                    Controls = pageType == "Canvas" ? (System.Collections.IList)stepJson.Controls : MapBannersAndCards(stepJson),
+                    // Canvas page-layout root (responsive Dock/Grid/Stack) — null/empty keeps absolute free-form.
+                    PageLayout = pageType == "Canvas" ? stepJson.Layout : null,
+                    PageColumns = pageType == "Canvas" ? stepJson.Columns : 0,
+                    PageColumnWidths = pageType == "Canvas" ? stepJson.ColumnWidths : null,
+                    PageSpacing = pageType == "Canvas" ? stepJson.Spacing : 0,
+                    PagePadding = pageType == "Canvas" ? stepJson.Padding : null
                 };
 
                 steps.Add(step);

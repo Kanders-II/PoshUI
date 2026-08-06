@@ -1,14 +1,38 @@
 # About
 
-Build beautiful PowerShell wizards, dashboards, and workflows—the PowerShell way.
+Build beautiful PowerShell wizards, dashboards, workflows, and free-form apps—the PowerShell way.
 
 ![PoshUI Dashboard](./images/visualization/Dashboard_ComputerMaintenance_Dark.png)
 
 PoshUI enables IT professionals to create professional Windows 11-style interfaces using familiar PowerShell cmdlets—**no WPF, XAML, or C# knowledge required**.
 
-## Three Independent Modules
+## Four Independent Modules
 
-PoshUI consists of three independent modules that can be used separately:
+PoshUI consists of four independent modules that can be used separately:
+
+### PoshUI.Canvas *(new in v1.4.0)*
+
+**Free-form apps** — lay out anything, anywhere, with no fixed shell. Where the other three modules give you an
+opinionated frame, Canvas gives you a blank page and ~85 cmdlets. A single `.ps1` **is** the application: no
+XAML, no MVVM, no project scaffolding, no build step.
+
+```powershell
+Import-Module PoshUI.Canvas
+New-PoshUICanvas -Title 'Hello' -Theme Dark
+Add-UICanvasPage -Title 'Home' -Layout VStack
+Add-UICanvasTextBox -Name who -Value 'World'
+Add-UICanvasButton 'Greet' -Style Accent -Action {
+    Show-UICanvasToast -Message ("Hello, " + (Get-UICanvasValue -Name who))
+}
+Show-PoshUICanvas
+```
+
+- [About Canvas](./canvas/about.md) - what it is, how it works, and how to use it
+- [Capability Reference](./Canvas-Reference.md) - every control and runtime cmdlet
+- [Agent Authoring Guide](./agent/README.md) - context pack for building Canvas apps with an AI assistant
+- Engine-native workflow runner with retry, timeouts, skip conditions and reboot-resume
+- Tabs, menus, splitters, cascading fields, master/detail grids, charts and reactive state
+- Two real-world example apps ship in `Examples/` — scheduled-task orchestration and end-user self-service
 
 ### PoshUI.Wizard
 

@@ -43,6 +43,9 @@ namespace Launcher.Models
         [DataMember(Name = "WindowTitleText")]
         public string WindowTitleText { get; set; }
 
+        [DataMember(Name = "HideTitleBar")]
+        public bool HideTitleBar { get; set; }
+
         [DataMember(Name = "WindowTitleIcon")]
         public string WindowTitleIcon { get; set; }
 
@@ -82,6 +85,19 @@ namespace Launcher.Models
         [DataMember(Name = "Navigation")]
         public string Navigation { get; set; }
 
+        // Optional window sizing (canvas apps): 0 = use the XAML default.
+        [DataMember(Name = "WindowWidth")]
+        public double WindowWidth { get; set; }
+
+        [DataMember(Name = "WindowHeight")]
+        public double WindowHeight { get; set; }
+
+        [DataMember(Name = "WindowMinWidth")]
+        public double WindowMinWidth { get; set; }
+
+        [DataMember(Name = "WindowMinHeight")]
+        public double WindowMinHeight { get; set; }
+
         [DataMember(Name = "GridColumns")]
         public int GridColumns { get; set; }
     }
@@ -109,6 +125,19 @@ namespace Launcher.Models
 
         [DataMember(Name = "Layout")]
         public string Layout { get; set; }
+
+        // ── Canvas page-layout-root options (additive; only used when a Canvas page declares a -Layout). ──
+        [DataMember(Name = "Columns")]
+        public int Columns { get; set; }
+
+        [DataMember(Name = "ColumnWidths")]
+        public string ColumnWidths { get; set; }
+
+        [DataMember(Name = "Spacing")]
+        public double Spacing { get; set; }
+
+        [DataMember(Name = "Padding")]
+        public string Padding { get; set; }
 
         [DataMember(Name = "Controls")]
         public List<UIControlJson> Controls { get; set; }
@@ -197,6 +226,70 @@ namespace Launcher.Models
 
         [DataMember(Name = "Properties")]
         public Dictionary<string, object> Properties { get; set; }
+
+        // ── Canvas (free-form) members. Additive; ignored by Wizard/Dashboard paths. ──
+        [DataMember(Name = "X")]
+        public double X { get; set; }
+
+        [DataMember(Name = "Y")]
+        public double Y { get; set; }
+
+        [DataMember(Name = "Height")]
+        public int Height { get; set; }
+
+        [DataMember(Name = "ZIndex")]
+        public int ZIndex { get; set; }
+
+        [DataMember(Name = "Action")]
+        public string Action { get; set; }
+
+        [DataMember(Name = "OnChange")]
+        public string OnChange { get; set; }
+
+        [DataMember(Name = "Events")]
+        public List<string> Events { get; set; }
+
+        [DataMember(Name = "Children")]
+        public List<UIControlJson> Children { get; set; }
+
+        [DataMember(Name = "Tooltip")]
+        public string Tooltip { get; set; }
+
+        [DataMember(Name = "Visible")]
+        public bool? Visible { get; set; }
+
+        [DataMember(Name = "Enabled")]
+        public bool? Enabled { get; set; }
+    }
+
+    /// <summary>One step of an engine-native Canvas Workflow control. The PS module serializes an array of
+    /// these into the control's Properties["StepsJson"]; the factory deserializes and builds WorkflowTaskViewModels.</summary>
+    [DataContract]
+    public class UIWorkflowStepJson
+    {
+        [DataMember(Name = "Name")]
+        public string Name { get; set; }
+
+        [DataMember(Name = "Detail")]
+        public string Detail { get; set; }
+
+        // The step's in-app scriptblock body (as a string). Runs on the WorkflowExecutor's own runspace with
+        // $PoshUIWorkflow ($wf) in scope — decoupled from the bridge's serialized gate.
+        [DataMember(Name = "Script")]
+        public string Script { get; set; }
+
+        [DataMember(Name = "ExpectedSeconds")]
+        public int ExpectedSeconds { get; set; }
+
+        [DataMember(Name = "Retry")]
+        public int Retry { get; set; }
+
+        [DataMember(Name = "TimeoutSeconds")]
+        public int TimeoutSeconds { get; set; }
+
+        // Optional PowerShell condition that, if truthy, skips the step (WorkflowTaskViewModel.SkipCondition).
+        [DataMember(Name = "SkipWhen")]
+        public string SkipWhen { get; set; }
     }
 
     [DataContract]
