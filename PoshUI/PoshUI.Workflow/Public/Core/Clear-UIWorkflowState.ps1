@@ -62,7 +62,7 @@ function Clear-UIWorkflowState {
         }
         else {
             # Default locations (encrypted .dat and legacy .json)
-            # Guard against null env vars (e.g. WinPE has no LOCALAPPDATA)
+            # Guard against null env vars (e.g. minimal environments have no LOCALAPPDATA)
             $defaultLocations = @()
             if ($env:LOCALAPPDATA) {
                 $defaultLocations += (Join-Path $env:LOCALAPPDATA 'PoshUI\PoshUI_Workflow_State.dat')

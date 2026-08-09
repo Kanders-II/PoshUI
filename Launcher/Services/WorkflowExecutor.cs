@@ -977,8 +977,8 @@ namespace Launcher.Services
         {
             try
             {
-                // A Canvas host can pin state to a non-volatile path (e.g. the target disk in WinPE); otherwise
-                // default to LOCALAPPDATA\PoshUI.
+                // A Canvas host can pin state to a non-volatile path (e.g. a fixed target disk in a minimal boot
+                // environment); otherwise default to LOCALAPPDATA\PoshUI.
                 string statePath;
                 if (!string.IsNullOrEmpty(_stateFilePath))
                 {

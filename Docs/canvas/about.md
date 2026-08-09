@@ -287,14 +287,3 @@ The [agent guide](../agent/README.md) has the complete list.
 - **[Agent Authoring Guide](../agent/README.md)** — the full LLM context pack: architecture, every control,
   the runtime, charts, theming, flows, gotchas, and a cheatsheet.
 - **[Capability Reference](../Canvas-Reference.md)** — terse index of every capability.
-- **Examples** — `PoshUI\Examples\` ships runnable demos: a workflow demo with live progress and retry, a
-  dashboard demo with an off-gate ScriptCard, a cascading-dropdown demo, and a layout demo (tabs, menu,
-  splitter, viewbox).
-- **Real-world apps** — two complete tools, not mockups, both usable without administrator rights:
-  - **`Endpoint-TaskOrchestrator.ps1`** — Windows Task Scheduler triage and orchestration. Surfaces every task
-    that failed, missed runs or went stale in *one* view (Task Scheduler shows Last Run Result one task at a
-    time, as a raw hex code, which this decodes), runs a chosen sequence of tasks with retry/timeout/skip via
-    the engine workflow, and flags non-Microsoft and SYSTEM+Highest-privilege tasks for persistence triage.
-  - **`Endpoint-SupportDesk.ps1`** — end-user self-service. Plain-language device health, one-click fixes for
-    the common helpdesk calls (privilege-split, so cache/profile fixes work unelevated), and a **support
-    bundle** that collects diagnostics into a zip on the Desktop to attach to a ticket. Nothing is uploaded.

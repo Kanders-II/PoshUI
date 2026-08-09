@@ -83,33 +83,6 @@ non-client area and child dialogs.
 
 ---
 
-## 🛠️ Two Real-World Example Apps
-
-Complete tools, not mockups. Both stay useful **without administrator rights** — read-only views always work,
-and privileged actions are visibly greyed with a one-click "Relaunch as administrator".
-
-**`Endpoint-TaskOrchestrator.ps1`** — Windows Task Scheduler triage and orchestration:
-- **Cross-task triage in one view** — every task that failed, missed runs or went stale. Task Scheduler shows
-  "Last Run Result" one task at a time, as a raw hex code; this shows all of them at once, **decoded** to plain
-  English (unknown codes are reported as hex, never guessed at).
-- **Click a row** to see **what the task actually runs** — its executable and arguments, the usual cause of a
-  failure and something Task Scheduler buries several clicks deep. Then Run now / Enable / Disable / Export XML.
-- **Real orchestration** — run a chosen sequence of tasks with retry, timeout and per-task skip. Task Scheduler
-  fires tasks independently on triggers and cannot express "B only after A succeeds".
-- **Security triage** — non-Microsoft tasks and tasks running as SYSTEM with Highest privileges, a common
-  persistence location. Refuses to modify `\Microsoft\*` tasks unless you explicitly allow it.
-
-**`Endpoint-SupportDesk.ps1`** — end-user self-service, aimed at the calls a helpdesk actually gets:
-- **"Why is my computer slow?"** — memory/disk pressure, days since restart, and the apps consuming the most
-  memory and CPU.
-- **Restart this computer** — with a confirmation, a 60-second countdown and how to cancel.
-- **"Am I up to date?"**, **Renew my network address**, and fixes for temp files, app caches, policy and mapped
-  drives. Cache clearing *discovers which caches exist* rather than hardcoding paths.
-- **Collect support bundle** — gathers diagnostics into a zip on the Desktop to attach to a ticket. A collector
-  that fails is logged and skipped rather than losing the bundle. **Nothing is uploaded anywhere.**
-
----
-
 ## 🤖 Building Canvas Apps with AI
 
 Canvas contains no AI and needs none. But because it is flat, declarative, single-file and build-free, with a

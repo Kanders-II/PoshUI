@@ -58,11 +58,6 @@ state, charts, animation, secondary windows, and a raw-XAML escape hatch for any
 Its **engine-native workflow runner** (`-Engine`) runs steps on their own runspace, so progress and elapsed time
 stay live during a long step, with per-step retry, timeouts, skip conditions and reboot-resume.
 
-**Two real-world apps ship in `Examples/`** — not mockups. `Endpoint-TaskOrchestrator.ps1` triages and
-orchestrates Windows scheduled tasks (every failed/missed/stale task in one view, with decoded result codes);
-`Endpoint-SupportDesk.ps1` is end-user self-service diagnostics, fixes, and a support bundle for a ticket. Both
-are useful without administrator rights.
-
 Because it's flat, declarative, single-file and build-free, Canvas is also an unusually good target to develop
 for **with an AI assistant** — see the [Agent Authoring Guide](Docs/agent/README.md), a context pack written to
 be handed to a model. → **[About Canvas](Docs/canvas/about.md)**

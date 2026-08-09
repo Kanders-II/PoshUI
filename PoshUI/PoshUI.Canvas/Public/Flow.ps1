@@ -239,7 +239,7 @@ function Add-UICanvasWorkflow {
         [switch]$Compact,          # tighter step rows (smaller padding/spacing) for dense pipelines
         [switch]$NoStartButton,    # don't render the Start button; place it yourself via $Global:_PoshUICanvas.WorkflowActions[Name]
         [switch]$NoHeader,         # don't render the Status/% header + gauge; place <name>_status/<name>_pct/<name>_gauge yourself
-        # Reboot-resume: a non-volatile path (e.g. on the target disk, NOT WinPE's X:) where completed-step
+        # Reboot-resume: a non-volatile path (e.g. on the target disk, not a RAM disk) where completed-step
         # state is written after each step. On relaunch the workflow pre-marks done steps and resumes from there.
         [string]$StateFile
     )

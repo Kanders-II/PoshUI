@@ -76,10 +76,10 @@ function Save-UIWorkflowState {
             # Determine state file path (use .dat for encrypted, .json for plain)
             $extension = if ($NoEncryption) { '.json' } else { '.dat' }
             if (-not $Path) {
-                # Guard against null env vars (e.g. WinPE has no LOCALAPPDATA)
+                # Guard against null env vars (e.g. minimal environments have no LOCALAPPDATA)
                 $baseDir = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA }
                            elseif ($env:PROGRAMDATA) { $env:PROGRAMDATA }
-                           else { 'X:\OSD\Temp' }
+                           else { Join-Path $env:SystemDrive 'Temp' }
                 $stateDir = Join-Path $baseDir 'PoshUI'
                 if (-not (Test-Path $stateDir)) {
                     $dir = New-Item -Path $stateDir -ItemType Directory -Force

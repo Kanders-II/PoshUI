@@ -22,7 +22,6 @@ opt-in via `-Engine`.
 - **Declarative cascading fields** - `-DependsOn` / `-OptionsScript` on `Add-UICanvasDropdown` and `Add-UICanvasListBox` recompute options when a parent field changes, with no event wiring.
 - **`Add-UICanvasDataGrid -OnChange`** - selecting a row now raises `ValueChanged`, enabling master/detail.
 - **Per-Monitor V2 DPI awareness** - windows re-render at the target monitor's DPI instead of being bitmap-stretched when moved between monitors with different scaling, and adapt live to scaling changes.
-- **Two real-world example apps** - `Endpoint-TaskOrchestrator.ps1` (Task Scheduler triage, orchestration and security audit) and `Endpoint-SupportDesk.ps1` (end-user self-service diagnostics, fixes and support bundle), plus the shared `Examples/Lib/EndpointUI.ps1`.
 - **Agent authoring guide** (`Docs/agent/`) - a self-contained context pack for building Canvas apps with an AI assistant.
 
 ### Fixed

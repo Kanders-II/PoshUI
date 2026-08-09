@@ -57,48 +57,11 @@ Add-UICanvasScriptCard 'Collect logs' -Detail 'Zips the last 24h' -Script {
 }
 ```
 
-### Real-World Example Apps
-
-Two complete tools that do real local work, replacing the simulated showcases as the reference for what Canvas
-builds. Both keep the showcase design language (chromeless toolbar + footer, pre-flight → live execution) and
-both stay useful **without administrator rights** — read-only views always work, and privileged actions are
-visibly greyed with a one-click "Relaunch as administrator".
-
-- **`Endpoint-TaskOrchestrator.ps1`** — Windows Task Scheduler triage and orchestration:
-  - **Cross-task triage in one view** — every task that failed, missed runs, or went stale. Task Scheduler shows
-    "Last Run Result" one task at a time; this shows all of them at once, with the raw code **decoded** to plain
-    English (unknown codes are reported as hex, never guessed at).
-  - **Real orchestration** — runs a chosen sequence of tasks in order with per-task retry, timeout and skip, via
-    `Add-UICanvasWorkflow -Engine`. Task Scheduler fires tasks independently on triggers and cannot express
-    "B only after A succeeds".
-  - **Click a row to inspect it** — a detail pane shows **what the task actually runs** (its executable and
-    arguments), its triggers, principal and decoded last result. A failing task is usually a bad path or a
-    missing exe, and Task Scheduler buries that several clicks deep.
-  - **Per-task actions** — Run now, Enable, Disable and Export XML on the selected task. Every write action is
-    refused without elevation, and refuses `\Microsoft\*` tasks unless you explicitly tick "Allow Windows
-    tasks" — those belong to Windows and breaking them breaks the OS. Export is read-only, so it always works.
-  - **Security triage** — non-Microsoft tasks and tasks running as SYSTEM with Highest privileges, a common
-    persistence location that Task Scheduler has no view for.
-- **`Endpoint-SupportDesk.ps1`** — end-user self-service, aimed at the calls a helpdesk actually gets:
-  - **"Why is my computer slow?"** — the top complaint. Reports memory/disk pressure, days since restart, and
-    the apps consuming the most memory and CPU, so the user can act or tell IT what to look at.
-  - **Restart this computer** — pending-reboot is *detected* on the status page, so it is *actionable* here
-    (confirmation dialog, 60-second countdown, and it tells you how to cancel).
-  - **"Am I up to date?"** and **Renew my network address**, plus fixes for temp/cache/policy/mapped drives.
-    Cache clearing **discovers which caches exist** rather than hardcoding paths. Service-level fixes (print
-    spooler, DNS) are visibly greyed and refuse politely when unelevated; everything else works as a standard user.
-  - **Support bundle** — collects diagnostics into a zip on the Desktop to attach to a ticket. A collector that
-    fails is logged and skipped rather than losing the bundle, and nothing is uploaded anywhere.
-
 ### Fixed / improved
 
 - **`Add-UICanvasDataGrid` gained `-OnChange`**, and the engine now raises `ValueChanged` when a grid row is
   selected. Selection was always readable via `Get-UICanvasValue`, but nothing fired on select — so a grid could
   not drive a detail pane. Master/detail now works in any Canvas app.
-- **`Examples/Lib/EndpointUI.ps1`** — shared chrome, elevation detection, the result-code decoder and the task
-  snapshot helpers. It also documents the key constraint both apps work around: **action and workflow-step
-  scriptblocks run in the engine process's runspace**, which shares no functions or variables with the authoring
-  script, so every action is composed from a prelude that dot-sources this library.
 
 ### Native Layout Controls — Tabs, Menu, GridSplitter, Viewbox
 

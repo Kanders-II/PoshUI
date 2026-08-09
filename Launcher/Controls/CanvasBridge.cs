@@ -1088,9 +1088,10 @@ $InformationPreference = 'Continue'
             if (nav != null) _ui.Invoke((Action)(() => { CaptureValues(); nav(page); }));
         }
 
-        /// <summary>True when running under WinPE, where the Win32 shell (comdlg32/shell32) that backs the
-        /// native folder/file dialogs is unavailable — so we must use the WPF-drawn picker instead.</summary>
-        private static bool IsWinPE()
+        /// <summary>True when running in a minimal environment (e.g. a preinstallation/recovery OS) where the
+        /// Win32 shell (comdlg32/shell32) that backs the native folder/file dialogs is unavailable — so we must
+        /// use the WPF-drawn picker instead.</summary>
+        private static bool IsMinimalShellEnvironment()
         {
             try
             {
@@ -1104,12 +1105,12 @@ $InformationPreference = 'Continue'
         }
 
         /// <summary>Opens a folder-browser dialog (on the UI thread) and returns the chosen path, or null.
-        /// Uses the native shell dialog on a full OS; falls back to a WPF-drawn browser under WinPE.</summary>
+        /// Uses the native shell dialog on a full OS; falls back to a WPF-drawn browser when the shell is unavailable.</summary>
         public string SelectFolder(string description)
         {
             return (string)_ui.Invoke((Func<string>)(() =>
             {
-                if (!IsWinPE())
+                if (!IsMinimalShellEnvironment())
                 {
                     try
                     {
@@ -1127,12 +1128,12 @@ $InformationPreference = 'Continue'
         }
 
         /// <summary>Opens an open-file dialog (on the UI thread) and returns the chosen path, or null.
-        /// Uses the native shell dialog on a full OS; falls back to a WPF-drawn browser under WinPE.</summary>
+        /// Uses the native shell dialog on a full OS; falls back to a WPF-drawn browser when the shell is unavailable.</summary>
         public string SelectFile(string title, string filter)
         {
             return (string)_ui.Invoke((Func<string>)(() =>
             {
-                if (IsWinPE()) return WpfBrowse(false, title, filter);
+                if (IsMinimalShellEnvironment()) return WpfBrowse(false, title, filter);
                 try
                 {
                     var dlg = new Microsoft.Win32.OpenFileDialog
@@ -1147,7 +1148,7 @@ $InformationPreference = 'Continue'
             }));
         }
 
-        // ── WPF-drawn file/folder picker (shell-free; works in WinPE) ─────────────────────
+        // ── WPF-drawn file/folder picker (shell-free; works in minimal environments) ─────────
         private sealed class BrowseEntry
         {
             public string Path;
