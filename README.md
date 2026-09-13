@@ -101,6 +101,19 @@ Orchestrate complex processes like server deployments, software installations, a
 1. Download the latest release from [GitHub Releases](https://github.com/Kanders-II/PoshUI/releases)
 2. Extract and unblock files: `Get-ChildItem -Recurse | Unblock-File`
 
+**Or build from source.** This repository holds the source. The PowerShell modules run as they are; the WPF
+engine they drive (`PoshUI.exe`) is built from `Launcher\`, which is SDK-style with no third-party packages, so
+the .NET SDK alone is enough:
+
+```powershell
+git clone https://github.com/Kanders-II/PoshUI.git
+cd PoshUI
+dotnet build Launcher\Launcher.csproj -c Release
+```
+
+The build writes `PoshUI\bin\PoshUI.exe` — where the modules already look for it, so there is nothing to copy
+afterwards. See [Building from Source](Docs/development/building-from-source.md).
+
 ### Simple Example
 
 ```powershell
@@ -147,7 +160,8 @@ Show-PoshUIWizard -ScriptBody {
 - **Tabs, Menus, Splitters & Viewbox** - Native cmdlets for the layout chrome that used to require raw XAML *(v1.4.0)*
 - **Master/Detail Grids** - `Add-UICanvasDataGrid -OnChange` fires on row select so a grid can drive a detail pane *(v1.4.0)*
 - **Per-Monitor V2 DPI** - Stays crisp when moved between monitors with different scaling *(v1.4.0)*
-- **Raw XAML Escape Hatch** - Splice any WPF control in and still drive it with the Canvas cmdlets *(v1.4.0)*
+- **Raw XAML Escape Hatch** - Splice any WPF control in, name it, and hand it an `-Actions` scriptblock, so a control the cmdlets do not cover still behaves like one that does *(v1.4.0)*
+- **Authoring Diagnostics** - A `-Properties` key nothing read is logged by name instead of being silently dropped, with a hint when the key is real for a different control *(v1.4.0)*
 - **Zero Dependencies** - No third-party libraries or NuGet packages
 
 ---
@@ -182,11 +196,11 @@ PoshUI is my contribution to the PowerShell community. Contributions, feedback, 
 
 ### Icons8
 
-Some example scripts in this project use icons provided by [Icons8](https://icons8.com). Icons8 icons are used under their [licensing terms](https://icons8.com/license). If you use these icons in your own projects, please provide appropriate attribution to Icons8.
+The documentation screenshots use icons provided by [Icons8](https://icons8.com). Icons8 icons are used under their [licensing terms](https://icons8.com/license). If you use these icons in your own projects, please provide appropriate attribution to Icons8.
 
 ### Microsoft Fluent Emoji
 
-Some example scripts use 3D emoji icons from the [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) repository. Fluent Emoji is published by Microsoft under the [MIT License](https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE). These high-quality 3D rendered PNG icons are ideal for use with PoshUI's `-IconPath` parameter.
+The documentation screenshots use 3D emoji icons from the [Microsoft Fluent Emoji](https://github.com/microsoft/fluentui-emoji) repository. Fluent Emoji is published by Microsoft under the [MIT License](https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE). These high-quality 3D rendered PNG icons are ideal for use with PoshUI's `-IconPath` parameter.
 
 ---
 

@@ -31,7 +31,7 @@ Show-PoshUIWizard -AppDebug
 
 ### Visual Studio Debugging
 If you have the source code, you can debug the UI engine directly:
-1. Open `UIFramework.sln` in Visual Studio.
+1. Open `WizardFramework.sln` in Visual Studio.
 2. Set the `Launcher` project as the StartUp project.
 3. In the project properties, go to the **Debug** tab.
 4. Set **Application arguments** to point to a valid PoshUI temporary file (e.g., `C:\Users\...\AppData\Local\Temp\PoshUI\debug.json`).

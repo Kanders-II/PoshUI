@@ -32,7 +32,7 @@ Show-PoshUICanvas
 - [Agent Authoring Guide](./agent/README.md) - context pack for building Canvas apps with an AI assistant
 - Engine-native workflow runner with retry, timeouts, skip conditions and reboot-resume
 - Tabs, menus, splitters, cascading fields, master/detail grids, charts and reactive state
-- Two real-world example apps ship in `Examples/` — scheduled-task orchestration and end-user self-service
+- A single `.ps1` is the whole app - no XAML, no MVVM, no build step
 
 ### PoshUI.Wizard
 

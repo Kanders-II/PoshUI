@@ -20,7 +20,6 @@ PoshUI.<ModuleName>/
 │   ├── Security/               # New-SecureTempFile, etc.
 │   ├── StateManagement/        # Initialize-UIContext, etc.
 │   └── Serialize-UIDefinition.ps1
-└── Examples/                   # Module-specific demonstration scripts
 ```
 
 ## Component Roles

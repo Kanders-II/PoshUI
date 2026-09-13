@@ -26,11 +26,11 @@ If you prefer to build PoshUI yourself, you can do so using Visual Studio or the
    ```powershell
    git clone https://github.com/Kanders-II/PoshUI.git
    ```
-2. Open `UIFramework.sln` in Visual Studio.
+2. Open `WizardFramework.sln` in Visual Studio.
 3. Set the build configuration to **Release**.
 4. Build the solution (**Build > Build Solution**).
 
-The compiled files will be located in the `bin/Release` folder.
+The build writes `PoshUIinPoshUI.exe`, which is where the modules look for it - no copying needed.
 
 ## Verification
 

@@ -45,8 +45,8 @@ We love new ideas! If you have a suggestion for a new control, feature, or impro
 ## Development Environment Setup
 
 1. Follow the [Building from Source](./building-from-source.md) guide.
-2. Use the `Examples/` directory to create test scripts for your new features.
-3. Run existing examples to ensure no regressions were introduced.
+2. Keep scratch test scripts out of the repo - nothing outside `Launcher/`, `PoshUI/` and `Docs/` is published.
+3. Re-run whatever you used to reproduce the problem, and check the app still starts clean.
 
 ## Pull Request Process
 

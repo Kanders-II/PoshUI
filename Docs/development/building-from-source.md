@@ -14,8 +14,7 @@ To build PoshUI, you will need the following tools installed on your system:
 
 - `Launcher/`: Contains the C# source code for the WPF application (`PoshUI.exe`).
 - `PoshUI/`: Contains the PowerShell modules and their class definitions.
-- `Examples/`: contains sample scripts for testing and demonstration.
-- `UIFramework.sln`: The primary Visual Studio solution file.
+- `WizardFramework.sln`: The primary Visual Studio solution file.
 
 ## Build Steps
 
@@ -27,7 +26,7 @@ cd PoshUI
 ```
 
 ### 2. Open the Solution
-Open `UIFramework.sln` in Visual Studio.
+Open `WizardFramework.sln` in Visual Studio.
 
 ### 3. Restore Dependencies
 Visual Studio should automatically restore any internal project references. Since PoshUI has **zero third-party dependencies**, there are no NuGet packages to download.
@@ -40,19 +39,20 @@ Go to **Build > Build Solution** (or press `Ctrl+Shift+B`).
 
 ## Output Location
 
-Once the build is complete, the compiled executable and associated files will be located in:
-`.\Launcher\bin\Release\PoshUI.exe`
+Both configurations write straight to the folder the modules already look in:
 
-## Post-Build Setup
+`.\PoshUI\bin\PoshUI.exe`
 
-To test your build, you need to ensure the PowerShell modules can find the new executable. The modules are configured to look for the EXE in a `bin` folder relative to the module root.
+Everything else the build produces (satellite assemblies, the `.pdb`, `.exe.config`) is moved into
+`.\PoshUI\bin\bin\` by the `RearrangeOutput` target, so the module directory stays readable. There is nothing
+to copy afterwards - import a module and it finds the engine you just built.
 
-1. Create a `bin` folder inside the `PoshUI` module directory if it doesn't exist.
-2. Copy the compiled `PoshUI.exe` into that `bin` folder.
+## Building Without Visual Studio
+
+The project is SDK-style and has no third-party packages, so the .NET SDK alone is enough:
 
 ```powershell
-New-Item -ItemType Directory -Path ".\PoshUI\bin" -Force
-Copy-Item ".\Launcher\bin\Release\PoshUI.exe" ".\PoshUI\bin\"
+dotnet build Launcher\Launcher.csproj -c Release
 ```
 
 Next: [Debugging](./debugging.md)

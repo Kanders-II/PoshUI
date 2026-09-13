@@ -30,7 +30,7 @@ git clone https://github.com/Kanders-II/PoshUI.git
 cd PoshUI
 
 # Build the solution
-msbuild UIFramework.sln /p:Configuration=Release
+dotnet build Launcherauncher.csproj -c release   # -> poshuiinposhui.exe
 ```
 
 :::
