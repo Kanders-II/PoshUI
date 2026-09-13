@@ -517,6 +517,8 @@ function Add-UICanvasImage {
 function Add-UICanvasXaml {
     [CmdletBinding()]
     param([string]$Name, [string]$Markup, [string]$Path,
+        # Name -> scriptblock for x:Name'd controls INSIDE the markup (e.g. a <Button x:Name='go'/>).
+        [hashtable]$Actions,
         [double]$X, [double]$Y, [double]$Width, [double]$Height, [int]$ZIndex,
         [string]$Tooltip, [bool]$Visible, [bool]$Enabled, [hashtable]$Properties)
     $props = @{}
@@ -527,6 +529,7 @@ function Add-UICanvasXaml {
     foreach ($p in 'Name', 'X', 'Y', 'Width', 'Height', 'ZIndex', 'Tooltip', 'Visible', 'Enabled') {
         if ($PSBoundParameters.ContainsKey($p)) { $fwd[$p] = $PSBoundParameters[$p] }
     }
+    if ($PSBoundParameters.ContainsKey('Actions')) { $fwd['XamlActions'] = $Actions }
     if ($props.Count -gt 0) { $fwd['Properties'] = $props }
     Add-UICanvasControlInternal @fwd
 }

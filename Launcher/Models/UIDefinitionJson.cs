@@ -243,6 +243,20 @@ namespace Launcher.Models
         [DataMember(Name = "Action")]
         public string Action { get; set; }
 
+        // Name -> script map for controls declared inside an Add-UICanvasXaml block. XamlReader gives
+        // those elements no Def of their own, so without this a named <Button> inside injected XAML
+        // raises Clicked and finds nothing to run.
+        [DataMember(Name = "XamlActions")]
+        public Dictionary<string, string> XamlActions { get; set; }
+
+        /// <summary>Runtime-only: which Properties keys the factory actually READ while building this
+        /// control. A key supplied but never read is almost always an author mistake - a typo, or a key
+        /// that only applies to a different control type (ImageWidth is read for a Banner hero image but
+        /// not for a plain Image, which silently rendered icons at full bleed). Reported by
+        /// CanvasControlFactory.WarnUnreadProperties instead of being dropped in silence.</summary>
+        [IgnoreDataMember]
+        public HashSet<string> ReadKeys { get; set; }
+
         [DataMember(Name = "OnChange")]
         public string OnChange { get; set; }
 

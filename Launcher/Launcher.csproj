@@ -130,4 +130,7 @@
     <Move SourceFiles="@(FilesToMove)" DestinationFolder="$(InnerBin)" />
   </Target>
 
+  <!-- Optional local-only build extensions. Absent from a clean checkout, which is why the import is
+       conditional: nothing it carries is required to build the app. -->
+  <Import Project="Local.props" Condition="Exists('Local.props')" />
 </Project>

@@ -24,7 +24,53 @@ namespace Launcher.Controls
     /// </summary>
     public class CanvasBridge
     {
-        private readonly Dispatcher _ui;
+        private readonly UiGate _ui;
+
+        /// <summary>
+        /// Guarded gateway to the UI dispatcher. Every bridge method marshals through here,
+        /// and most do it with a BLOCKING Invoke — which is why teardown needs a gate.
+        ///
+        /// Two ways that used to hang the process with no window on screen:
+        ///   * A background script (Start-UICanvasAsync) calling Set-UICanvasProperty while
+        ///     the window is closing blocks forever on a dispatcher that will never pump again.
+        ///   * Runspace.Close() waits for in-flight pipelines. Shutdown() runs it on the UI
+        ///     thread, so if a pipeline is simultaneously blocked in Invoke() waiting for that
+        ///     same UI thread, the two deadlock permanently.
+        ///
+        /// Setting Disabled makes Invoke return null and BeginInvoke drop its work, so script
+        /// still running during teardown unwinds instead of blocking. The timeout covers the
+        /// window between "the user clicked X" and "Disabled has been set".
+        /// </summary>
+        private sealed class UiGate
+        {
+            private readonly Dispatcher _d;
+            internal volatile bool Disabled;
+            internal UiGate(Dispatcher d) { _d = d; }
+
+            private bool Dead
+            {
+                get { return Disabled || _d == null || _d.HasShutdownStarted || _d.HasShutdownFinished; }
+            }
+
+            internal object Invoke(Delegate method)
+            {
+                if (Dead || method == null) return null;
+                try { return _d.Invoke(method, TimeSpan.FromSeconds(10)); }
+                catch (Exception) { return null; }   // dispatcher went away mid-call
+            }
+
+            internal void BeginInvoke(Delegate method)
+            {
+                if (Dead || method == null) return;
+                try { _d.BeginInvoke(method); } catch { }
+            }
+
+            internal void BeginInvoke(DispatcherPriority priority, Delegate method)
+            {
+                if (Dead || method == null) return;
+                try { _d.BeginInvoke(priority, method); } catch { }
+            }
+        }
         private readonly string _definitionPath;
         private readonly Dictionary<string, CanvasControl> _byName = new Dictionary<string, CanvasControl>(StringComparer.OrdinalIgnoreCase);
         // Values survive page navigation (controls are rebuilt per page); restored on Register, captured on leave.
@@ -84,7 +130,7 @@ $InformationPreference = 'Continue'
 
         public CanvasBridge(Dispatcher ui, string definitionPath)
         {
-            _ui = ui;
+            _ui = new UiGate(ui);
             _definitionPath = definitionPath;
             try
             {
@@ -388,16 +434,85 @@ $InformationPreference = 'Continue'
             });
         }
 
-        private bool _disposed;
+        private volatile bool _disposed;
 
-        /// <summary>Stops live-refresh timers and disposes the runspace. Call when the window closes.</summary>
+        /// <summary>In-flight Start-UICanvasAsync pipelines, so Shutdown can stop them.</summary>
+        private readonly List<PowerShell> _asyncPipelines = new List<PowerShell>();
+
+        /// <summary>
+        /// Tears the runtime down when the window closes. Ordering matters here, and the whole
+        /// method must be safe to run ON the UI thread (it is called from MainWindow_Closing).
+        /// </summary>
         public void Shutdown()
         {
             if (_disposed) return;
             _disposed = true;
+
+            // FIRST, before anything that waits: close the gate. Any script currently blocked in
+            // a UI marshal returns immediately instead of waiting on a dispatcher that is about
+            // to stop pumping, which is what allows the steps below to complete at all.
+            _ui.Disabled = true;
+
             try { foreach (var t in _timers) t.Stop(); _timers.Clear(); } catch { }
-            try { if (_runspace != null) { _runspace.Close(); _runspace.Dispose(); _runspace = null; } } catch { }
-            LoggingService.Info("CanvasBridge shut down (timers stopped, runspace disposed).", component: "CanvasBridge");
+
+            // Secondary canvas windows keep the app alive under the default
+            // ShutdownMode.OnLastWindowClose, so close them explicitly.
+            try
+            {
+                foreach (var w in _windows.ToArray()) { try { w.Close(); } catch { } }
+                _windows.Clear();
+            }
+            catch { }
+
+            // Stop background pipelines rather than waiting for them. A provisioning run can be
+            // hours long; the window is gone and nothing can consume its output.
+            PowerShell[] running;
+            lock (_asyncPipelines) running = _asyncPipelines.ToArray();
+            foreach (var ps in running) { try { ps.Stop(); } catch { } }
+
+            // Runspace.Close() BLOCKS until in-flight pipelines finish, so it must not run on the
+            // UI thread: a pipeline waiting on a UI marshal while the UI thread waits on Close()
+            // is a deadlock with no window and no way out. Off-thread with a bounded wait means a
+            // stuck pipeline costs a few seconds, not the process.
+            var rs = _runspace;
+            _runspace = null;
+            if (rs != null)
+            {
+                var closer = new Thread(() => { try { rs.Close(); rs.Dispose(); } catch { } });
+                closer.IsBackground = true;
+                closer.Start();
+                if (!closer.Join(TimeSpan.FromSeconds(3)))
+                    LoggingService.Warn("Canvas runspace did not close within 3s; abandoning it.", component: "CanvasBridge");
+            }
+
+            LoggingService.Info("CanvasBridge shut down (gate closed, " + running.Length +
+                " async pipeline(s) stopped, timers stopped, runspace disposed).", component: "CanvasBridge");
+
+            ArmExitWatchdog();
+        }
+
+        /// <summary>
+        /// Last-resort guarantee that closing the window ends the process.
+        ///
+        /// Everything above is best-effort: it stops the pipelines we know about, but in-app
+        /// script is arbitrary and can hold a foreground thread or a COM apartment we have no
+        /// handle on. The launching PowerShell host blocks on WaitForExit(), so a process that
+        /// never exits strands the host too — that pair is what shows up as leftover PoshUI.exe
+        /// processes. This thread is background, so a clean exit kills it first and it never
+        /// fires; it only wins when something genuinely refused to unwind.
+        /// </summary>
+        private static void ArmExitWatchdog()
+        {
+            var t = new Thread(() =>
+            {
+                Thread.Sleep(8000);
+                LoggingService.Warn("Process still alive 8s after canvas shutdown; forcing exit.", component: "CanvasBridge");
+                LoggingService.Shutdown();
+                Environment.Exit(0);
+            });
+            t.IsBackground = true;
+            t.Name = "CanvasExitWatchdog";
+            t.Start();
         }
 
         // ── Bridge methods called from in-app scriptblocks ────────────────────────
@@ -630,6 +745,7 @@ $InformationPreference = 'Continue'
         /// doesn't freeze the UI. The injected runtime cmdlets still marshal updates back to the UI thread.</summary>
         public void RunAsync(string script)
         {
+            if (_disposed) return;   // window is closing; don't start new background work
             Task.Run(() =>
             {
                 Runspace rs = null;
@@ -644,9 +760,18 @@ $InformationPreference = 'Continue'
                     {
                         ps.Runspace = rs;
                         ps.AddScript(Bootstrap + "\n" + script);
-                        ps.Invoke();
-                        if (ps.HadErrors)
-                            foreach (var er in ps.Streams.Error) Diag("Start-UICanvasAsync error: " + er.ToString());
+                        // Tracked so Shutdown can stop it. These pipelines are the long ones -
+                        // a provisioning run is minutes to hours - and left untracked they keep
+                        // executing (and calling back into a dead dispatcher) after the window
+                        // has gone, which is what kept the process alive.
+                        lock (_asyncPipelines) _asyncPipelines.Add(ps);
+                        try
+                        {
+                            ps.Invoke();
+                            if (ps.HadErrors)
+                                foreach (var er in ps.Streams.Error) Diag("Start-UICanvasAsync error: " + er.ToString());
+                        }
+                        finally { lock (_asyncPipelines) _asyncPipelines.Remove(ps); }
                     }
                 }
                 catch (Exception ex) { Diag("Start-UICanvasAsync failed: " + ex.Message); }
@@ -719,7 +844,12 @@ $InformationPreference = 'Continue'
                     ResizeMode = ResizeMode.NoResize,
                     ShowInTaskbar = false,
                     Owner = owner,
-                    Background = Brush("#141A2E")
+                    // WindowStyle.None: the OS title bar is drawn by Windows in the SYSTEM theme, so on a
+                    // dark app it lands as a light strip above dark content no matter how the body is
+                    // styled. The main window already hides its chrome and draws its own header - this
+                    // makes dialogs consistent with that instead of the only light surface in the app.
+                    WindowStyle = WindowStyle.None,
+                    Background = Res("ContentBackgroundBrush", "#141A2E")
                 };
                 var panel = new StackPanel { Margin = new Thickness(22) };
                 panel.Children.Add(new TextBlock { Text = message ?? "", Foreground = Brush("#E5E7EB"), TextWrapping = TextWrapping.Wrap, FontSize = 13, Margin = new Thickness(0, 0, 0, 16) });
@@ -742,10 +872,105 @@ $InformationPreference = 'Continue'
                 cancel.Click += (s, e) => { result = null; dlg.DialogResult = false; };
                 bar.Children.Add(ok); bar.Children.Add(cancel);
                 panel.Children.Add(bar);
-                dlg.Content = panel;
+
+                // Replacement chrome: a themed header bar plus a 1px frame. WindowStyle.None removes the
+                // OS border too, so without the frame the dialog would bleed into the window behind it.
+                var root = new DockPanel();
+                var header = BuildDialogHeader(dlg, title);
+                DockPanel.SetDock(header, Dock.Top);
+                root.Children.Add(header);
+                root.Children.Add(panel);
+                dlg.Content = new Border
+                {
+                    BorderBrush = Res("BorderBrush", "#1E293B"),
+                    BorderThickness = new Thickness(1),
+                    Child = root
+                };
                 dlg.ShowDialog();
                 return result;
             }));
+        }
+
+        /// <summary>
+        /// Themed title bar for a chrome-less dialog: accent tick, title, close button, and a drag
+        /// handle (WindowStyle.None loses the OS one, so the dialog would otherwise be unmovable).
+        /// </summary>
+        private static FrameworkElement BuildDialogHeader(Window dlg, string title)
+        {
+            var grid = new Grid { Height = 38, Background = Res("CardBackgroundBrush", "#0D1420") };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var left = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                VerticalAlignment = VerticalAlignment.Stretch,
+                Margin = new Thickness(14, 0, 0, 0),
+                // Transparent, not null: an unpainted panel is not hit-testable, so the empty space
+                // beside the title would not be draggable.
+                Background = System.Windows.Media.Brushes.Transparent
+            };
+            left.Children.Add(new TextBlock
+            {
+                Text = "■",                       // same accent tick the section labels use
+                Foreground = Res("PrimaryBrush", "#22D3EE"),
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 9, 0)
+            });
+            left.Children.Add(new TextBlock
+            {
+                Text = title ?? "Confirm",
+                Foreground = Res("BodyForegroundBrush", "#E2E8F0"),
+                FontSize = 12,
+                FontWeight = FontWeights.SemiBold,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Grid.SetColumn(left, 0);
+            grid.Children.Add(left);
+
+            var close = new Button
+            {
+                Content = "✕",
+                Width = 38,
+                Height = 38,
+                Background = System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Foreground = Res("SecondaryForegroundBrush", "#64748B"),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                FontSize = 12
+            };
+            // Same outcome as the Cancel button: dismissed, no value.
+            close.Click += (s, e) => { try { dlg.DialogResult = false; } catch { dlg.Close(); } };
+            close.MouseEnter += (s, e) => close.Foreground = Res("BodyForegroundBrush", "#E2E8F0");
+            close.MouseLeave += (s, e) => close.Foreground = Res("SecondaryForegroundBrush", "#64748B");
+            Grid.SetColumn(close, 1);
+            grid.Children.Add(close);
+
+            // Drag from the title area only, NOT the whole header: DragMove captures the mouse on
+            // button-down, which would swallow the close button's click and turn ✕ into a drag.
+            left.MouseLeftButtonDown += (s, e) => { try { dlg.DragMove(); } catch { } };
+
+            var wrap = new DockPanel();
+            DockPanel.SetDock(grid, Dock.Top);
+            wrap.Children.Add(grid);
+            wrap.Children.Add(new Border { Height = 1, Background = Res("BorderBrush", "#1E293B") });
+            return wrap;
+        }
+
+        /// <summary>Theme brush by resource key, falling back to a literal when the key is absent.</summary>
+        private static Brush Res(string key, string fallback)
+        {
+            try
+            {
+                if (System.Windows.Application.Current != null)
+                {
+                    var b = System.Windows.Application.Current.TryFindResource(key) as Brush;
+                    if (b != null) return b;
+                }
+            }
+            catch { }
+            return Brush(fallback);
         }
 
         /// <summary>Lightweight anchored flyout: an optional title/message plus clickable items, anchored to a named
@@ -1507,12 +1732,10 @@ $InformationPreference = 'Continue'
             return long.TryParse(Str(v), NumberStyles.Any, CultureInfo.InvariantCulture, out t) ? t : 0;
         }
 
-        public void Dispose()
-        {
-            foreach (var t in _timers) { try { t.Stop(); } catch { } }
-            _timers.Clear();
-            try { if (_runspace != null) _runspace.Dispose(); } catch { }
-        }
+        // Routed through Shutdown so there is exactly one teardown path. The old body stopped
+        // timers and disposed the runspace WITHOUT closing the UI gate or stopping async
+        // pipelines, so disposing via this route could still deadlock.
+        public void Dispose() { Shutdown(); }
 
         // ── helpers ────────────────────────────────────────────────────────────────
         private static string Str(object v) { return v == null ? "" : v.ToString(); }

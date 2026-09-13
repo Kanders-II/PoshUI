@@ -93,6 +93,15 @@ namespace Launcher.Controls
             try { cc = CanvasControlFactory.Build(pageContainer, onEvent); }
             catch { return; }
 
+            // Report -Properties keys nothing read. Unrecognised input is otherwise accepted and dropped,
+            // which turns an author mistake into a wrong-looking screen with a clean log.
+            try
+            {
+                CanvasControlFactory.WarnUnreadProperties(pageContainer,
+                    m => Launcher.Services.LoggingService.Warn(m, component: "CanvasControlFactory"));
+            }
+            catch { }
+
             var root = cc.Element;
             root.HorizontalAlignment = HorizontalAlignment.Stretch;
             root.VerticalAlignment = VerticalAlignment.Stretch;

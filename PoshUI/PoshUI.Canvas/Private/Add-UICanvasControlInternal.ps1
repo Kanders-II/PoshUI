@@ -21,6 +21,7 @@ function Add-UICanvasControlInternal {
         [Nullable[bool]]$Visible,
         [Nullable[bool]]$Enabled,
         [hashtable]$Properties,
+        [hashtable]$XamlActions,
         [System.Collections.Generic.List[hashtable]]$Children
     )
 
@@ -51,6 +52,36 @@ function Add-UICanvasControlInternal {
         $ctrl.OnChange = $OnChange.ToString().Trim()
         $existing = @($ctrl['Events'])
         $ctrl.Events = @($existing + 'ValueChanged' | Where-Object { $_ })
+    }
+
+    if ($XamlActions) {
+        $map = @{}
+        foreach ($k in $XamlActions.Keys) { $map[$k] = ([scriptblock]$XamlActions[$k]).ToString().Trim() }
+        $ctrl.XamlActions = $map
+    }
+
+    # ── Author-time validation ────────────────────────────────────────────────────────────────────
+    # Cheap checks for mistakes the engine would otherwise accept and silently drop. Warnings only -
+    # never terminating - so an unusual-but-deliberate call still works.
+    if ($Properties) {
+        # Nested objects do not survive serialisation into the definition. Flat arrays of scalars DO
+        # (Columns/Labels/Values are folded into the bag by the card cmdlets), so only a dictionary or
+        # object - at any depth - is flagged.
+        $isNested = {
+            param($x)
+            if ($x -is [System.Collections.IDictionary] -or $x -is [System.Management.Automation.PSCustomObject]) { return $true }
+            if ($x -is [System.Collections.IEnumerable] -and $x -isnot [string]) { foreach ($e in $x) { if (& $isNested $e) { return $true } } }
+            $false
+        }
+        foreach ($k in $Properties.Keys) {
+            $v = $Properties[$k]
+            if (& $isNested $v) {
+                Write-Warning ((
+                    "PoshUI: -Properties['{0}'] on {1}{2} is a nested object. Nested values do not " +
+                    "round-trip through the UI definition; use the dedicated parameter " +
+                    "(-Nodes/-Datasets/-Items/-Choices) instead.") -f $k, $Type, $(if ($Name) { " '$Name'" }))
+            }
+        }
     }
 
     if ($Properties) {

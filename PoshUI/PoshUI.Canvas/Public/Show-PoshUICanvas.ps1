@@ -23,7 +23,9 @@ function Show-PoshUICanvas {
         $parsed = $json | ConvertFrom-Json    # throws if the definition isn't valid JSON
         $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) 'PoshUI'
         [void][System.IO.Directory]::CreateDirectory($tempDir)
-        $jsonPath = Join-Path $tempDir ("validate_{0}.json" -f ([guid]::NewGuid().ToString('N')))
+        # An external tool can set POSHUI_CANVAS_DEFINITION_OUT to choose where the definition lands.
+        $jsonPath = if ($env:POSHUI_CANVAS_DEFINITION_OUT) { $env:POSHUI_CANVAS_DEFINITION_OUT }
+                    else { Join-Path $tempDir ("validate_{0}.json" -f ([guid]::NewGuid().ToString('N'))) }
         [System.IO.File]::WriteAllText($jsonPath, $json, (New-Object System.Text.UTF8Encoding $false))
         return [pscustomobject]@{
             Validated  = $true
@@ -48,6 +50,22 @@ function Show-PoshUICanvas {
 
     $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) 'PoshUI'
     [void][System.IO.Directory]::CreateDirectory($tempDir)
+
+    # Sweep what earlier runs left behind. Each launch writes a definition (a large canvas
+    # serializes to a few hundred KB) AND the engine writes a per-launch .log beside it, so
+    # without this the folder grows without limit - a real install had accumulated 75
+    # definitions / 20 MB plus 80 stray logs. A day's grace keeps anything a concurrently
+    # running instance might still be reading or writing.
+    try {
+        $cutoff = (Get-Date).AddDays(-1)
+        foreach ($pattern in @('canvas_*.json', '*.result.json', 'canvas_*.log', 'PoshUI_*.log')) {
+            Get-ChildItem $tempDir -Filter $pattern -ErrorAction SilentlyContinue |
+                Where-Object { $_.LastWriteTime -lt $cutoff } |
+                Remove-Item -Force -ErrorAction SilentlyContinue
+        }
+    }
+    catch { }   # housekeeping must never stop the app from launching
+
     $jsonPath = Join-Path $tempDir ("canvas_{0}.json" -f ([guid]::NewGuid().ToString('N')))
     $ui | ConvertTo-Json -Depth 32 | Set-Content -Path $jsonPath -Encoding UTF8
 
@@ -56,22 +74,31 @@ function Show-PoshUICanvas {
 
     Write-Verbose "Launching $exe $jsonPath"
     $proc = Start-Process -FilePath $exe -ArgumentList $argList -PassThru
+    # -NoWait hands the caller the process, so the definition must stay on disk - the engine
+    # has not necessarily finished reading it yet. Those get collected by the sweep above.
     if ($NoWait) { return $proc }
     $proc.WaitForExit()
 
     # The engine writes collected values next to the definition as <name>.result.json (Phase 3).
     $resultPath = [System.IO.Path]::ChangeExtension($jsonPath, '.result.json')
-    if (Test-Path $resultPath) {
-        try {
-            $result = Get-Content $resultPath -Raw | ConvertFrom-Json
-            # Password fields are DPAPI-protected by the engine (prefix 'PoshUISecure:'); unprotect to SecureString.
-            $result = Convert-UICanvasSecrets $result
-            Remove-Item $resultPath -Force -ErrorAction SilentlyContinue   # don't leave the result on disk
-            return $result
+    try {
+        if (Test-Path $resultPath) {
+            try {
+                $result = Get-Content $resultPath -Raw | ConvertFrom-Json
+                # Password fields are DPAPI-protected by the engine (prefix 'PoshUISecure:'); unprotect to SecureString.
+                $result = Convert-UICanvasSecrets $result
+                Remove-Item $resultPath -Force -ErrorAction SilentlyContinue   # don't leave the result on disk
+                return $result
+            }
+            catch { }
         }
-        catch { }
+        return $null
     }
-    return $null
+    finally {
+        # The engine has exited, so nothing is reading the definition any more. In a finally
+        # block so it is dropped on every path, including the early return above.
+        Remove-Item $jsonPath -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function script:Convert-UICanvasSecrets {

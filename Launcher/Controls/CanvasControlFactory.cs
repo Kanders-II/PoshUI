@@ -47,8 +47,7 @@ namespace Launcher.Controls
                         var childCc = Build(child, onEvent);
                         cc.Children.Add(childCc);
                         var item = new TabItem { Header = Str(child.Label) ?? "Tab", Content = childCc.Element };
-                        object dis;
-                        if (child.Properties != null && child.Properties.TryGetValue("Disabled", out dis) && AsBool(dis)) item.IsEnabled = false;
+                        if (PBoolF(child, "Disabled")) item.IsEnabled = false;   // via P() so the read is recorded for the linter
                         tabs.Items.Add(item);
                     }
                 }
@@ -191,6 +190,22 @@ namespace Launcher.Controls
         }
 
         /// <summary>Fades + slides a panel's children in with an incremental per-item delay (premium "build" feel).</summary>
+        /// <summary>Returns the element's RenderTransform as a TransformGroup, preserving whatever is
+        /// already there. Stagger (a translate) and HoverScale (a scale) both animate the same element,
+        /// so assigning RenderTransform directly would silently clobber whichever was applied first.</summary>
+        private static TransformGroup EnsureTransformGroup(FrameworkElement el)
+        {
+            var grp = el.RenderTransform as TransformGroup;
+            if (grp != null) return grp;
+            grp = new TransformGroup();
+            var existing = el.RenderTransform;
+            var mt = existing as MatrixTransform;
+            bool isIdentity = (existing == null) || (mt != null && mt.Matrix.IsIdentity);
+            if (!isIdentity) grp.Children.Add(existing);
+            el.RenderTransform = grp;
+            return grp;
+        }
+
         private static void ApplyStagger(Panel panel, double perItemMs)
         {
             int idx = 0;
@@ -199,7 +214,7 @@ namespace Launcher.Controls
                 var child = obj as FrameworkElement;
                 if (child == null) { idx++; continue; }
                 var tt = new System.Windows.Media.TranslateTransform(0, 12);
-                child.RenderTransform = tt;
+                EnsureTransformGroup(child).Children.Add(tt);
                 child.Opacity = 0;
                 var begin = TimeSpan.FromMilliseconds(idx * perItemMs);
                 var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
@@ -345,15 +360,45 @@ namespace Launcher.Controls
                 if (src != null) img.Source = src;
                 return img;
             }
+            string glyph = ResolveGlyph(token);
             var t = new TextBlock
             {
-                Text = ResolveGlyph(token),
+                Text = glyph,
                 FontFamily = IconFont,
                 FontSize = size,
                 TextAlignment = TextAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(0)
             };
             if (fg != null) t.Foreground = fg;
+
+            // Centre on the glyph's INK, not its text metrics. A TextBlock's box spans the font's
+            // full ascent/descent, so Center alignment leaves an icon visibly high inside a round
+            // node. Measure where the drawn pixels actually sit and offset by the difference.
+            //
+            // The offset is a RenderTransform, NOT a margin. A symmetric margin (-dx,+dx) keeps the
+            // measured size right but makes one side negative, and a negative margin overlaps the
+            // neighbouring element - which silently ate the gap between an icon and its label in
+            // every HStack. A transform moves the glyph after layout, so nothing else shifts.
+            try
+            {
+                var typeface = new Typeface(IconFont, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+                var ft = new FormattedText(glyph, CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
+                                           typeface, size, Brushes.Black, 1.0);
+                var ink = ft.BuildGeometry(new Point(0, 0)).Bounds;
+                if (!ink.IsEmpty && ft.Width > 0 && ft.Height > 0)
+                {
+                    double dx = (ink.Left + ink.Width / 2.0) - ft.Width / 2.0;
+                    double dy = (ink.Top + ink.Height / 2.0) - ft.Height / 2.0;
+                    if (Math.Abs(dx) > 0.01 || Math.Abs(dy) > 0.01)
+                    {
+                        // Through the shared group so this composes with Spin's RotateTransform.
+                        EnsureTransformGroup(t).Children.Add(new TranslateTransform(-dx, -dy));
+                    }
+                }
+            }
+            catch { }
             return t;
         }
 
@@ -432,7 +477,35 @@ namespace Launcher.Controls
                 case "Label":
                 case "TextBlock":
                     {
-                        var t = new TextBlock { Text = Str(c.Label) ?? Str(c.Default) ?? "", TextWrapping = TextWrapping.Wrap };
+                        string labelText = Str(c.Label) ?? Str(c.Default) ?? "";
+
+                        // -Properties @{ Selectable = $true }: a WPF TextBlock cannot be selected, so
+                        // render a read-only, borderless, transparent TextBox instead. It looks the same
+                        // but supports click-drag selection and Ctrl+C - which matters for log output the
+                        // operator needs to copy. Background/Padding/MinHeight/BorderBrush are set locally
+                        // because ApplyThemeDefaults uses SetIfUnset and would otherwise style this as an
+                        // input field (notably MinHeight 30, which would space log lines far apart).
+                        if (AsBool(PStr(c, "Selectable")))
+                        {
+                            var tb = new TextBox
+                            {
+                                Text = labelText,
+                                IsReadOnly = true,
+                                IsReadOnlyCaretVisible = false,
+                                IsTabStop = false,
+                                TextWrapping = TextWrapping.Wrap,
+                                BorderThickness = new Thickness(0),
+                                BorderBrush = Brushes.Transparent,
+                                Background = Brushes.Transparent,
+                                Padding = new Thickness(0),
+                                MinHeight = 0,
+                                VerticalContentAlignment = VerticalAlignment.Top,
+                                Cursor = System.Windows.Input.Cursors.IBeam
+                            };
+                            return tb;   // ApplyCommonStyle handles Foreground/FontSize/FontFamily
+                        }
+
+                        var t = new TextBlock { Text = labelText, TextWrapping = TextWrapping.Wrap };
                         ApplyText(c, t);
                         return t;
                     }
@@ -638,6 +711,44 @@ namespace Launcher.Controls
                         if (onEvent != null) link.Click += (s, e) => onEvent(name, "Clicked");
                         var tb = new TextBlock();
                         tb.Inlines.Add(link);
+
+                        // A Hyperlink brings its own theme brush and ignores the Foreground set on
+                        // the parent TextBlock, so an -Properties @{ Foreground = ... } would be
+                        // silently dropped. Apply it to the inline itself.
+                        var linkFg = Brush(PStr(c, "Foreground"));
+                        if (linkFg != null) link.Foreground = linkFg;
+                        if (PStr(c, "Underline") == "false") link.TextDecorations = null;
+
+                        // Optional glow, and an optional colour/glow swap on hover. WPF gives a
+                        // Hyperlink no hover affordance beyond the cursor, which is too subtle on a
+                        // dark console where the link is already coloured.
+                        var glowCol = PStr(c, "Glow");
+                        var hoverFg = Brush(PStr(c, "HoverForeground"));
+                        var hoverGlowCol = PStr(c, "HoverGlow");
+                        double glowR = PDbl(c, "GlowRadius", 10);
+
+                        Func<string, System.Windows.Media.Effects.Effect> mkGlow = col =>
+                            string.IsNullOrEmpty(col) ? null : new System.Windows.Media.Effects.DropShadowEffect
+                            { Color = ParseColor(col), BlurRadius = glowR, ShadowDepth = 0, Opacity = 0.95 };
+
+                        var restEffect = mkGlow(glowCol);
+                        if (restEffect != null) tb.Effect = restEffect;
+
+                        if (hoverFg != null || !string.IsNullOrEmpty(hoverGlowCol))
+                        {
+                            var restFg = link.Foreground;
+                            var hoverEffect = mkGlow(string.IsNullOrEmpty(hoverGlowCol) ? glowCol : hoverGlowCol);
+                            link.MouseEnter += (s, e) =>
+                            {
+                                if (hoverFg != null) link.Foreground = hoverFg;
+                                if (hoverEffect != null) tb.Effect = hoverEffect;
+                            };
+                            link.MouseLeave += (s, e) =>
+                            {
+                                link.Foreground = restFg;
+                                tb.Effect = restEffect;
+                            };
+                        }
                         return tb;
                     }
                 case "Separator":
@@ -2247,18 +2358,21 @@ namespace Launcher.Controls
             if (root == null)
                 return new TextBlock { Text = "[Xaml: root is not a FrameworkElement]", Foreground = Brush("#F87171") };
 
-            RegisterNamedXaml(root, cc, onEvent);
+            RegisterNamedXaml(root, cc, onEvent, c.XamlActions);
             return root;
         }
 
         /// <summary>Walks a parsed XAML logical tree (INCLUDING the root) and registers every x:Name'd element
         /// with the bridge — the named control is often the markup root, so it must be registered too.</summary>
-        private static void RegisterNamedXaml(DependencyObject node, CanvasControl parentCc, Action<string, string> onEvent)
+        private static void RegisterNamedXaml(DependencyObject node, CanvasControl parentCc, Action<string, string> onEvent, Dictionary<string, string> xamlActions = null)
         {
             var fe = node as FrameworkElement;
             if (fe != null && !string.IsNullOrEmpty(fe.Name))
             {
-                var childCc = new CanvasControl { Name = fe.Name, Element = fe, Def = new UIControlJson { Name = fe.Name } };
+                var childDef = new UIControlJson { Name = fe.Name };
+                string xaScript;
+                if (xamlActions != null && xamlActions.TryGetValue(fe.Name, out xaScript)) childDef.Action = xaScript;
+                var childCc = new CanvasControl { Name = fe.Name, Element = fe, Def = childDef };
                 WireValue(fe, childCc);
                 var bb = fe as System.Windows.Controls.Primitives.ButtonBase;
                 if (bb != null && onEvent != null) bb.Click += (s, e) => onEvent(fe.Name, "Clicked");
@@ -2267,7 +2381,7 @@ namespace Launcher.Controls
             foreach (var obj in System.Windows.LogicalTreeHelper.GetChildren(node))
             {
                 var d = obj as DependencyObject;
-                if (d != null) RegisterNamedXaml(d, parentCc, onEvent);
+                if (d != null) RegisterNamedXaml(d, parentCc, onEvent, xamlActions);
             }
         }
 
@@ -2400,7 +2514,38 @@ namespace Launcher.Controls
                 border.MouseLeave += (s, e) => border.Background = normal;
                 border.Cursor = System.Windows.Input.Cursors.Hand;
             }
+            ApplyHoverScale(c, border);
             return border;
+        }
+
+        /// <summary>Optional hover zoom on a card/panel: -Properties @{ HoverScale=1.03; HoverScaleMs=140 }.
+        /// Animates a centred ScaleTransform so the card grows in place instead of nudging its neighbours,
+        /// and animates back out on leave. Unlike HoverBackground this composes with a runtime Background
+        /// swap, because it never captures the brush.</summary>
+        private static void ApplyHoverScale(UIControlJson c, FrameworkElement el)
+        {
+            double scale = PDbl(c, "HoverScale", 0);
+            if (el == null || scale <= 0 || Math.Abs(scale - 1.0) < 0.0001) return;
+
+            var st = new ScaleTransform(1.0, 1.0);
+            el.RenderTransformOrigin = new Point(0.5, 0.5);
+            EnsureTransformGroup(el).Children.Add(st);   // compose, don't clobber Stagger's translate
+            var dur = new Duration(TimeSpan.FromMilliseconds(PDbl(c, "HoverScaleMs", 140)));
+
+            Action<double> animate = to =>
+            {
+                var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+                st.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(to, dur) { EasingFunction = ease });
+                st.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(to, dur) { EasingFunction = ease });
+            };
+            el.MouseEnter += (s, e) => animate(scale);
+            el.MouseLeave += (s, e) => animate(1.0);
+
+            // A transparent background makes the whole card hit-testable, so the zoom
+            // triggers over empty space too and not only on the child text.
+            var b = el as Border;
+            if (b != null && b.Background == null) b.Background = Brushes.Transparent;
+            el.Cursor = System.Windows.Input.Cursors.Hand;
         }
 
         /// <summary>Wraps a container's child panel in an Expander (header from Label, expanded by default).</summary>
@@ -2579,8 +2724,97 @@ namespace Launcher.Controls
             if (fg != null) t.Foreground = fg;
         }
 
+        /// <summary>Walks a built control tree and logs author mistakes the engine would otherwise swallow.
+        ///
+        /// This is the diagnostic for the framework's worst failure mode: unrecognised or inapplicable
+        /// input is not rejected, it is accepted and ignored, so the app renders wrong with a clean log
+        /// and exit code 0. Two checks:
+        ///
+        ///   1. UNREAD keys - a -Properties key nothing in the build path ever asked for. Catches typos
+        ///      ('Margins'), and keys that are real for a DIFFERENT control (ImageWidth is read for a
+        ///      Banner hero image but not a plain Image, which rendered icons at full bleed).
+        ///
+        ///   2. INAPPLICABLE keys - read, but meaningless in this position, so read-tracking alone cannot
+        ///      see them. Padding in the bag on a stack is the expensive one: it produced pages with the
+        ///      correct control count and a blank screen.</summary>
+        public static void WarnUnreadProperties(UIControlJson c, Action<string> warn, string path = null,
+                                                string parentLayout = null)
+        {
+            if (c == null || warn == null) return;
+
+            string here = string.IsNullOrEmpty(c.Name)
+                ? (string.IsNullOrEmpty(c.Type) ? "?" : c.Type)
+                : c.Type + " '" + c.Name + "'";
+            string full = string.IsNullOrEmpty(path) ? here : path + " > " + here;
+
+            // A WindowTemplate is a stored blueprint, not a built control: its own Title/Width/Height are
+            // read when Show-UICanvasWindow materialises it, long after this walk - so they can never be
+            // marked read here. Its CHILDREN are built like anything else, so they are still walked.
+            if (string.Equals(c.Type, "WindowTemplate", StringComparison.OrdinalIgnoreCase))
+            {
+                if (c.Children != null)
+                    foreach (var wc in c.Children) WarnUnreadProperties(wc, warn, full, null);
+                return;
+            }
+
+            string layout = IsContainerType(c.Type) ? ContainerLayout(c.Type, c) : null;
+
+
+            if (c.Properties != null && c.Properties.Count > 0)
+            {
+                foreach (var kv in c.Properties)
+                {
+                    if (IgnoredPropertyKeys.Contains(kv.Key)) continue;
+
+                    // Supplied, but nothing in the build path ever asked for it.
+                    if (c.ReadKeys == null || !c.ReadKeys.Contains(kv.Key))
+                    {
+                        string hint;
+                        PropertyHints.TryGetValue(kv.Key, out hint);
+                        warn("[unused property] " + full + ": '" + kv.Key + "' was supplied but nothing read it"
+                             + (string.IsNullOrEmpty(hint) ? "." : " - " + hint));
+                        continue;
+                    }
+
+                }
+            }
+
+            if (c.Children != null)
+                foreach (var child in c.Children)
+                    WarnUnreadProperties(child, warn, full, layout);
+        }
+
+
+        /// <summary>Keys consumed outside the factory (module-side or bridge-side), so silence is correct.</summary>
+        private static readonly HashSet<string> IgnoredPropertyKeys =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Read by the module or the bridge rather than the factory, so silence is correct here.
+                "Markup", "Path", "StateJson", "StateFile", "ContentJson", "ActionsJson",
+                "DatasetsJson", "ItemsJson", "LinksJson", "NodesJson",
+                "Bind", "BindItems", "Key", "AutoStart", "LockNavigation", "Modal", "Topmost",
+                "Resizable", "NoScroll", "Position", "HideTitleBar", "TitleBarColor", "TitleBarText",
+
+                // A refreshing control's tick is wired by CanvasBridge.StartRefresh, which the factory never sees.
+
+                "ValueScript", "RefreshInterval", "ClockStop",
+            };
+
+        /// <summary>Specific advice for keys that are real elsewhere, which is why they look right.</summary>
+        private static readonly Dictionary<string, string> PropertyHints =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "ImageWidth",  "it is only read for a Banner hero image; size a plain Image with -Width/-Height" },
+                { "HoverScale",  "supported on cards/panels; check the control type" },
+                { "Stagger",     "supported on containers; check the control type" },
+                { "BackgroundImage", "supported on containers; check the control type" },
+            };
         private static object P(UIControlJson c, string key)
         {
+            // Record every key the factory asks for, so WarnUnreadProperties can report the ones the
+            // author supplied that nothing ever looked at.
+            if (c.ReadKeys == null) c.ReadKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            c.ReadKeys.Add(key);
             object v;
             if (c.Properties != null && c.Properties.TryGetValue(key, out v)) return v;
             return null;

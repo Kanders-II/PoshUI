@@ -1,0 +1,20 @@
+# Build output. The repo publishes SOURCE: the engine is built from Launcher\, not shipped as a binary.
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+.vs/
+
+# Local-only build extensions. Launcher.csproj imports Local.props when it exists, so a machine can
+# add build items (paths, tools, catalogues) that are not part of the published project; App.Local.cs
+# is the matching partial of App for anything that hooks startup locally. Neither is required to build.
+Launcher/Local.props
+Launcher/App.Local.cs
+
+# Scratch and secrets
+*.local.config
+appsettings.local.json
+*credentials*.json
+*secrets*.json
+*.pfx
+*.p12

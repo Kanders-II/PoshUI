@@ -14,6 +14,13 @@ namespace Launcher
     /// </summary>
     public partial class App : Application
     {
+        /// <summary>Optional startup interceptor, installed by a local-only partial of this class.
+        /// Returns true when it has handled the launch, in which case no main window is created.
+        /// Nothing in the published build installs one, so it is normally null and the call is a no-op.</summary>
+#pragma warning disable 0649   // assigned only by a local-only partial; null in the published build
+        internal static Func<string[], string, bool> LocalStartup;
+#pragma warning restore 0649
+
         protected override void OnStartup(StartupEventArgs e)
         {
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -75,6 +82,9 @@ namespace Launcher
                 {
                     LoggingService.Info("No script path provided");
                 }
+
+                // Give any locally installed startup handler first refusal on this launch.
+                if (LocalStartup != null && LocalStartup(e.Args, scriptPath)) return;
 
                 // Create main window
                 LoggingService.Info("Creating main window");

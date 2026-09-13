@@ -5,7 +5,7 @@
 # definition to JSON and launches PoshUI.exe (the WPF Launcher), which renders a Canvas page.
 #
 # This module is self-contained (no dependency on the Wizard/Dashboard modules). It mirrors the
-# WinUI 3 PoshUI3.Canvas authoring surface so the same scripts/Designer output run on both engines.
+# WinUI 3 PoshUI3.Canvas authoring surface so the same scripts run on both engines.
 
 $script:ModuleRoot = $PSScriptRoot
 
