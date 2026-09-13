@@ -18,3 +18,8 @@ appsettings.local.json
 *secrets*.json
 *.pfx
 *.p12
+
+# Docs site: dependencies and build output (the site is built by CI from source)
+node_modules/
+Docs/.vitepress/dist/
+Docs/.vitepress/cache/

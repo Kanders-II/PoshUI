@@ -13,7 +13,7 @@ The `DataGridCard` is used to display tabular data in a sortable and filterable 
 ```powershell
 $processData = Get-Process | Select-Object -First 10 Name, Id, CPU, WorkingSet
 
-Add-UIVisualizationCard -Step 'Overview' -Name 'ProcessGrid' -Type 'DataGridCard' `
+Add-UITableCard -Step 'Overview' -Name 'ProcessGrid' `
     -Title 'Running Processes' -Data $processData
 ```
 
@@ -32,10 +32,9 @@ The `-Data` parameter accepts:
 - A ScriptBlock that returns one of the above (for Live Refresh).
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'Services' -Type 'DataGridCard' `
+Add-UITableCard -Step 'Overview' -Name 'Services' `
     -Title 'Critical Services' `
-    -Data { Get-Service | Where-Object Status -eq 'Running' | Select-Object Name, DisplayName, StartType } `
-    -RefreshInterval 30
+    -Data { Get-Service | Where-Object Status -eq 'Running' | Select-Object Name, DisplayName, StartType }
 ```
 
 ## Key Parameters
@@ -44,7 +43,6 @@ Add-UIVisualizationCard -Step 'Overview' -Name 'Services' -Type 'DataGridCard' `
 |-----------|------|-------------|
 | `-Data` | Object/Array | The collection of objects or hashtables to display. |
 | `-RefreshScript` | ScriptBlock | PowerShell code to re-fetch the grid data. |
-| `-RefreshInterval` | Int | How often to refresh the data in seconds. |
 
 ::: info
 In the current version, Sorting, Filtering, and Export capabilities are enabled by default for all DataGridCards to provide the best user experience.

@@ -1,54 +1,61 @@
-# Live Refresh
+# Card Refresh
 
-Dashboards in PoshUI support real-time updates for visualization cards. This allows you to monitor dynamic data like system performance, active processes, or service status without manual interaction.
+A dashboard card can re-read its own data after the window is open, so a dashboard stays useful for monitoring
+instead of showing a snapshot from launch time.
 
 ## How Refresh Works
 
-Each card in a dashboard can have its own `-RefreshScript` and `-RefreshInterval`. 
+Refresh is **on demand, not on a timer.** Give a card a `-RefreshScript` and it becomes refreshable:
 
-1. **Initial Load**: When the dashboard starts, the `Value` or `Data` script is executed once.
-2. **Scheduling**: The card enters a refresh loop based on the `RefreshInterval` (in seconds).
-3. **Execution**: The `RefreshScript` is executed in a background runspace.
-4. **UI Update**: The result of the script is pushed to the UI, and the card updates its display.
+1. **Initial load**: the card renders the `-Value` (or `-Data`) supplied when it was declared.
+2. **Trigger**: the operator refreshes the card, or uses the dashboard's *Refresh all*, which fires every
+   refreshable card on the visible page.
+3. **Execution**: the `RefreshScript` runs in its own runspace, off the UI thread, so a slow query does not
+   freeze the window.
+4. **UI update**: whatever the script returns replaces the card's value or rows.
+
+::: warning No interval parameter
+There is no `-RefreshInterval` on a dashboard card, and nothing polls in the background. If you need a value
+that updates itself on a clock, use the Canvas module, where a control takes `-Refresh <seconds>` and the
+engine ticks it — see [About Canvas](../canvas/about.md).
+:::
 
 ## Configuring Refresh
 
 ### Simple Metric Refresh
 
 ```powershell
-Add-UIVisualizationCard -Step 'Main' -Name 'CPU' -Type MetricCard `
+Add-UIMetricCard -Step 'Main' -Name 'CPU' `
     -Title 'CPU Usage' `
     -Value 0 `
     -Unit '%' `
-    -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average } `
-    -RefreshInterval 5
+    -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average }
 ```
 
 ### DataGrid Refresh
 
 ```powershell
-Add-UIVisualizationCard -Step 'Main' -Name 'ProcGrid' -Type DataGridCard `
+Add-UITableCard -Step 'Main' -Name 'ProcGrid' `
     -Title 'Top Processes' `
     -Data @() `
-    -RefreshScript { Get-Process | Sort-Object CPU -Descending | Select-Object -First 10 Name, Id, CPU } `
-    -RefreshInterval 10
+    -RefreshScript { Get-Process | Sort-Object CPU -Descending | Select-Object -First 10 Name, Id, CPU }
 ```
 
 ## Refresh Properties
 
 | Parameter | Description |
 |-----------|-------------|
-| `-RefreshScript` | A ScriptBlock that returns the new value/data for the card. |
-| `-RefreshInterval` | Time in seconds between updates. Minimum is 1 second. |
+| `-RefreshScript` | A ScriptBlock returning the new value (MetricCard) or rows (TableCard / ChartCard). Supported on `Add-UIMetricCard`, `Add-UIChartCard`, `Add-UITableCard` and `Add-UIStatusCard`. |
 
 ## Performance Considerations
 
-- **Background Execution**: Refresh scripts run in separate runspaces, so they don't block the UI.
-- **Resource Usage**: Frequent refreshes (e.g., every 1 second) on complex scripts (like querying remote WMI) can increase CPU/Memory usage.
-- **Error Handling**: If a refresh script fails, the card will display the last known good value or an error indicator if configured.
+- **Background execution**: refresh scripts run in separate runspaces, so they do not block the UI.
+- **Cost per click**: *Refresh all* fires every refreshable card at once, so keep the scripts cheap — a remote
+  WMI query on a dozen cards is a dozen remote queries.
+- **Error handling**: a script that throws leaves the card showing its last known value.
 
 ::: tip
-Use `Get-CimInstance` instead of `Get-WmiObject` for better performance and modern compatibility in your refresh scripts.
+Use `Get-CimInstance` rather than `Get-WmiObject` in refresh scripts: it is faster and still supported.
 :::
 
 Next: [Category Filtering](./categories.md)

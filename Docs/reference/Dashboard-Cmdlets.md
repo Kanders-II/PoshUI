@@ -911,12 +911,12 @@ Show-PoshUIDashboard [[-ScriptBody] <ScriptBlock>] [[-DefaultValues] <Hashtable>
 **Examples**
 
 ```powershell
-$result = Show-PoshUI
+$result = Show-PoshUIDashboard
 ```
 Shows the UI with default script body and returns results.
 
 ```powershell
-$result = Show-PoshUI -ScriptBody {
+$result = Show-PoshUIDashboard -ScriptBody {
     Write-Host "Configuring server: $ServerName"
     # Perform configuration tasks
     return @{ Status = 'Success'; Message = 'Configuration completed' }
@@ -926,7 +926,7 @@ Shows the UI with custom script logic.
 
 ```powershell
 $defaults = @{ ServerName = 'SQL01'; Environment = 'Production' }
-$result = Show-PoshUI -DefaultValues $defaults -ScriptBody $configScript
+$result = Show-PoshUIDashboard -DefaultValues $defaults -ScriptBody $configScript
 ```
 Shows the UI with pre-populated default values.
 

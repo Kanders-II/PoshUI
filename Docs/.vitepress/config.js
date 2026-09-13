@@ -65,6 +65,7 @@ export default {
           { text: 'About', link: '/dashboards/about' },
           { text: 'Creating Dashboards', link: '/dashboards/creating-dashboards' },
           { text: 'Dashboard Cards Reference', link: '/dashboard-cards-reference' },
+          { text: 'Card Types', link: '/dashboards/visualization-cards' },
           { text: 'MetricCard', link: '/visualization/metric-cards' },
           { text: 'GraphCard', link: '/visualization/graph-cards' },
           { text: 'DataGridCard', link: '/visualization/datagrid-cards' },
@@ -123,7 +124,9 @@ export default {
         text: 'Development',
         items: [
           { text: 'Building from Source', link: '/development/building-from-source' },
-          { text: 'Debugging', link: '/development/debugging' }
+          { text: 'Debugging', link: '/development/debugging' },
+          { text: 'Extending PoshUI', link: '/development/extending' },
+          { text: 'Contributing', link: '/development/contributing' }
         ]
       },
       {
@@ -134,6 +137,24 @@ export default {
           { text: 'Dynamic Controls', link: '/examples/demo-dynamic' },
           { text: 'Dashboard Demo', link: '/examples/demo-dashboard' },
           { text: 'Real-World Scenarios', link: '/examples/real-world-scenarios' }
+        ]
+      },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'Cmdlet Index', link: '/reference/README' },
+          { text: 'Wizard Cmdlets', link: '/reference/Wizard-Cmdlets' },
+          { text: 'Dashboard Cmdlets', link: '/reference/Dashboard-Cmdlets' },
+          { text: 'Workflow Cmdlets', link: '/reference/Workflow-Cmdlets' },
+          { text: 'Authoring Guide', link: '/POSHUI_AUTHORING_GUIDE' }
+        ]
+      },
+      {
+        text: 'Releases',
+        items: [
+          { text: 'Version History', link: '/changelogs/changelog' },
+          { text: 'Migration Guide', link: '/changelogs/migration-guide' },
+          { text: 'Community Feedback', link: '/changelogs/roadmap' }
         ]
       },
       {

@@ -82,7 +82,7 @@ Add-UIScriptCard -Step 'Tools' -Name 'RestartIIS' `
     -Icon 'Refresh'
 ```
 
-[Learn more about ScriptCards →](./dashboards/script-cards.md)
+[Learn more about ScriptCards →](./visualization/script-cards.md)
 
 ---
 

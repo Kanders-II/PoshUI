@@ -33,7 +33,7 @@ A PoshUI Dashboard follows this pattern:
 
 1. **Initialize**: Use `New-PoshUIDashboard` to start a new definition.
 2. **Define Pages**: Add dashboard pages using `Add-UIStep -Type Dashboard`.
-3. **Add Components**: Populate pages with `Add-UIVisualizationCard`, `Add-UIScriptCard`, or `Add-UIBanner`.
+3. **Add Components**: Populate pages with `Add-UIMetricCard`, `Add-UIChartCard`, `Add-UITableCard`, `Add-UIStatusCard`, `Add-UIScriptCard`, `Add-UICard` or `Add-UIBanner`.
 4. **Show**: Display the interface using `Show-PoshUIDashboard`.
 
 Next: [Creating Dashboards](./creating-dashboards.md)

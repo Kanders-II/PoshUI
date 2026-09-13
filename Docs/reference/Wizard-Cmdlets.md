@@ -1101,8 +1101,8 @@ Supports three usage patterns:
 3. Mixed: Set-UITheme @{ AccentColor = '#FF6B35' } -Light @{ Background = '#FFF' } -Dark @{ Background = '#111' }
    Shared base + mode-specific overrides (mode-specific keys win on conflict).
 
-Must be called after New-PoshUIWizard (or New-PoshUIDashboard, New-PoshUIWorkflow, New-PoshUIFreeform).
-Works with all PoshUI modules: Wizard, Dashboard, Workflow, and Freeform.
+Must be called after New-PoshUIWizard (or New-PoshUIDashboard, New-PoshUIWorkflow, New-PoshUICanvas).
+Works with all PoshUI modules: Wizard, Dashboard, Workflow and Canvas.
 
 ```
 Set-UITheme [[-Theme] <Hashtable>] [-Light <Hashtable>] [-Dark <Hashtable>] [<CommonParameters>]

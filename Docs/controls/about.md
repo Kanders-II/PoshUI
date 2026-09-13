@@ -29,7 +29,7 @@ Show information, instructions, or banners without collecting input.
 ### Specialized Dashboard Cards
 Exclusive to the Dashboard module for high-level monitoring.
 - [Visualization Cards](../visualization/metric-cards.md): MetricCard, GraphCard, DataGridCard.
-- [Script Cards](../dashboards/script-cards.md): Executable cards with auto-discovered parameters.
+- [Script Cards](../visualization/script-cards.md): Executable cards with auto-discovered parameters.
 
 ## Common Parameters
 

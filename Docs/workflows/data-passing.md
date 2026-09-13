@@ -79,9 +79,13 @@ All input controls create wizard inputs:
 - `Add-UIPassword` → `$VariableName`
 - `Add-UICheckbox` → `$VariableName` (boolean)
 - `Add-UIDropdown` → `$VariableName`
-- `Add-UIMultiSelect` → `$VariableName` (array)
-- `Add-UIDatePicker` → `$VariableName`
-- `Add-UIFilePicker` → `$VariableName`
+- `Add-UIListBox -MultiSelect` → `$VariableName` (array)
+- `Add-UIDate` → `$VariableName`
+- `Add-UIFilePath` or `Add-UIFolderPath` → `$VariableName`
+- `Add-UIToggle` → `$VariableName` (boolean)
+- `Add-UINumeric` → `$VariableName` (number)
+- `Add-UIOptionGroup` → `$VariableName`
+- `Add-UIMultiLine` → `$VariableName`
 
 ## Mechanism 2: Task Arguments
 

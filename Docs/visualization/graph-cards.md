@@ -17,18 +17,19 @@ $chartData = @(
     @{ Label = 'Mar'; Value = 120 }
 )
 
-Add-UIVisualizationCard -Step 'Overview' -Name 'SalesChart' -Type 'GraphCard' `
+Add-UIChartCard -Step 'Overview' -Name 'SalesChart' `
     -Title 'Monthly Sales' -ChartType 'Bar' -Data $chartData
 ```
 
 ## Supported Chart Types
 
-You can choose from four primary chart types using the `-ChartType` parameter:
+`-ChartType` accepts five values:
 
 - **Bar**: Best for comparing distinct categories.
 - **Line**: Ideal for showing trends over time.
 - **Area**: Similar to line charts but highlights the volume under the line.
 - **Pie**: Best for showing proportional distributions (percentage of a whole).
+- **Donut**: A pie with the centre cut out - the same data, more room for a legend.
 
 ## Data Format
 
@@ -39,7 +40,7 @@ $data = @(
     @{ Label = 'Available'; Value = 45 }
     @{ Label = 'Used'; Value = 55 }
 )
-Add-UIVisualizationCard -Step 'Overview' -Name 'Storage' -Type 'GraphCard' `
+Add-UIChartCard -Step 'Overview' -Name 'Storage' `
     -Title 'Storage Distribution' -ChartType 'Pie' -Data $data
 ```
 
@@ -47,23 +48,22 @@ Add-UIVisualizationCard -Step 'Overview' -Name 'Storage' -Type 'GraphCard' `
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `-ChartType`| String | The type of chart: `'Bar'`, `'Line'`, `'Area'`, or `'Pie'`. |
+| `-ChartType`| String | `'Line'`, `'Bar'`, `'Area'`, `'Pie'` or `'Donut'`. |
 | `-Data` | Array | An array of hashtables containing `Label` and `Value`. |
 | `-ShowLegend`| Boolean| Whether to display the chart legend (default: `$true`). |
 | `-ShowTooltip`| Boolean| Whether to show values when hovering over data points (default: `$true`). |
 
 ## Live Refresh
 
-Like all visualization cards, GraphCards support automatic updates.
+A chart with a `-RefreshScript` can be re-run from the card itself, or by the dashboard's Refresh all - see [Card Refresh](../dashboards/refresh.md).
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'LiveNet' -Type 'GraphCard' `
-    -Title 'Network Traffic' -ChartType 'Area' `
+Add-UIChartCard -Step 'Overview' -Name 'LiveNet' `
+    -Title 'Network Traffic' -ChartType 'Area' -Data @() `
     -RefreshScript {
         # Fetch latest traffic stats and return as chart data
         Get-NetworkStats | Select-Object @{N='Label';E={$_.Time}}, @{N='Value';E={$_.Bytes}}
-    } `
-    -RefreshInterval 5
+    }
 ```
 
 Next: [DataGridCard](./datagrid-cards.md)

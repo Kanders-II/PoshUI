@@ -207,6 +207,12 @@ Add-UICanvasGridSplitter [-Orientation Vertical|Horizontal] [-Thickness 5] -Prop
 
 # Scale content to fit (vector scaling - text stays crisp).
 Add-UICanvasViewbox [-Stretch Uniform|Fill|UniformToFill|None] [-StretchDirection Both|UpOnly|DownOnly] -Children { ... }
+
+# Docked chrome. Both are ordinary controls, so on a Dock page they need -Properties @{ Dock = 'Top'/'Bottom' }
+# or they scroll away with the body.
+Add-UICanvasToolbar [-Name] [-Brand 'App'] [-BrandIcon] [-Status 'connected'] `
+    [-Links 'Home','Runs'] [-Active 'Home'] [-Actions @(@{ Text='Refresh'; Action={ } })]
+Add-UICanvasFooter [-Name] [-LeftText 'ready'] [-Links @(@{ Text='Docs'; Page='Help' })]
 ```
 
 ## Raw XAML escape hatch
@@ -215,8 +221,30 @@ in — for controls the cmdlet set doesn't cover (DataGrid, TreeView, TabControl
 element (including the root) is registered with the bridge, so `Set/Get-UICanvasValue` and `Set-UICanvasProperty`
 work on it. Setting `ItemsSource` to a PowerShell object collection auto-coerces to a `DataView` so `{Binding Col}`
 binds; selection reads back as a `DataRowView`. Namespaces are auto-injected if omitted. Notes: WPF dialect (not
-portable to the WinUI 3 build); buttons *inside* the markup don't run script — wire interactions from normal canvas
-controls; the markup uses explicit colors or `{DynamicResource <key>}` (it doesn't auto-inherit the theme).
+portable to the WinUI 3 build); a named control inside the markup runs script only if you pass it in `-Actions` (below); the markup uses explicit colors or `{DynamicResource <key>}` (it doesn't auto-inherit the theme).
+
+```powershell
+# -Actions wires x:Name'd controls inside the markup (1.3.0 of the module)
+Add-UICanvasXaml -Markup '<StackPanel><Button x:Name="go" Content="Run"/><TextBlock x:Name="out"/></StackPanel>' `
+    -Actions @{ go = { Set-UICanvasValue -Name out -Value 'ran' } }
+```
+
+## Secondary windows
+Declared at authoring time, opened on demand. The template is **deserialized and rebuilt on every open**, so a
+control reading a file (e.g. `Add-UICanvasMarkdown -Path`) re-reads it each time — write to one fixed path and a
+single window can serve many documents.
+
+```powershell
+New-UICanvasWindow detail -Title 'Details' -Width 900 -Height 700 -Layout VStack -Padding 20 `
+    [-Modal] [-Resizable $false] [-Topmost] [-MinWidth] [-MinHeight] [-Icon] `
+    [-Position CenterOwner|CenterScreen|Manual] [-X] [-Y] [-NoScroll] `
+    [-HideTitleBar] [-TitleBarColor '#0A0E14'] [-TitleBarText '#E2E8F0'] -Content { ... }
+
+# ...in any action:
+Show-UICanvasWindow detail
+Close-UICanvasWindow          # closes the most recently opened secondary window, and ONLY that:
+                              # it is a no-op on the main window, which closes via Submit-UICanvas
+```
 
 ## Motion
 `Set-UICanvasAnimate -Name -Property -To [-From] [-Duration 250] [-Easing CubicOut]` — animates `Opacity`/`Width`/

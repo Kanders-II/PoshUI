@@ -6,10 +6,14 @@ Visualization cards are the primary components of PoshUI dashboards. They provid
 
 ## Adding Cards
 
-Use the `Add-UIVisualizationCard` cmdlet to add cards to a dashboard step.
+Each card type has its own cmdlet, and each takes the step to add it to, a unique name and a title:
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'Metric1' -Type MetricCard ...
+Add-UIMetricCard -Step 'Overview' -Name 'Cpu'     -Title 'CPU'       -Value 42 -Unit '%'
+Add-UIChartCard  -Step 'Overview' -Name 'Trend'   -Title 'Sales'     -ChartType 'Line' -Data $series
+Add-UITableCard  -Step 'Overview' -Name 'Procs'   -Title 'Processes' -Data (Get-Process | Select-Object -First 10 Name, Id)
+Add-UIStatusCard -Step 'Overview' -Name 'Health'  -Title 'Services'
+Add-UIScriptCard -Step 'Overview' -Name 'Cleanup' -Title 'Clear temp' -ScriptBlock { Remove-Item "$env:TEMP\*" -Recurse -Force }
 ```
 
 ## Supported Card Types
@@ -72,14 +76,13 @@ When both `-Icon` and `-IconPath` are specified, the PNG image takes priority. I
 Cards can be configured to update automatically without reloading the entire dashboard.
 
 ```powershell
-Add-UIVisualizationCard -Step 'Main' -Name 'CPU' -Type MetricCard `
+Add-UIMetricCard -Step 'Main' -Name 'CPU' `
     -Title 'Live CPU' `
-    -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average } `
-    -RefreshInterval 5
+    -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average }
 ```
 
 ::: tip
 See [Live Refresh](./refresh.md) for more details on scheduling updates.
 :::
 
-Next: [Script Cards](./script-cards.md)
+Next: [Script Cards](../visualization/script-cards.md)

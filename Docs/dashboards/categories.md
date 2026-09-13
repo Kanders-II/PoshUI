@@ -8,9 +8,9 @@ Every dashboard card (`MetricCard`, `GraphCard`, `DataGridCard`, `ScriptCard`) s
 
 ```powershell
 # Add cards with categories
-Add-UIVisualizationCard -Step 'Main' -Name 'CPU' -Type MetricCard -Title 'CPU' -Category 'Performance'
-Add-UIVisualizationCard -Step 'Main' -Name 'RAM' -Type MetricCard -Title 'RAM' -Category 'Performance'
-Add-UIVisualizationCard -Step 'Main' -Name 'SQL' -Type MetricCard -Title 'SQL Status' -Category 'Database'
+Add-UIMetricCard -Step 'Main' -Name 'CPU' -Title 'CPU' -Value 42 -Unit '%' -Category 'Performance'
+Add-UIMetricCard -Step 'Main' -Name 'RAM' -Title 'RAM' -Value 63 -Unit '%' -Category 'Performance'
+Add-UIMetricCard -Step 'Main' -Name 'SQL' -Title 'SQL Status' -Value 'Running' -Category 'Database'
 ```
 
 ## How Filtering Works
@@ -38,15 +38,15 @@ New-PoshUIDashboard -Title 'Enterprise Monitor' -GridColumns 4
 Add-UIStep -Name 'Dashboard' -Title 'Overview' -Type Dashboard
 
 # Performance Category
-Add-UIVisualizationCard -Step 'Dashboard' -Name 'CPU' -Type MetricCard `
+Add-UIMetricCard -Step 'Dashboard' -Name 'CPU' `
     -Title 'CPU Usage' -Value 45 -Unit '%' -Category 'Performance'
 
 # Security Category
-Add-UIVisualizationCard -Step 'Dashboard' -Name 'Logins' -Type MetricCard `
+Add-UIMetricCard -Step 'Dashboard' -Name 'Logins' `
     -Title 'Failed Logins' -Value 2 -Category 'Security'
 
 # Services Category
-Add-UIVisualizationCard -Step 'Dashboard' -Name 'IIS' -Type MetricCard `
+Add-UIMetricCard -Step 'Dashboard' -Name 'IIS' `
     -Title 'IIS Status' -Value 'Running' -Category 'Services'
 
 Show-PoshUIDashboard

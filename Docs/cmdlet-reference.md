@@ -42,7 +42,9 @@ Quick orientation by category:
 - **Runtime** (inside `-Action`/`-OnChange`/`-Refresh`) — `Get-/Set-UICanvasValue`, `Set-UICanvasProperty`,
   `New-/Watch-/Get-/Set-UICanvasState`, `Show-UICanvasPage`, `Show-UICanvasToast`/`-Dialog`/`-Flyout`,
   `Start-UICanvasAsync`, `Set-UICanvasAnimate`, `Lock-/Unlock-UICanvasNavigation`
-- **Escape hatch** — `Add-UICanvasXaml` (splice raw WPF; `x:Name`'d elements stay drivable)
+- **Secondary windows** — `New-UICanvasWindow` (authoring time) + `Show-UICanvasWindow` / `Close-UICanvasWindow` (runtime).
+  A template is rebuilt on every open, so a control reading a file re-reads it each time
+- **Escape hatch** — `Add-UICanvasXaml` (splice raw WPF; `x:Name`'d elements stay drivable, and `-Actions` gives them scriptblocks)
 
 ---
 

@@ -2,7 +2,7 @@
 
 All notable changes to the PoshUI project are documented here.
 
-## [1.4.0] - Unreleased
+## [1.4.0] - 2026-09-13
 
 ### PoshUI.Canvas — Free-Form Apps
 
@@ -142,8 +142,34 @@ lay out in. Prefer proportional layout and set `-MinWidth`/`-MinHeight`.
 - **[Agent Authoring Guide](../agent/README.md)** — a self-contained context pack for building Canvas apps with
   an AI assistant, including the rules that prevent the common silent failures
 - **[Capability Reference](../Canvas-Reference.md)** — terse index of every Canvas capability
-- New runnable examples: engine workflow (live progress + retry), dashboard with an off-gate ScriptCard, and
-  cascading dropdowns
+
+## [1.3.1] - 2026-06-18
+
+Security hardening and bug fixes. No change to the public cmdlet API.
+
+### Security
+
+- **Script injection in the generator closed** — `ConvertTo-UIScript` (Wizard and Workflow) now emits every
+  collected value through a single escaper instead of interpolating it into the generated script.
+- **The value escaper itself repaired** — its boolean branch used `return if (...)`, which threw at runtime.
+- **Generated scripts are no longer written to a predictable path**, and the temp directory's restrictive ACL is
+  re-asserted on every use.
+- **Workflow state uses DPAPI authenticated encryption**, and secret-named fields (password, token, credential
+  and friends) are redacted before state is persisted.
+- **`-RequireSignedScripts` can no longer be downgraded** by calling `Show-*` without it.
+
+### Fixed
+
+- An `Add-UIOptionGroup` attribute was dropped by a stray `else` in the generator.
+- A `DateTime` default was emitted twice, producing a malformed parameter declaration.
+- `Add-UIDate` and `Add-UINumeric` silently ignored `-Default`, `-Minimum`, `-Maximum` and `-Increment`.
+
+### Notes
+
+Workflow state is written as `POSHUI_STATE_V2`. The modules read both V1 and V2, so an in-flight workflow
+survives the upgrade.
+
+---
 
 ## [1.3.0] - 2026-03-23
 
@@ -192,7 +218,7 @@ PNG icons fall back to glyph icons automatically if the file path is invalid.
 
 ---
 
-## [1.0.0] - 2026-01-15
+## [1.0.0] - 2026-01-31
 
 ### 🎉 Initial Public Release
 
@@ -258,3 +284,7 @@ PoshUI v1.0.0 is the first public release of a PowerShell UI framework for build
 - .NET Framework 4.8
 - Windows 10/11 and Server 2016+
 - Single executable distribution
+
+---
+
+Earlier releases (1.2.0, 1.1.0) are listed in [CHANGELOG.md](https://github.com/Kanders-II/PoshUI/blob/main/CHANGELOG.md), which is the authoritative record.

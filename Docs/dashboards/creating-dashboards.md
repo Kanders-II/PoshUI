@@ -17,7 +17,7 @@ New-PoshUIDashboard -Title 'System Overview' -GridColumns 3
 Add-UIStep -Name 'Main' -Title 'Overview' -Type Dashboard
 
 # 4. Components
-Add-UIVisualizationCard -Step 'Main' -Name 'CPU' -Type MetricCard `
+Add-UIMetricCard -Step 'Main' -Name 'CPU' `
     -Title 'CPU Usage' -Value 45 -Unit '%'
 
 # 5. Show

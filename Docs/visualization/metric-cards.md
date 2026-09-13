@@ -9,7 +9,7 @@ The `MetricCard` is designed to display a single, high-impact value (KPI) with c
 ## Basic Usage
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'UserCount' -Type 'MetricCard' `
+Add-UIMetricCard -Step 'Overview' -Name 'UserCount' `
     -Title 'Active Users' -Value 1250 -Icon '&#xE77B;'
 ```
 
@@ -19,7 +19,7 @@ Add-UIVisualizationCard -Step 'Overview' -Name 'UserCount' -Type 'MetricCard' `
 Show how a metric has changed over time using the `-Trend` and `-TrendValue` parameters.
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'Sales' -Type 'MetricCard' `
+Add-UIMetricCard -Step 'Overview' -Name 'Sales' `
     -Title 'Monthly Sales' -Value 45000 -Unit '$' `
     -Trend 'up' -TrendValue 12.5
 ```
@@ -31,7 +31,7 @@ Add-UIVisualizationCard -Step 'Overview' -Name 'Sales' -Type 'MetricCard' `
 Visualize a value relative to a target using a built-in progress bar.
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'Quota' -Type 'MetricCard' `
+Add-UIMetricCard -Step 'Overview' -Name 'Quota' `
     -Title 'Storage Quota' -Value 85 -Unit '%' `
     -Target 100 -Icon '&#xEDA2;'
 ```
@@ -40,7 +40,7 @@ Add-UIVisualizationCard -Step 'Overview' -Name 'Quota' -Type 'MetricCard' `
 - **Value**: The current progress toward that target.
 
 ### Status Colors
-The card automatically colors the icon and trend based on thresholds if logic is implemented in your script, or you can use the `-Type` parameter for semantic styling (if supported by specific card overrides).
+The trend arrow is coloured by its direction (`up` green, `down` red, `stable` neutral). There is no semantic colour parameter on a metric card: to signal a threshold, return a different `-Trend` from your refresh script, or use [Add-UIStatusCard](../dashboards/visualization-cards.md) which is built for state rather than magnitude.
 
 ## Parameters
 
@@ -57,13 +57,12 @@ The card automatically colors the icon and trend based on thresholds if logic is
 
 ## Live Refresh
 
-MetricCards are highly dynamic. Use `-RefreshScript` to update the value automatically.
+Give the card a `-RefreshScript` and it can be re-read after launch, on demand - see [Card Refresh](../dashboards/refresh.md).
 
 ```powershell
-Add-UIVisualizationCard -Step 'Overview' -Name 'CPU' -Type 'MetricCard' `
+Add-UIMetricCard -Step 'Overview' -Name 'CPU' `
     -Title 'System CPU' -Value 0 -Unit '%' `
-    -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average } `
-    -RefreshInterval 2
+    -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average }
 ```
 
 Next: [GraphCard](./graph-cards.md)
