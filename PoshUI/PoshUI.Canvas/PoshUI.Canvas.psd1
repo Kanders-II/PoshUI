@@ -1,6 +1,6 @@
 @{
     RootModule        = 'PoshUI.Canvas.psm1'
-    ModuleVersion     = '1.2.0'
+    ModuleVersion     = '1.3.0'
     GUID              = 'b2c7d9e0-5a14-4f3b-9c2a-71d8e6a0c4f2'
     Author            = 'Kanders-II'
     CompanyName       = 'Kanders-II'

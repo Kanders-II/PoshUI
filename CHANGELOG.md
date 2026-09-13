@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.4.0] - Unreleased
+## [1.4.0] - 2026-09-13
 
 Adds **PoshUI.Canvas**, a fourth module for free-form apps, and an engine-native workflow runner. Additive
 release: existing Wizard, Dashboard and Workflow scripts are unaffected, and the new workflow execution mode is
@@ -23,9 +23,18 @@ opt-in via `-Engine`.
 - **`Add-UICanvasDataGrid -OnChange`** - selecting a row now raises `ValueChanged`, enabling master/detail.
 - **Per-Monitor V2 DPI awareness** - windows re-render at the target monitor's DPI instead of being bitmap-stretched when moved between monitors with different scaling, and adapt live to scaling changes.
 - **Agent authoring guide** (`Docs/agent/`) - a self-contained context pack for building Canvas apps with an AI assistant.
+- **`Add-UICanvasXaml -Actions`** - a hashtable of name -> scriptblock for `x:Name`'d controls inside injected markup. `XamlReader` gives those elements no definition of their own, so a named `<Button>` in raw XAML previously raised `Clicked` and found nothing to run. This is what makes the raw-XAML escape hatch a full citizen rather than a display-only hole.
+- **Authoring diagnostics** - a `-Properties` key that nothing in the build path read is now logged by name, with a hint when the key is real for a different control (`ImageWidth` is read for a Banner hero image but not a plain Image). Nested objects in `-Properties` warn at authoring time, because they do not survive serialization into the definition. Unrecognised input used to be accepted and dropped, so an author mistake produced a wrong-looking screen with a clean log and exit code 0.
+- **`HoverScale` on cards and panels** - a centred scale animation, composed through a shared transform group so it coexists with `Stagger`'s translate and `Spin`'s rotation instead of overwriting whichever was applied first. Unlike `HoverBackground` it never captures a brush, so it survives a runtime `Background` swap.
+- **Selectable labels** - `-Properties @{ Selectable = $true }` renders a read-only borderless TextBox, so log and console output can be selected and copied. A WPF TextBlock cannot be.
 
 ### Fixed
 
+- **Closing the window could leave `PoshUI.exe` running** - two hangs, both ending in a live process with no window, which also stranded the launching PowerShell host on `WaitForExit()`. A background script marshalling to the UI while the window closed blocked on a dispatcher that would never pump again; and `Runspace.Close()`, which waits for in-flight pipelines, ran on the UI thread a pipeline was waiting for. Teardown now closes a gate before anything that waits, stops tracked background pipelines rather than waiting on them, closes secondary windows explicitly, moves the runspace close off the UI thread with a bounded wait, and arms a background exit watchdog as a last resort.
+- **Themed dialogs** - message and prompt dialogs drew the OS title bar in the system theme, landing as a light strip above dark content. They now supply their own chrome, like the main window.
+- **Icons sat high inside round nodes** - a glyph was centred on the font's full ascent/descent rather than its drawn pixels. Centring now measures the ink and offsets by a transform, not a margin: a symmetric negative margin overlapped the neighbouring element and silently ate the gap between an icon and its label in every HStack.
+- **`Add-UICanvasHyperlink` ignored `Foreground`** - a Hyperlink brings its own theme brush and overrode the colour set on its parent TextBlock. It is now applied to the inline itself, with an optional hover colour and glow.
+- **Stale temp files accumulated without limit** - each launch writes a definition (a few hundred KB for a large canvas) plus a per-launch engine log, and nothing ever removed them; one install had reached 75 definitions and 20 MB. Launch now sweeps anything older than a day.
 - **Cross-page value reads returned `$null`** - `Get-UICanvasValue` only searched the currently rendered page, so a field entered on an earlier page read as empty from a later page's action. It now falls back to the persisted cross-page snapshot.
 - **Dynamic string lists rendered as `System.Data.DataRowView`** - setting a control's `ItemsSource` at runtime to a list of strings wrapped each item in a DataView, because a string exposes a `Length` property and looked like a single-column row. Scalars now pass through as plain items.
 - **`-SkipWhen` conditions deadlocked the UI** - skip conditions were evaluated synchronously on the UI thread, so a condition calling a bridge cmdlet (the documented pattern) blocked forever. They now evaluate off-thread.

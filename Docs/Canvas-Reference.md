@@ -1,6 +1,6 @@
 # PoshUI Canvas — Capability & Control Reference (.NET 4.8 WPF)
 
-> Module `PoshUI.Canvas` **1.2.0** · requires engine `PoshUI.exe` **≥ 1.4.0** (checked at import).
+> Module `PoshUI.Canvas` **1.3.0** · requires engine `PoshUI.exe` **≥ 1.4.0** (checked at import).
 
 Free-form, responsive, themeable UI apps authored in PowerShell and rendered by the v1 WPF engine
 (`PoshUI.exe`). The WPF engine **software-renders**, so it does not require GPU compositing and runs on
