@@ -11,7 +11,7 @@ The `Banner` control creates a visual header at the top of a wizard or dashboard
 ```powershell
 Add-UIBanner -Step 'Welcome' -Title 'Welcome to the Setup' `
              -Subtitle 'This wizard will guide you through the process.' `
-             -Icon '&#xE8BC;' -Type 'info'
+             -Icon '&#xE8BC;' -Style 'Info'
 ```
 
 ### Key Features

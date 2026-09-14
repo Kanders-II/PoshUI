@@ -23,7 +23,7 @@
     Optional help text displayed as a tooltip.
     
     .EXAMPLE
-    Add-UIFolderPath -Name "DataPath" -Label "Data Folder" -DefaultValue "C:\SQLData"
+    Add-UIFolderPath -Step "Config" -Name "DataPath" -Label "Data Folder" -Default "C:\SQLData"
     
     Adds a folder path selector with a default value.
     

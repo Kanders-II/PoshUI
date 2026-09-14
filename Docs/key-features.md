@@ -76,8 +76,8 @@ One of PoshUI's most powerful features is the ability to turn PowerShell scripts
 **Example:**
 ```powershell
 Add-UIScriptCard -Step 'Tools' -Name 'RestartIIS' `
-    -DisplayName 'Restart IIS Service' `
-    -Script 'Restart-Service W3SVC -Force' `
+    -Title 'Restart IIS Service' `
+    -ScriptBlock { Restart-Service W3SVC -Force } `
     -Description 'Restarts the IIS web service' `
     -Icon 'Refresh'
 ```
@@ -121,7 +121,7 @@ Build professional monitoring dashboards with specialized visualization cards:
 ```powershell
 Add-UIMetricCard -Step 'Dashboard' -Name 'CPU' -Title 'CPU Usage' `
     -Value { (Get-CimInstance Win32_Processor).LoadPercentage } `
-    -Unit '%' -Target 80 -TrendDirection 'Down'
+    -Unit '%' -Target 80 -Trend 'down'
 ```
 
 **GraphCards** - Visualize data with charts (Bar, Line, Area, Pie)

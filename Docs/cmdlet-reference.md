@@ -124,7 +124,8 @@ Add-UIStep -Name "Config" -Title "Configuration" -IconPath "C:\Icons\gear_3d.png
 Customizes the visual appearance of the wizard window.
 
 ```powershell
-Set-UIBranding -WindowTitle "Contoso Setup" -AccentColor "#0078D4"
+Set-UIBranding -WindowTitle "Contoso Setup"
+Set-UITheme @{ AccentColor = "#0078D4" }   # accent lives on the theme, not on branding
 ```
 
 | Parameter | Type | Required | Description |

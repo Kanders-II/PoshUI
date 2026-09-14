@@ -55,7 +55,7 @@ A set of mutually exclusive options where only one can be selected at a time. Id
 
 ```powershell
 Add-UIOptionGroup -Step 'Config' -Name 'DeploymentType' -Label 'Deployment Type' `
-                  -Choices @('Standard', 'High Availability') `
+                  -Options @('Standard', 'High Availability') `
                   -Orientation 'Horizontal'
 ```
 
@@ -63,7 +63,7 @@ Add-UIOptionGroup -Step 'Config' -Name 'DeploymentType' -Label 'Deployment Type'
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `-Choices` | String[] | Array of labels for the radio buttons. |
+| `-Options` | String[] | Array of labels for the radio buttons. |
 | `-Orientation` | String | Layout of the buttons: `'Horizontal'` or `'Vertical'`. |
 
 Next: [Boolean Controls](./boolean-controls.md)
