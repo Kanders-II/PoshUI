@@ -767,6 +767,14 @@ namespace Launcher.Controls
                 case "CalendarView":
                     {
                         var dp = new DatePicker { SelectedDate = AsDate(c.Default) };
+                        // Without this the picker is the stock Aero one - a hard-coded white text-box border,
+                        // the gradient "15" icon and a LIGHT calendar popup even in a dark app - because the
+                        // brushes ApplyThemeDefaults sets on the outer control never reach the Calendar's own
+                        // templates. CanvasDatePickerStyle (CanvasStyles.xaml) templates every part through
+                        // DynamicResource. Once Style is set, ApplyThemeDefaults returns early, as it should.
+                        var dpStyle = System.Windows.Application.Current != null
+                            ? System.Windows.Application.Current.TryFindResource("CanvasDatePickerStyle") as Style : null;
+                        if (dpStyle != null) dp.Style = dpStyle;
                         if (onEvent != null) dp.SelectedDateChanged += (s, e) => onEvent(name, "ValueChanged");
                         return dp;
                     }
@@ -2795,9 +2803,10 @@ namespace Launcher.Controls
                 "Bind", "BindItems", "Key", "AutoStart", "LockNavigation", "Modal", "Topmost",
                 "Resizable", "NoScroll", "Position", "HideTitleBar", "TitleBarColor", "TitleBarText",
 
-                // A refreshing control's tick is wired by CanvasBridge.StartRefresh, which the factory never sees.
+                // A refreshing control's tick is wired by CanvasBridge.StartRefresh, and an elapsed clock by
+                // CanvasBridge.StartClock (which reads BOTH Clock and ClockStop) - the factory never sees either.
 
-                "ValueScript", "RefreshInterval", "ClockStop",
+                "ValueScript", "RefreshInterval", "Clock", "ClockStop",
             };
 
         /// <summary>Specific advice for keys that are real elsewhere, which is why they look right.</summary>
