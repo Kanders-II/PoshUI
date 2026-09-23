@@ -253,6 +253,31 @@ Implicit: progress bars **tween** to new values; pages **fade in** when shown.
 - **Stagger:** a container `-Properties @{ Stagger = 70 }` fades + slides its children in with a 70 ms per-item delay.
 - **Glow (any control):** `-Properties @{ Glow='#34D399'; GlowRadius=16; GlowPulse=$true }` (or `Glow=$true` to use the
   control's own colour). `Add-UICanvasProgressBar` also takes `-Fill/-Glow/-GlowPulse/-GlowRadius`.
+- **HoverScale:** `-Properties @{ HoverScale=1.04; HoverScaleMs=150 }` — animated centred zoom on a card/panel. Unlike
+  `HoverBackground` (which captures its brush at build time) it composes safely with a runtime `Background` swap.
+- **Spin:** `Set-UICanvasProperty <name> Spin $true` rotates any icon/image continuously; `$false` stops it.
+
+### Beyond the knobs: Storyboards in a XAML island
+`Set-UICanvasAnimate` is those five properties only — no rotation, scale, colour, blur or clip, and **nothing that
+sequences**. For a real timeline, put a WPF `Storyboard` inside `Add-UICanvasXaml`.
+- **It must self-start from an `EventTrigger` on `FrameworkElement.Loaded`.** Canvas actions run **off** the UI
+  thread, so PowerShell cannot call `.Begin()` — it would deadlock waiting for its own busy runspace. A declarative
+  trigger has no thread affinity to satisfy.
+- Animate by **property path from the named element**, not by naming Freezables: `Opacity`,
+  `RenderTransform.ScaleX|X|Y|Angle`, `RenderTransform.Children[0].ScaleX` (a `TransformGroup`), `Effect.Radius`
+  (blur), `Effect.BlurRadius`/`Effect.Opacity` (glow), `OpacityMask.StartPoint`/`EndPoint` (**`PointAnimation`**),
+  `Clip.RadiusX`/`RadiusY` (an `EllipseGeometry`), `StrokeDashOffset`.
+- Set `RenderTransformOrigin="0.5,0.5"` or scales/rotations happen about the top-left corner.
+- `RepeatBehavior="Forever"` needs an explicit `Duration` on the `Storyboard` to have a cycle length.
+- `StrokeDashArray` is in **multiples of `StrokeThickness`**, not pixels — it drives draw-on, progress rings and
+  marching-ants borders.
+- **`-Refresh` fires once immediately at registration**, which makes a hidden refreshing label a page-load hook;
+  pair it with `Start-UICanvasAsync { Start-Sleep -Milliseconds N; Show-UICanvasPage '<title>' }` for
+  millisecond-precision sequencing (`-Refresh` itself is integer seconds).
+- The definition's `DisableAnimations` flag (Dashboard module's `Set-UIBranding`; **no Canvas equivalent**) gates page
+  and dialog transitions but **does not reach inside an island** — gate island motion yourself if reduced motion matters.
+
+Full treatment, with a technique catalogue and headless verification: `Docs\agent\16-animation-and-motion.md`.
 
 ## Reactive state
 A shared, reactive store: change one key and every bound control updates itself (no per-control `Set-UICanvasValue`).

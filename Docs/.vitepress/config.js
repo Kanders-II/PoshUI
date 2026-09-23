@@ -45,7 +45,8 @@ export default {
         items: [
           { text: 'About Canvas', link: '/canvas/about' },
           { text: 'Capability Reference', link: '/Canvas-Reference' },
-          { text: 'Agent Authoring Guide (AI)', link: '/agent/README' }
+          { text: 'Agent Authoring Guide (AI)', link: '/agent/README' },
+          { text: 'Animation & Motion', link: '/agent/16-animation-and-motion' }
         ]
       },
       {

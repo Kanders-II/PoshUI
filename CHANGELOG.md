@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.1] - 2026-09-22
+
+A polish release for **PoshUI.Canvas**: a redesigned date picker and calendar, a release showcase app, and a
+full motion guide. No cmdlet or parameter changed, so existing scripts run unchanged; every app that uses
+`Add-UICanvasDatePicker` picks up the new look automatically. `PoshUI.Canvas` moves from 1.3.0 to 1.4.1 so the
+module and engine versions match again. This is the first signed release package since 1.3.1: 1.4.0 was never
+packaged, so the 1.4.1 download is the first to include PoshUI.Canvas and everything under [1.4.0].
+
+### Added
+
+- **Themed date picker and calendar** - the date field, its calendar popup, the day, month and year cells, and the header paging are all templated in `CanvasStyles.xaml` through theme resources, so they follow `Set-UITheme` and light/dark mode. Full-contrast day text, an accent-filled selected day, a ring on today, dimmed days from adjacent months, chevron paging, and an accent border on focus.
+- **Release showcase** (`Examples\Showcase-Release.ps1` in the release package) - an animated splash that reveals the PoshUI lockup, then four sections behind a left icon rail (Ctrl+1..4): an Overview hero, live bound charts, a Motion page, and reactive forms. The Motion page demonstrates engine-native motion (`Set-UICanvasAnimate` easings, `HoverScale`, `Glow`/`GlowPulse`, `Spin`, progress tweens, `-Clock`) alongside raw WPF in XAML islands (a 3D `Viewport3D` cube, motion along a Bezier path, colour animation, spring-on-hover, a particle field, an odometer, stroke draw-on).
+- **Motion guide** (`Docs/agent/16-animation-and-motion.md`) - what the engine animates for you and where it stops, the XAML-island contract (storyboards must self-start from `Loaded`), the `Storyboard.TargetProperty` paths that work, a technique catalogue, easing and timing guidance, sequencing across pages, and how to verify motion headlessly. The QUICK and Capabilities context packs and the AI system prompt now carry the motion rules too.
+
+### Changed
+
+- **`PoshUI.Canvas` 1.3.0 -> 1.4.1**, aligned with the engine. It still accepts engine 1.4.0 or later.
+
+### Fixed
+
+- **The date picker looked dated and its text was faint** - the factory built a bare `DatePicker` with no style, so it rendered the stock Aero template (a hard-coded white text-box border, the gradient "15" icon, text on a 10%-white translucent fill) and a stock *light* calendar popup inside dark apps. The brushes applied to the outer control never reached the calendar's own templates.
+- **False `[unused property]` warning for `Clock`** - an elapsed-clock label (`Add-UICanvasLabel -Clock`) logged that `Clock` was supplied but never read. `CanvasBridge.StartClock` reads it; the diagnostic's exclusion list had `ClockStop` but not `Clock`.
+- **Garbled AI context packs** - `Build-AIDocs.ps1` read source docs saved without a BOM as the ANSI codepage, turning every em dash into `â€”` in the generated bundles. The packs had also not been regenerated since docs 10-15 were added; they now include every numbered doc.
+
+### Known issues
+
+- `-Refresh` timers, `Watch-UICanvasState` watchers and shortcuts registered on a page are kept until shutdown, and are registered again on every visit to that page. An app a user navigates around repeatedly should throttle its tickers; the showcase shows the pattern.
+
 ## [1.4.0] - 2026-09-13
 
 Adds **PoshUI.Canvas**, a fourth module for free-form apps, and an engine-native workflow runner. Additive

@@ -8,7 +8,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
+[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -38,6 +38,16 @@ PoshUI provides four independent modules, each designed for a specific use case:
 ### PoshUI.Canvas *(new in v1.4.0)*
 **Free-form apps** — lay out anything, anywhere, with no fixed shell. Where the other three modules give you an
 opinionated frame, Canvas gives you a blank page and ~85 cmdlets.
+
+<p align="center">
+  <img src="Images/canvas-showcase.gif" alt="PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar" width="900">
+</p>
+
+*The release showcase: one PowerShell script, included in the [release package](https://github.com/Kanders-II/PoshUI/releases) as `Examples\Showcase-Release.ps1`. From the extracted folder:*
+
+```powershell
+powershell -NoProfile -STA -File .\Examples\Showcase-Release.ps1
+```
 
 A single `.ps1` **is** the application — no XAML, no MVVM, no project scaffolding, no build step:
 

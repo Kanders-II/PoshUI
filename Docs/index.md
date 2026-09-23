@@ -16,6 +16,10 @@ PoshUI consists of four independent modules that can be used separately:
 opinionated frame, Canvas gives you a blank page and ~85 cmdlets. A single `.ps1` **is** the application: no
 XAML, no MVVM, no project scaffolding, no build step.
 
+![PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar](/canvas-showcase.gif)
+
+*The v1.4.1 release showcase — one PowerShell script, included in the [release package](https://github.com/Kanders-II/PoshUI/releases) as `Examples\Showcase-Release.ps1`.*
+
 ```powershell
 Import-Module PoshUI.Canvas
 New-PoshUICanvas -Title 'Hello' -Theme Dark
@@ -30,6 +34,7 @@ Show-PoshUICanvas
 - [About Canvas](./canvas/about.md) - what it is, how it works, and how to use it
 - [Capability Reference](./Canvas-Reference.md) - every control and runtime cmdlet
 - [Agent Authoring Guide](./agent/README.md) - context pack for building Canvas apps with an AI assistant
+- [Animation & Motion](./agent/16-animation-and-motion.md) - engine motion, XAML-island Storyboards, and how to verify them *(v1.4.1)*
 - Engine-native workflow runner with retry, timeouts, skip conditions and reboot-resume
 - Tabs, menus, splitters, cascading fields, master/detail grids, charts and reactive state
 - A single `.ps1` is the whole app - no XAML, no MVVM, no build step

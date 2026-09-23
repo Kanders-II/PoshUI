@@ -2,6 +2,76 @@
 
 All notable changes to the PoshUI project are documented here.
 
+## [1.4.1] - 2026-09-22
+
+![PoshUI Canvas release showcase](/canvas-showcase.gif)
+
+A polish release for Canvas. No cmdlet or parameter changed, so existing scripts run as they are. Every app that
+uses `Add-UICanvasDatePicker` gets the new look automatically. `PoshUI.Canvas` moves from 1.3.0 to **1.4.1**, so
+the module and engine versions match again.
+
+This is also the **first signed release package since 1.3.1**. 1.4.0 was never packaged, so the 1.4.1 download
+is the first to include PoshUI.Canvas and everything listed under [1.4.0](#_1-4-0-2026-09-13) below.
+
+### A date picker that belongs in a dark app
+
+The old picker had no style of its own, so Canvas fell back to the stock Windows one. That meant:
+
+- a hard-coded white border around the text;
+- the old gradient calendar icon;
+- faint text on a translucent fill;
+- a **light** calendar popup, even inside a dark app.
+
+Colours set on the outer control never reached the calendar inside it.
+
+Every part is now themed through `Set-UITheme` and follows light and dark mode:
+
+- full-contrast day numbers;
+- an accent-filled selected day and a ring on today;
+- dimmed days from neighbouring months;
+- chevron paging, and month and year views to match;
+- an accent border when the field has focus.
+
+### Release showcase
+
+`Examples\Showcase-Release.ps1` in the release package shows Canvas at full stretch. An animated splash reveals the PoshUI lockup, then
+hands off to four sections behind a left icon rail (also `Ctrl+1` to `Ctrl+4`):
+
+- **Overview**: a hero panel, clickable explore cards and live metrics.
+- **Charts**: bound to state. Push new data and watch every chart animate again.
+- **Motion**: sixteen demos of movement, from `Set-UICanvasAnimate` easings, glow and spin, through to a 3D
+  cube, motion along a curve, colour animation and a particle field in XAML islands.
+- **Forms**: two-way binding, validation feedback and the new calendar.
+
+```powershell
+# from the extracted release folder
+powershell -NoProfile -STA -File .\Examples\Showcase-Release.ps1
+```
+
+### Motion guide
+
+A new chapter, **[Animation & Motion](../agent/16-animation-and-motion.md)**, covers:
+
+- what the engine animates for you, and where that stops;
+- the XAML-island contract: storyboards must start themselves;
+- the property paths that work, with a technique catalogue;
+- easing and timing guidance;
+- sequencing across pages;
+- how to check that an animation works without watching it.
+
+### Fixed
+
+- **False `[unused property]` warning for `Clock`** on elapsed-clock labels. The diagnostic's allow-list had
+  `ClockStop` but not `Clock`.
+- **Garbled AI context packs.** Docs saved without a byte-order mark were read in the wrong encoding, so every
+  em dash came out as `â€”`. The packs now also include every numbered agent doc.
+
+### Known issue
+
+Timers (`-Refresh`), state watchers and shortcuts registered on a page stay alive until the app closes, and are
+registered again each time you visit that page. If users navigate around a lot, throttle your tickers. The
+showcase shows the pattern.
+
 ## [1.4.0] - 2026-09-13
 
 ### PoshUI.Canvas — Free-Form Apps
