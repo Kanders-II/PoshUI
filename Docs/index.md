@@ -2,7 +2,9 @@
 
 Build beautiful PowerShell wizards, dashboards, workflows, and free-form apps—the PowerShell way.
 
-![PoshUI Dashboard](./images/visualization/Dashboard_ComputerMaintenance_Dark.png)
+![PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar](/canvas-showcase.gif)
+
+*The v1.4.1 release showcase — one PowerShell script, included in the [release package](https://github.com/Kanders-II/PoshUI/releases) as `Examples\Showcase-Release.ps1`.*
 
 PoshUI enables IT professionals to create professional Windows 11-style interfaces using familiar PowerShell cmdlets—**no WPF, XAML, or C# knowledge required**.
 
@@ -15,10 +17,6 @@ PoshUI consists of four independent modules that can be used separately:
 **Free-form apps** — lay out anything, anywhere, with no fixed shell. Where the other three modules give you an
 opinionated frame, Canvas gives you a blank page and ~85 cmdlets. A single `.ps1` **is** the application: no
 XAML, no MVVM, no project scaffolding, no build step.
-
-![PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar](/canvas-showcase.gif)
-
-*The v1.4.1 release showcase — one PowerShell script, included in the [release package](https://github.com/Kanders-II/PoshUI/releases) as `Examples\Showcase-Release.ps1`.*
 
 ```powershell
 Import-Module PoshUI.Canvas
