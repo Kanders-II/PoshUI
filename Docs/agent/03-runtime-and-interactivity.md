@@ -166,7 +166,7 @@ Show-UICanvasWindow [-Name] <s>
 Close-UICanvasWindow
 ```
 ```powershell
-New-UICanvasWindow -Name details -Title 'Server details' -Width 520 -Height 380 -Topmost -Content {
+New-UICanvasWindow -Name details -Title 'Server details' -Width 520 -Height 380 -Modal -Content {
     Add-UICanvasLabel -Bind 'Details for {selected}' -FontSize 16 -FontWeight SemiBold
     Add-UICanvasTextBox -Name note -Placeholder 'Add a note'
     Add-UICanvasButton 'Save and close' -Style Accent -Action {
@@ -178,11 +178,13 @@ Add-UICanvasButton 'Open details' -Action { Show-UICanvasWindow details }
 ```
 - The window shares the app's runspace, **reactive state** and theme — bind its controls to state keys to pass
   data in and out (above, `{selected}` in, `lastNote` out).
-- **Buttons inside a `-Modal` window cannot run.** `Show-UICanvasWindow` on a modal window does not return until
-  the window closes, and the action that called it holds the app's action queue the whole time — so the
-  modal's own buttons (including one calling `Close-UICanvasWindow`) wait forever; only the window's own ✕ closes
-  it. Use `-Modal` only for a read-only window. For a window with its own buttons, leave `-Modal` off; add
-  `-Topmost` to keep it in front, and disable what the user shouldn't touch meanwhile.
+- **`-Modal`** disables the main window until the modal closes; its own buttons work normally (including one
+  calling `Close-UICanvasWindow`). `Show-UICanvasWindow` **returns immediately** for both kinds of window, so do
+  not put code after it that expects the window to have closed — react to what the window did from the window's
+  own actions, or through state (`Watch-UICanvasState`, or a label bound to the key it sets).
+- On **engine 1.4.1 and earlier**, `Show-UICanvasWindow` on a modal window blocked the action queue until the
+  window closed, so buttons inside a modal never ran. If you must support that engine, leave `-Modal` off and use
+  `-Topmost` instead.
 - `-TitleBarColor` / `-TitleBarText` tint the Windows 11 caption to match the theme — without them the caption
   stays in the system (usually light) colours.
 - Define windows **before** `Show-PoshUICanvas`, like pages; they are not pages and don't appear in navigation.

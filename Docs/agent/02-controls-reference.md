@@ -196,10 +196,13 @@ Add-UICanvasTabs -Name details -Children {
 ```
 Tabs keep every page's controls alive, so a value typed on one tab is still readable from another.
 
-> **Known issue (engine 1.4.1):** the tab strip is not themed yet — it renders in the stock light Windows style,
-> which is hard to read in a dark app. Until it is, prefer a **segmented switch**: a row of buttons that show one
-> panel and hide the others with `Set-UICanvasProperty <panel> Visible $true|$false`, or a Dock page with an icon
-> rail (file 10).
+The strip follows the theme: headers in the secondary text colour, the selected one in full text weight over an
+accent underline, a hairline under the strip, and each page on the surface the tabs sit on (so tabs inside a card
+take the card's background).
+
+> **Engine 1.4.1 and earlier** drew tabs in the stock light Windows style, unreadable in a dark app. If you must
+> support that engine, use a row of buttons that show one panel and hide the others with
+> `Set-UICanvasProperty <panel> Visible $true|$false` instead.
 
 ### Add-UICanvasGridSplitter
 ```
