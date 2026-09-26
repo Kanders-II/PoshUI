@@ -1,16 +1,16 @@
-# 08 — Cheatsheet (every cmdlet, terse)
+﻿# 08 — Cheatsheet (every cmdlet, terse)
 
 Universal control params (most controls): `-Name -X -Y -Width -Height -ZIndex -Tooltip -Visible -Enabled -Refresh -Properties`.
 
 ## Lifecycle / shell
 ```
 New-PoshUICanvas -Title <s> [-Description] [-Theme Light|Dark|Auto] [-Navigation None|Sidebar|Compact|Top]
-                 [-Width][-Height][-MinWidth][-MinHeight][-WindowTitleText][-WindowTitleIcon][-AllowCancel]
+                 [-Width][-Height][-MinWidth][-MinHeight][-WindowTitleText][-WindowTitleIcon][-AllowCancel][-HideTitleBar]
 Add-UICanvasPage -Title <s> [-Description][-Icon] [-Layout Canvas|Dock|Grid|Stack|VStack|HStack|Wrap]
                  [-Columns <int>][-ColumnWidths <s>][-Spacing <d>][-Padding <s>]   # avoid -Padding on stacks
 Set-UITheme [-Preset Dark|Light|Midnight|Slate] [-Accent Indigo|Emerald|Sky|Amber|Rose|Violet|Cyan|Orange]
             [-Theme @{slot=hex}] [-Light @{}] [-Dark @{}] [-Mode Light|Dark|Auto]
-Show-PoshUICanvas [-NoWait] [-AppDebug]       # returns the result hashtable
+Show-PoshUICanvas [-NoWait] [-AppDebug] [-Validate]   # returns the result hashtable; -Validate builds without launching
 ```
 
 ## Containers
@@ -22,7 +22,7 @@ Add-UICanvasExpander [-Label] [-IsExpanded <bool>][-Background][-CornerRadius] -
 
 ## Text & display
 ```
-Add-UICanvasLabel [-Label <s|sb>] [-Bind][-FontSize][-FontWeight][-Foreground]
+Add-UICanvasLabel [-Label <s|sb>] [-Bind][-FontSize][-FontWeight][-Foreground][-Clock <ctl>][-ClockStop <ctl>]  # -Clock: engine-ticked mm:ss from a control holding UTC ticks
 Add-UICanvasIcon  [-Icon <s>] [-FontSize][-Foreground]
 Add-UICanvasBadge [-Label] [-Value][-Severity Neutral|Info|Success|Warning|Error][-Icon]
 Add-UICanvasBanner [-Label] [-Value][-Severity Informational|Success|Warning|Error][-Icon][-Image]
@@ -33,7 +33,7 @@ Add-UICanvasSeparator
 
 ## Buttons
 ```
-Add-UICanvasButton [-Label] [-Action {}][-Style Standard|Secondary|Accent|Primary|Subtle][-Icon]
+Add-UICanvasButton [-Label] [-Action {}][-NavigateTo <title|index|Next|Prev|First|Last>][-Style Standard|Secondary|Accent|Primary|Subtle|Gradient][-Icon]
 Add-UICanvasDropDownButton [-Label] [-Choices][-Value][-OnChange {}]
 ```
 
@@ -74,7 +74,7 @@ Add-UICanvasChartCard   [-Title] [-Type Bar|Line|Area|Donut|Sparkline][-Labels][
 ## Images / xaml / iteration / shapes / pickers
 ```
 Add-UICanvasImage  -Source|-Value <path> [-Properties @{Stretch=}]
-Add-UICanvasXaml   [-Markup <xaml>][-Path <file>]
+Add-UICanvasXaml   [-Markup <xaml>][-Path <file>][-Actions @{ xamlName = { } }]   # -Actions binds a scriptblock to each x:Name'd control INSIDE the markup
 Add-UICanvasRepeater -Items <obj[]> -Template { param($item) ... }
 Add-UICanvasRectangle/Ellipse/Line [-Fill][-Stroke][-StrokeThickness][-CornerRadius]
 Add-UICanvasFolderPicker [-Value][-Placeholder][-Description][-ButtonLabel]
@@ -92,8 +92,8 @@ Get-UICanvasState  <name>                         # runtime: read
 
 ## Runtime (inside -Action / -OnChange)
 ```
-Get-UICanvasValue <name>                          Set-UICanvasValue <name> <v>
-Set-UICanvasProperty <name> <prop> <v>            # Enabled/Visible/Foreground/Background/Source/Spin/ItemsSource/...
+Get-UICanvasValue <name>                          Set-UICanvasValue <name> <v> [-Quiet]
+Set-UICanvasProperty <name> <prop> <v> [-Quiet]   # Enabled/Visible/Foreground/Background/Source/Spin/ItemsSource/AppendLine/...
 Show-UICanvasPage <pageTitle|index>               Submit-UICanvas
 Lock-UICanvasNavigation / Unlock-UICanvasNavigation
 Start-UICanvasAsync { }                            # background work
@@ -102,6 +102,7 @@ Show-UICanvasDialog -Message <s> [-Title][-Prompt][-DefaultValue][-OkLabel][-Can
 Show-UICanvasFlyout [-Target <name>] [-Items <s[]>] [-Title][-Message] [-Placement Bottom|Top|Left|Right|Mouse]  # ->item/$null
 Set-UICanvasAnimate -Name <s> -Property Opacity|Width|Height|X|Y -To <d> [-From][-Duration][-Easing]
 Select-UICanvasFolder [-Description]               Select-UICanvasFile [-Title][-Filter]
+Show-UICanvasWindow <name>                         Close-UICanvasWindow            # close = from inside that window
 ```
 
 ## Flows
@@ -110,8 +111,8 @@ Select-UICanvasFolder [-Description]               Select-UICanvasFile [-Title][
 Add-UICanvasWizardSteps -Steps <s[]> [-Current <s>]
 Add-UICanvasWizardNav [-Next <page>][-Back <page>][-Require <s[]>][-Validate { 'err' | $null }][-NextLabel][-BackLabel][-NoBack]
 # Workflow
-Add-UICanvasWorkflowStep -Name <s> [-Detail] -Script { } [-ExpectedSeconds][-Retry][-TimeoutSeconds][-SkipWhen <cond>]   # Retry/Timeout/SkipWhen need -Engine
-Add-UICanvasWorkflow [-Engine][-Name][-StartLabel][-StartIcon][-ShowLog][-AutoStart][-LockNavigation][-LockOnStart][-StepsHeight][-NoStartButton][-NoHeader][-StateFile]
+Add-UICanvasWorkflowStep -Name <s> [-Detail] -Script { } [-ExpectedSeconds][-Retry][-TimeoutSeconds][-SkipWhen <cond>][-OnClick {}]   # Retry/Timeout/SkipWhen need -Engine
+Add-UICanvasWorkflow [-Engine][-Name][-StartLabel][-StartIcon][-ShowLog][-AutoStart][-LockNavigation][-LockOnStart][-StepsHeight][-Compact][-NoStartButton][-NoHeader][-StateFile]
 #   -Engine (preferred): steps run on the engine executor, own runspace (UI stays live); step context $wf:
 #   $wf.UpdateProgress(pct,msg) $wf.WriteOutput(txt,lvl) $wf.GetValue(n)/$wf.SetValue(n,v) $wf.SetData(k,v)/$wf.GetData(k) $wf.SkipTask(r) $wf.RequestReboot(r)
 
@@ -123,20 +124,54 @@ Add-UICanvasTabs [-Name][-SelectedIndex][-OnChange {}] -Children { Add-UICanvasT
 #   value = selected index; Set-UICanvasValue accepts an index OR a tab header string
 Add-UICanvasMenu -Items @(@{Text='File';Items=@(@{Text='Open';Gesture='Ctrl+O';Action={}},@{Text='-'})})  # leaf: Icon/Gesture/Disabled/Checked/Name/Page
 Add-UICanvasGridSplitter [-Orientation Vertical|Horizontal][-Thickness]   # own Grid cell BETWEEN two panes
-Add-UICanvasViewbox [-Stretch Uniform|Fill|UniformToFill|None][-StretchDirection Both|UpOnly|DownOnly] -Children { }
+Add-UICanvasViewbox [-Stretch Uniform|Fill|UniformToFill|None][-StretchDirection Both|UpOnly|DownOnly][-Layout][-Spacing] -Children { }
+Add-UICanvasToolbar [-Brand][-BrandIcon][-Status][-Links <page titles>][-Active <title>][-Actions @(@{Icon;Tooltip;Action={}|Page})]   # ~54px, fixed
+Add-UICanvasFooter [-LeftText][-Links @('text' | @{Text;Action={}} | @{Text;Page})]
+New-UICanvasWindow <name> -Content { } [-Title][-Width][-Height][-MinWidth][-MinHeight][-Modal][-Topmost][-Resizable <bool>]
+                   [-Position CenterOwner|CenterScreen|Manual][-X][-Y][-Icon][-Layout][-Columns][-Spacing][-Padding]
+                   [-NoScroll][-HideTitleBar][-TitleBarColor][-TitleBarText]   # template; open with Show-UICanvasWindow
 # runner publishes: <wf>_status, <wf>_pct, <wf>_gauge, <wf>_start/_end, <step>_elapsed/_remaining
 ```
 
 ## Keyboard
 ```
-Add-UICanvasShortcut '<gesture>' { }              # e.g. 'Ctrl+S', 'F5'
+Add-UICanvasShortcut '<gesture>' -Action { }      # e.g. 'Ctrl+S', 'F5'. -Action must be named
 ```
 
 ## Properties bag keys
 `Margin '<L,T,R,B>'` · `VAlign`/`HAlign` · `CornerRadius` · `Background` · `HoverBackground` ·
+`HoverScale <1.04>`/`HoverScaleMs` ·
 `BackgroundImage`/`BackgroundStretch`/`BackgroundOpacity` · `Stagger <ms>` · `Scroll $true` · `ContentAlign` ·
 `Layout` · `Stretch` · `IconSize` · `ImageWidth`.
 
+## Motion  (full treatment: [16](16-animation-and-motion.md))
+```
+# declarative, no island needed
+-Properties @{ Stagger = 70 }                     # container: children cascade in, one-shot at page entry
+-Properties @{ HoverScale = 1.04; HoverScaleMs = 150 }
+-Properties @{ Glow = '#34D399'; GlowRadius = 16; GlowPulse = $true }
+Set-UICanvasProperty <name> Spin $true            # continuous rotation on an icon/image
+Set-UICanvasAnimate -Name <s> -Property Opacity|Width|Height|X|Y -To <d> [-From][-Duration][-Easing]
+```
+That is the whole runtime surface: **no rotation, scale, colour, blur, clip — and nothing that sequences.**
+For a real timeline use a WPF `Storyboard` inside `Add-UICanvasXaml`:
+```xml
+<Grid.Triggers><EventTrigger RoutedEvent="FrameworkElement.Loaded"><BeginStoryboard>
+  <Storyboard>            <!-- + Duration and RepeatBehavior="Forever" to loop -->
+    <DoubleAnimation Storyboard.TargetName="x" Storyboard.TargetProperty="Opacity" From="0" To="1"
+                     BeginTime="0:0:0.2" Duration="0:0:0.45" EasingFunction="{StaticResource eo}"/>
+  </Storyboard>
+</BeginStoryboard></EventTrigger></Grid.Triggers>
+```
+- **Must self-start from `Loaded`.** Canvas actions run off the UI thread, so PowerShell cannot call `.Begin()`.
+- Animatable paths: `Opacity` · `RenderTransform.X|Y|ScaleX|ScaleY|Angle` · `RenderTransform.Children[0].ScaleX`
+  (`TransformGroup`) · `Effect.Radius` (blur) · `Effect.BlurRadius`/`Effect.Opacity` (glow) ·
+  `OpacityMask.StartPoint`/`EndPoint` (**`PointAnimation`**) · `Clip.RadiusX`/`RadiusY` · `StrokeDashOffset`.
+- `RenderTransformOrigin="0.5,0.5"` or it scales about the top-left. · `StrokeDashArray` is in **multiples of
+  `StrokeThickness`**. · `TextElement.FontFamily` on a panel, not `FontFamily`. · one `Effect` per element (nest).
+- Page-load hook: **`-Refresh` fires once at registration.** Pair with
+  `Start-UICanvasAsync { Start-Sleep -Milliseconds N; Show-UICanvasPage '<title>' }` for ms-precision sequencing.
+
 ## Reminders
-- UTF-8 **with BOM** for non-ASCII. · `-Refresh` = seconds. · alias `$Name` before `-Children`. ·
-  authoring vs runtime cmdlets. · run with WinPS 5.1. · log: `PoshUI\bin\logs\PoshUI.log`.
+- UTF-8 **with BOM** for non-ASCII. · `-Refresh` = seconds, **and fires once at registration**. · alias `$Name`
+  before `-Children`. · authoring vs runtime cmdlets. · run with WinPS 5.1. · log: `PoshUI\bin\logs\PoshUI.log`.

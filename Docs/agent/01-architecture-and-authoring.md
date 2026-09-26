@@ -7,7 +7,7 @@
 - The engine hosts a single **in-process Windows PowerShell runspace** (the "bridge"). Your `-Action` /
   `-OnChange` scriptblocks run there, full-privilege, in the same process as the UI. UI mutations they request
   are marshaled onto the WPF dispatcher thread.
-- Module: `PoshUI.Canvas` (ModuleVersion 1.2.0). It checks the engine is **≥ 1.4.0** at import.
+- Module: `PoshUI.Canvas` (ModuleVersion 1.4.1). It checks the engine is **≥ 1.4.0** at import.
 
 ## The authoring lifecycle (always this order)
 ```powershell
@@ -28,9 +28,14 @@ New-PoshUICanvas -Title <string> [-Description <string>]
   [-Navigation None|Sidebar|Compact|Top]   # multi-page chrome (default None)
   [-SidebarHeaderText <s>] [-SidebarHeaderIcon <s>]
   [-WindowTitleIcon <s>] [-WindowTitleText <s>] [-AllowCancel <bool>]
+  [-HideTitleBar]                           # no system title bar: draw your own top bar
   [-Width <d>] [-Height <d>] [-MinWidth <d>] [-MinHeight <d>]
 ```
 - Auto-creates an initial page; your first `Add-UICanvasPage` **reuses** it.
+- `-WindowTitleIcon` also sets the taskbar icon (PNG path).
+- `-HideTitleBar` removes the caption. The window keeps a 32 px drag strip at the top; a custom top bar there
+  must mark its buttons `shell:WindowChrome.IsHitTestVisibleInChrome="True"` (in an `Add-UICanvasXaml` island)
+  or they won't receive clicks.
 - `-Navigation None` = single-page / free dashboard. `Sidebar`/`Top`/`Compact` add nav chrome for multi-page.
 
 ## Pages — `Add-UICanvasPage`
@@ -100,7 +105,9 @@ A hashtable of extra, lower-level rendering options passed straight to the rende
 | `HAlign` / `HorizontalAlignment` | `Left\|Center\|Right\|Stretch` | Horizontal alignment. |
 | `CornerRadius` | number | Rounded corners (cards/panels/buttons). |
 | `Background` | hex | Background color. |
-| `HoverBackground` | hex | Background on mouse-over (cards). |
+| `HoverBackground` | hex | Background on mouse-over (cards). Captures the brush at build time — do **not** combine with a runtime `Background` swap, or mouse-out restores the stale colour. |
+| `HoverScale` | number, e.g. `1.04` | Animated centred zoom on mouse-over (cards/panels). Composes with a runtime `Background` swap and with `Stagger`. |
+| `HoverScaleMs` | ms (number, default 140) | Duration of the `HoverScale` ease. |
 | `BackgroundImage` | path | Raster background for a container. |
 | `BackgroundStretch` | `Uniform\|UniformToFill\|Fill\|None` | How the background image scales. |
 | `BackgroundOpacity` | 0..1 | Background image opacity. |

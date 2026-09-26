@@ -19,7 +19,11 @@ Set-UICanvasProperty go 'Enabled' $false     # set ANY property: Enabled, Visibl
                                              #   Source/Image, Spin, ItemsSource, Value, Text, ...
 ```
 - `Get-UICanvasValue` returns `null` for a control that isn't on the current page yet (this is fine — it's a
-  legitimate cross-page/defensive read, not an error).
+  legitimate cross-page/defensive read, not an error). Values typed on a page you have navigated away from are
+  still returned: the engine snapshots each page's values when you leave it.
+- Setting a control that doesn't exist (or isn't on the current page) writes a `no control named '...'` line to
+  the engine log. Add **`-Quiet`** to `Set-UICanvasValue` / `Set-UICanvasProperty` when that is expected — e.g.
+  a background job updating a progress bar on a page the user may have left.
 - `Set-UICanvasProperty <name> Spin $true` continuously rotates any icon/image (busy indicator); `$false` stops it.
 
 ## Reactive state (the modern way)
@@ -82,6 +86,34 @@ Add-UICanvasButton 'Scan' -Action {
 `Start-UICanvasAsync { }` runs the scriptblock on its own runspace/thread so the UI thread stays responsive.
 Use the runtime cmdlets inside it to push results back.
 
+### What happens to async work when the window closes
+
+Closing the window **stops** in-flight `Start-UICanvasAsync` pipelines. It does not wait for them, and it
+cannot roll them back — so treat the close as a cancellation point:
+
+- Persist progress **as you go**, not at the end. A long job that only writes its result on the last line
+  loses everything if the operator closes the window.
+- External processes you started (`msiexec`, `wusa`, a PSADT package) are separate processes and keep
+  running to completion regardless. Stopping the pipeline does not stop them.
+- Don't rely on a `finally` block in the async scriptblock for cleanup that must happen. A stopped
+  pipeline may not run it.
+
+This is deliberate. Before, async pipelines kept executing after the window was gone: the run continued
+invisibly, and the process never exited — every leaked `PoshUI.exe` also stranded the `powershell.exe`
+host blocked on `WaitForExit()`, and it held a file lock on `PoshUI.exe` that blocked redeploys.
+
+### Why the runtime cmdlets can no-op during teardown
+
+Every runtime cmdlet marshals to the UI thread, and most do it with a **blocking** call. During shutdown
+that is a deadlock waiting to happen — `Runspace.Close()` waits for pipelines while a pipeline waits for
+the UI thread — so the bridge closes a gate first and marshalling calls become no-ops. Consequences for
+authors:
+
+- A `Get-UICanvasValue` issued while the window is closing returns `$null`, not the value. Capture what
+  you need **before** long work, not after it.
+- `Submit-UICanvas` writes its result file *before* asking the window to close, so submitted values are
+  safe. Values you only read after a close request are not.
+
 ## Transient surfaces
 
 ### Toast
@@ -97,6 +129,11 @@ $name = Show-UICanvasDialog -Message 'Name?' -Prompt -DefaultValue 'PC1'  # ente
 Show-UICanvasDialog -Message 'Done.' -OkLabel 'Close' -CancelLabel 'Hide'
 ```
 Blocks until dismissed; returns text (prompt+OK), `$true` (confirm+OK), or `$null` (cancel).
+
+The dialog draws its **own** title bar (accent tick, title, `✕`) and follows the theme. It does not use OS
+window chrome — Windows draws that in the *system* theme, which put a light strip above dark content and
+made the dialog the only light surface in a dark app. Consequences: the `✕` returns `$null`, exactly like
+Cancel, and the dialog is dragged by its title area (the button strip is not a drag handle).
 
 ### Flyout (lightweight anchored popup, returns the chosen item)
 ```powershell
@@ -115,6 +152,41 @@ Show-UICanvasFlyout [-Target <controlName>] [-Items <string[]>] [-Title <s>] [-M
 - Returns the clicked item, or `$null` if dismissed. Synchronous (blocks the action until closed), like a dialog.
 - Use for action/context menus and detail popovers — lighter than a modal dialog.
 
+### Secondary windows
+A second window for a detail view, a tool, or a modal form. Define it at authoring time with
+`New-UICanvasWindow`; show it from any action with `Show-UICanvasWindow`; an action running **inside** it closes
+it with `Close-UICanvasWindow`.
+```
+New-UICanvasWindow [-Name] <s> -Content { Add-UICanvas* ... }
+  [-Title <s>] [-Width <d>] [-Height <d>] [-MinWidth <d>] [-MinHeight <d>] [-Modal] [-Topmost]
+  [-Resizable <bool>] [-Position CenterOwner|CenterScreen|Manual] [-X <d>] [-Y <d>] [-Icon <png>]
+  [-Layout VStack|Stack|HStack|Grid|Wrap|Canvas] [-Columns <int>] [-Spacing <d>] [-Padding <d>]
+  [-NoScroll] [-HideTitleBar] [-TitleBarColor <hex>] [-TitleBarText <hex>]
+Show-UICanvasWindow [-Name] <s>
+Close-UICanvasWindow
+```
+```powershell
+New-UICanvasWindow -Name details -Title 'Server details' -Width 520 -Height 380 -Topmost -Content {
+    Add-UICanvasLabel -Bind 'Details for {selected}' -FontSize 16 -FontWeight SemiBold
+    Add-UICanvasTextBox -Name note -Placeholder 'Add a note'
+    Add-UICanvasButton 'Save and close' -Style Accent -Action {
+        Set-UICanvasState lastNote (Get-UICanvasValue -Name note)
+        Close-UICanvasWindow
+    }
+}
+Add-UICanvasButton 'Open details' -Action { Show-UICanvasWindow details }
+```
+- The window shares the app's runspace, **reactive state** and theme — bind its controls to state keys to pass
+  data in and out (above, `{selected}` in, `lastNote` out).
+- **Buttons inside a `-Modal` window cannot run.** `Show-UICanvasWindow` on a modal window does not return until
+  the window closes, and the action that called it holds the app's action queue the whole time — so the
+  modal's own buttons (including one calling `Close-UICanvasWindow`) wait forever; only the window's own ✕ closes
+  it. Use `-Modal` only for a read-only window. For a window with its own buttons, leave `-Modal` off; add
+  `-Topmost` to keep it in front, and disable what the user shouldn't touch meanwhile.
+- `-TitleBarColor` / `-TitleBarText` tint the Windows 11 caption to match the theme — without them the caption
+  stays in the system (usually light) colours.
+- Define windows **before** `Show-PoshUICanvas`, like pages; they are not pages and don't appear in navigation.
+
 ## Native file/folder pickers
 ```powershell
 $dir  = Select-UICanvasFolder -Description 'Pick a folder'
@@ -130,10 +202,14 @@ Set-UICanvasAnimate -Name panel -Property Y -To 0 -From 12 -Duration 220
 Animates `Opacity`/`Width`/`Height`/`X`/`Y` on a named control. `-Easing` ∈ `Linear|CubicOut|CubicInOut|...`.
 Containers also support a one-shot **stagger-in** via `-Properties @{ Stagger = 60 }` (children cascade in).
 
+Those five properties are the whole runtime animation surface — no rotation, scale, colour, blur or clip,
+and nothing that **sequences** ("A, then B 300ms later, while C is still moving"). For any of that, use a
+`Storyboard` inside an `Add-UICanvasXaml` island: see [16-animation-and-motion.md](16-animation-and-motion.md).
+
 ## Keyboard shortcuts
 ```powershell
-Add-UICanvasShortcut 'Ctrl+S' { Submit-UICanvas }           # authoring-time registration
-Add-UICanvasShortcut 'F5' { Set-UICanvasState refresh ((Get-UICanvasState refresh) + 1) }
+Add-UICanvasShortcut 'Ctrl+S' -Action { Submit-UICanvas }   # authoring-time registration
+Add-UICanvasShortcut 'F5' -Action { Set-UICanvasState refresh ((Get-UICanvasState refresh) + 1) }
 ```
 Registers a global gesture whose action runs like any other.
 

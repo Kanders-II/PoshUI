@@ -44,8 +44,33 @@ export default {
         text: 'Canvas',
         items: [
           { text: 'About Canvas', link: '/canvas/about' },
-          { text: 'Capability Reference', link: '/Canvas-Reference' },
-          { text: 'Agent Authoring Guide (AI)', link: '/agent/README' },
+          { text: 'Capability Reference', link: '/Canvas-Reference' }
+        ]
+      },
+      {
+        text: 'Canvas Guide — Design',
+        collapsed: false,
+        items: [
+          { text: 'Start Here: Guide & Golden Rules', link: '/agent/README' },
+          { text: 'Design Paradigms', link: '/agent/00-design-paradigms' },
+          { text: 'App Blueprints', link: '/agent/09-app-blueprints' },
+          { text: 'Visual Design & App Shell', link: '/agent/10-visual-design-and-shell' },
+          { text: 'Staging & Delivery', link: '/agent/11-staging-and-delivery' }
+        ]
+      },
+      {
+        text: 'Canvas Guide — API',
+        collapsed: false,
+        items: [
+          { text: 'Architecture & Authoring', link: '/agent/01-architecture-and-authoring' },
+          { text: 'Controls Reference', link: '/agent/02-controls-reference' },
+          { text: 'Runtime & Interactivity', link: '/agent/03-runtime-and-interactivity' },
+          { text: 'Charts', link: '/agent/04-charts' },
+          { text: 'Theming', link: '/agent/05-theming' },
+          { text: 'Wizards & Workflows', link: '/agent/06-flows-wizard-workflow' },
+          { text: 'Patterns, Gotchas & Recipes', link: '/agent/07-patterns-gotchas-recipes' },
+          { text: 'Cheatsheet', link: '/agent/08-cheatsheet' },
+          { text: 'Control Catalog', link: '/agent/15-control-catalog' },
           { text: 'Animation & Motion', link: '/agent/16-animation-and-motion' }
         ]
       },

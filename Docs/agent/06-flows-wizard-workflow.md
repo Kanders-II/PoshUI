@@ -61,6 +61,7 @@ Add-UICanvasWorkflowStep -Name <string> [-Detail <string>] -Script { ... }
   [-Retry <int>]            # (-Engine only) retry the step this many times on failure before failing the run
   [-TimeoutSeconds <int>]   # (-Engine only) fail the step if it runs longer than this
   [-SkipWhen <condition>]   # (-Engine only) PowerShell condition string; truthy at run time -> step is skipped
+  [-OnClick { ... }]        # makes the step's row clickable, e.g. to filter a log to this step or open details
 ```
 Call once per step, in order, **before** `Add-UICanvasWorkflow`.
 
@@ -74,6 +75,7 @@ Add-UICanvasWorkflow [-Name <id='wf'>] [-StartLabel <s>] [-StartIcon <s>] [-Show
   [-LockNavigation]       # block backtracking once the first step completes
   [-LockOnStart]          # block backtracking immediately when the run begins
   [-StepsHeight <int>]    # scroll the step rows within a fixed pixel height
+  [-Compact]              # tighter step rows (smaller padding and text) for long pipelines
   [-NoStartButton]        # don't render Start; place it yourself
   [-NoHeader]             # don't render the Status/% header + gauge; place them yourself
   [-StateFile <path>]     # persist progress for reboot-resume

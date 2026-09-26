@@ -1,4 +1,4 @@
-# 05 — Theming
+﻿# 05 — Theming
 
 `Set-UITheme` applies colors/typography to the current canvas. Call it **after `New-PoshUICanvas`** and before
 (or interleaved with) adding controls.
@@ -67,3 +67,4 @@ Set-UITheme -Mode Auto -Light @{ Background = '#F4F6FB'; TextPrimary = '#1E2433'
   New-PoshUICanvas -Title 'App' -Theme Dark | Out-Null
   Set-UITheme -Preset Slate -Accent Sky | Out-Null
   ```
+

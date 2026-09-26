@@ -32,6 +32,16 @@
 8. **Before rebuilding/iterating, kill a running instance** of the engine if you launched one, or a locked DLL
    ships a stale build. When testing: stop `PoshUI` process, then relaunch.
 
+9. **A clickable row should be a `Panel`, not a `Card`.** Cards always draw a 1px border and a card
+   background — that is unconditional, so `-Background 'Transparent'` on a Card will not remove the box.
+   `Add-UICanvasPanel -Action { }` is just as clickable (hand cursor, transparent hit-test area) and draws
+   no chrome; `HoverScale` works on both.
+
+10. **`-Refresh` with a `-Label` scriptblock evaluates it ONCE IN THE HOST** at build time, to seed the
+    initial text — before the engine even launches. A "run once" guard based on a marker file therefore
+    fires in the host first and the real in-app tick then short-circuits. Either clear the guard after
+    building the canvas and before `Show-PoshUICanvas`, or arm on the first tick and act on the second.
+
 ## Idioms
 
 - **Live label:** `Add-UICanvasLabel -Refresh 1 -Label { Get-Date -Format HH:mm:ss }`.
@@ -130,3 +140,55 @@ Show-PoshUICanvas | Out-Null
 - The engine logs to `PoshUI\bin\logs\PoshUI.log`. Lines with `[diag]` flag would-be-silent failures (e.g.
   `Set-UICanvasValue: no control named 'x'`) — useful when a control name is wrong.
 - Set env `POSHUI_CANVAS_DIAG=1` to also surface those as toasts (strict mode).
+
+## Diagnosing "it built fine and looks wrong"
+
+The engine accepts a `-Properties` bag and reads the keys it understands. Anything else used to be
+dropped in silence, which turned author mistakes into wrong-looking screens with a clean log and exit
+code 0. The factory now reports them.
+
+After each page is built it logs, at warning level, every `-Properties` key **nothing in the build
+path ever read**:
+
+```
+[unused property] Panel > Image: 'ImageWidth' was supplied but nothing read it -
+                  it is only read for a Banner hero image; size a plain Image with -Width/-Height
+[unused property] Panel > Label: 'Margins' was supplied but nothing read it.
+```
+
+Check `PoshUI\bin\logs\PoshUI.log` first whenever a screen renders wrong. It catches typos and — more
+usefully — keys that are real for a *different* control type, which is why they look correct in review.
+
+The module also warns at author time when a `-Properties` value is a nested object, since nested values
+do not round-trip into the definition; use the dedicated parameter (`-Nodes`, `-Datasets`, `-Items`,
+`-Choices`) instead.
+
+**This does not catch everything.** A key that IS read but has no effect in that position still passes
+silently. Rules for those were prototyped and withdrawn because they fired on known-good code — for
+example `-Padding` on a `VStack` card is correct and common, so warning about "Padding on a stack"
+produced seven false positives in one small app. A diagnostic that cries wolf is worse than none.
+
+## When to reach for a XAML island
+
+`Add-UICanvasXaml` is not a last resort, but it is not free either: inside an island you leave the
+engine's layout, theming helpers and control set behind, and take on raw WPF.
+
+Use an island when the screen needs something the properties bag genuinely does not model:
+
+- motion driven by **hover** (there is no author-facing hover event; `EventTrigger` + `Storyboard` is)
+- **clipping**, opacity masks, transforms
+- custom-drawn instruments (gauges, arcs, dials)
+- an exact reproduction of a supplied design
+
+Keep on engine controls: chrome, navigation, forms, data widgets, and anything that has to run
+PowerShell — though `-Actions` now binds scriptblocks to named controls inside an island too, so a
+tile strip can slide on hover *and* stay clickable.
+
+Decide the boundary **before** building the screen. Retrofitting an island around a finished layout
+costs more than planning one, and a page that has quietly become 90% island is a signal that the
+screen wanted to be in-process WPF all along.
+
+Once the boundary is decided, [16-animation-and-motion.md](16-animation-and-motion.md) covers what to do
+inside one: storyboard mechanics (they must self-start — PowerShell cannot call `.Begin()` from an action),
+the `Storyboard.TargetProperty` paths that actually work, a catalogue of techniques, and how to verify the
+result headlessly.

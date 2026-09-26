@@ -26,6 +26,20 @@ Add-UICanvasLabel 'Status: ready' -FontSize 14 -Foreground '#94A3B8'
 Add-UICanvasLabel -Name clock -Refresh 1 -Label { Get-Date -Format 'HH:mm:ss' }
 ```
 
+**Elapsed clock (`-Clock` / `-ClockStop`).** `-Clock <controlName>` names a control that holds a start time as
+**UTC ticks**; the label then shows elapsed `mm:ss`, updated twice a second by the engine itself — no runspace
+call, so it keeps ticking while a long action or step holds the gate (a `-Refresh` label would freeze).
+`-ClockStop <controlName>` names a control holding the end ticks; once it is set, the clock freezes at the
+final time. The workflow runner publishes `<wf>_start` / `<wf>_end` for exactly this; for your own timer, keep
+the ticks in hidden controls:
+```powershell
+Add-UICanvasTextBox -Name jobStart -Visible $false
+Add-UICanvasTextBox -Name jobEnd -Visible $false
+Add-UICanvasLabel -Name elapsed '00:00' -Clock jobStart -ClockStop jobEnd -FontSize 20
+Add-UICanvasButton 'Start' -Action { Set-UICanvasValue jobStart ([DateTime]::UtcNow.Ticks) }
+Add-UICanvasButton 'Stop'  -Action { Set-UICanvasValue jobEnd ([DateTime]::UtcNow.Ticks) }
+```
+
 ### Add-UICanvasIcon
 ```
 Add-UICanvasIcon [-Icon] <string> [-Name <s>] [-FontSize <d>] [-Foreground <hex>]
@@ -73,12 +87,17 @@ A horizontal rule.
 
 ### Add-UICanvasButton
 ```
-Add-UICanvasButton [-Label] <string> [-Name <s>] [-Action { }]
-  [-Style Standard|Secondary|Accent|Primary|Subtle] [-Icon <s>]
+Add-UICanvasButton [-Label] <string> [-Name <s>] [-Action { }] [-NavigateTo <page>]
+  [-Style Standard|Secondary|Accent|Primary|Subtle|Gradient] [-Icon <s>]
 ```
 - `-Action { }` runs (on the bridge runspace) when clicked.
-- `-Style`: `Accent`/`Primary` = filled brand; `Secondary` = outlined; `Subtle` = quiet/ghost; `Standard` = default.
-- `-Icon` = a PNG path or glyph shown before the label. `-Properties @{ ContentAlign = 'Left' }` left-aligns content.
+- `-NavigateTo` goes to a page with no action code: a page **title**, a numeric **index**, or a relative keyword
+  `Next`, `Prev`/`Previous`/`Back`, `First`, `Last`. It is ignored when `-Action` is also given — to navigate
+  after doing work, call `Show-UICanvasPage` at the end of the action instead.
+- `-Style`: `Accent`/`Primary` = filled brand; `Secondary` = outlined; `Subtle` = quiet/ghost; `Gradient` = brand
+  gradient fill; `Standard` = default. Call `Set-UITheme` first — on the unthemed dark palette `Accent` is unreadable.
+- `-Icon` = a friendly name (`play`, `back`, `next`, `refresh`, `shield`, `server`, …), a hex code point
+  (`E768`, `0xE768`), a glyph character, or a PNG path. `-Properties @{ ContentAlign = 'Left' }` left-aligns content.
 ```powershell
 Add-UICanvasButton 'Deploy' -Name go -Style Accent -Icon 'play' -Action {
     Set-UICanvasProperty go 'Enabled' $false
@@ -92,6 +111,123 @@ Add-UICanvasDropDownButton [-Label] <string> [-Choices <array>] [-Value <o>] [-O
 ```
 A button that opens a built-in menu of `-Choices`; the picked item becomes its value. (For an anchored popup
 menu driven by an action, see `Show-UICanvasFlyout` in [03](03-runtime-and-interactivity.md).)
+
+---
+
+## App chrome & structure
+
+The pieces that turn a page into an application: a header, a footer, a menu bar, tabs, resizable panes and
+content that scales to fit. For a fully custom look (slim top bar, animated icon rail) see
+[10](10-visual-design-and-shell.md); these are the built-in versions.
+
+### Add-UICanvasToolbar
+```
+Add-UICanvasToolbar [-Name <s>] [-Brand <s>] [-BrandIcon <s>] [-Status <s>]
+  [-Links <string[]>] [-Active <pageTitle>] [-Actions <hashtable[]>]
+```
+An application header: brand and a status pill on the left, navigation links in the centre, action icons on the
+right.
+- `-Links` — page titles; each link navigates to the page of the same title. `-Active` highlights the current one.
+- `-Actions` — `@{ Icon = '<glyph>'; Tooltip = '...'; Action = { ... } }`, or `Page = '<title>'` instead of
+  `Action`, or `Image = '<png>'` (e.g. an avatar) instead of `Icon`. Add `Name = '...'` to address it later.
+- Its height is fixed at about 54 px; for a slimmer bar build one in an island (file 10).
+```powershell
+Add-UICanvasToolbar -Brand 'Contoso Ops' -BrandIcon 'server' -Status 'Connected' `
+    -Links 'Overview', 'Reports', 'Settings' -Active 'Overview' -Actions @(
+        @{ Icon = 'refresh'; Tooltip = 'Refresh'; Action = { Show-UICanvasToast 'Refreshed' -Severity info } }
+        @{ Icon = 'settings'; Tooltip = 'Settings'; Page = 'Settings' }
+    )
+```
+
+### Add-UICanvasFooter
+```
+Add-UICanvasFooter [-Name <s>] [-LeftText <s>] [-Links <object[]>]
+```
+A status/footer bar: muted text on the left, links on the right. A link is a plain string (display only) or
+`@{ Text = '...'; Action = { ... } }` / `@{ Text = '...'; Page = '<title>' }`.
+```powershell
+Add-UICanvasFooter -LeftText 'v1.2.0  |  Signed in as CONTOSO\admin' -Links @(
+    @{ Text = 'Help'; Action = { Show-UICanvasDialog -Title 'Help' -Message 'Call 1234.' -OkLabel 'Close' } }
+    @{ Text = 'Settings'; Page = 'Settings' }
+)
+```
+On a Dock page, give it `-Properties @{ Dock = 'Bottom' }` and declare it before the fill child.
+
+### Add-UICanvasMenu
+```
+Add-UICanvasMenu -Items <hashtable[]> [-Name <s>] [-Background <hex>]
+```
+A classic menu bar. Each item is `@{ Text; Items }` (a submenu) or a leaf `@{ Text; Action }` / `@{ Text; Page }`.
+Leaves also take `Gesture` (the shortcut text shown — register the key itself with `Add-UICanvasShortcut`),
+`Icon`, `Disabled = $true` and `Checked = $true|$false`. `Text = '-'` is a separator.
+```powershell
+Add-UICanvasMenu -Items @(
+    @{ Text = 'File'; Items = @(
+        @{ Text = 'Export...'; Gesture = 'Ctrl+E'; Action = { Show-UICanvasToast 'Exported' -Severity success } }
+        @{ Text = '-' }
+        @{ Text = 'Exit'; Action = { Submit-UICanvas } } ) }
+    @{ Text = 'View'; Items = @(
+        @{ Text = 'Reports'; Page = 'Reports' }
+        @{ Text = 'Show hidden'; Checked = $false; Action = { } } ) }
+)
+Add-UICanvasShortcut 'Ctrl+E' -Action { Show-UICanvasToast 'Exported' -Severity success }
+```
+
+### Add-UICanvasTabs / Add-UICanvasTab
+```
+Add-UICanvasTabs [-Name <s>] [-SelectedIndex <int>] [-OnChange { }] -Children { Add-UICanvasTab ... }
+Add-UICanvasTab [-Label] <header> [-Layout VStack|HStack|Grid|Wrap|Canvas] [-Columns <int>]
+  [-ColumnWidths <s>] [-Spacing <d>] [-Padding <o>] [-Disabled] -Children { ... }
+```
+A tab container; its children must be `Add-UICanvasTab` blocks, each one tab page with its own layout.
+Read or switch the active tab with `Get-UICanvasValue` / `Set-UICanvasValue` (an index or the header text);
+`-OnChange` fires when the user switches tab.
+```powershell
+Add-UICanvasTabs -Name details -Children {
+    Add-UICanvasTab 'Summary' -Spacing 8 -Children {
+        Add-UICanvasLabel 'Everything at a glance.'
+    }
+    Add-UICanvasTab 'Hardware' -Layout Grid -Columns 2 -Spacing 8 -Children {
+        Add-UICanvasMetricCard 'CPU' -Value '8 cores'
+        Add-UICanvasMetricCard 'RAM' -Value '32 GB'
+    }
+    Add-UICanvasTab 'Audit' -Disabled -Children { Add-UICanvasLabel 'Coming soon' }
+}
+```
+Tabs keep every page's controls alive, so a value typed on one tab is still readable from another.
+
+> **Known issue (engine 1.4.1):** the tab strip is not themed yet — it renders in the stock light Windows style,
+> which is hard to read in a dark app. Until it is, prefer a **segmented switch**: a row of buttons that show one
+> panel and hide the others with `Set-UICanvasProperty <panel> Visible $true|$false`, or a Dock page with an icon
+> rail (file 10).
+
+### Add-UICanvasGridSplitter
+```
+Add-UICanvasGridSplitter [-Name <s>] [-Orientation Vertical|Horizontal] [-Thickness <d>] [-Background <hex>]
+```
+A drag handle that resizes the panes either side of it. Put it in its **own** column of a `Grid` panel, between
+the two panes, and give that column a fixed width. `Vertical` (default) resizes columns; `Horizontal` resizes rows.
+```powershell
+Add-UICanvasPanel -Layout Grid -ColumnWidths '280,6,*' -Children {
+    Add-UICanvasListBox -Name servers -Choices 'web-01', 'web-02', 'db-01' -Properties @{ Column = 0 }
+    Add-UICanvasGridSplitter -Properties @{ Column = 1 }
+    Add-UICanvasLabel 'Details for the selected server' -Properties @{ Column = 2; Margin = '12,0,0,0' }
+}
+```
+
+### Add-UICanvasViewbox
+```
+Add-UICanvasViewbox [-Stretch Uniform|Fill|UniformToFill|None] [-StretchDirection Both|UpOnly|DownOnly]
+  [-Layout VStack|HStack|Grid|Wrap|Canvas] [-Spacing <d>] -Children { ... }
+```
+Scales its content to fit the space it is given — vector scaling, so text stays crisp. Use it for a kiosk
+number, a big status readout, or a fixed design that must fill any window. `DownOnly` shrinks to fit but never
+enlarges. Give it an explicit `-Height` (or a Dock fill slot) so it has a size to scale to.
+```powershell
+Add-UICanvasViewbox -Height 160 -Children {
+    Add-UICanvasLabel -Name bigCount '248' -FontSize 72 -FontWeight Bold
+}
+```
 
 ---
 
@@ -240,6 +376,9 @@ An indeterminate spinner. (`Set-UICanvasProperty <name> Spin $true/$false` toggl
 Add-UICanvasConsole [-Name <s>] [-Bind <s>] [-Value <o>]
 ```
 A themed monospace log/output area. Append live via `Set-UICanvasValue`/`-Refresh` or bind to state.
+To add one line and scroll to it: `Set-UICanvasProperty <name> AppendLine '<text>'` — the cheapest way to
+stream a log from an async block, since it doesn't resend the whole text. The console is one colour, so
+mark levels in the text (`[ERROR] …`).
 
 ---
 
