@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- **Tabs are themed.** `Add-UICanvasTabs` drew the stock light Windows tab control - a white page with pale
+  headers, unreadable in a dark app. Tabs now follow `Set-UITheme`: an accent underline on the selected header,
+  a hairline under the strip, and each page on the surface the tabs sit on.
+- **Buttons inside a modal window run.** `Show-UICanvasWindow` on a `-Modal` window held the app's action queue
+  until the window closed, so the modal's own buttons - `Close-UICanvasWindow` included - never ran. The dialog is
+  now scheduled rather than shown inline: the main window is still disabled while it is open, and
+  `Show-UICanvasWindow` returns immediately for modal and non-modal windows alike.
+
+### Documentation
+- The full Canvas guide is on the documentation site: design paradigms, twelve app blueprints, visual design and
+  the app shell, staging and delivery, plus reference for secondary windows, toolbar, footer, menu, tabs,
+  splitter, Viewbox, the elapsed clock, `-NavigateTo` and `-Quiet`.
+
+---
+
 ## [1.4.1] - 2026-09-22
 
 A polish release for **PoshUI.Canvas**: a redesigned date picker and calendar, a release showcase app, and a

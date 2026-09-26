@@ -1116,7 +1116,20 @@ $InformationPreference = 'Continue'
 
                 _windows.Add(win);
                 win.Closed += (s, e) => { _windows.Remove(win); UnregisterTree(cc); };
-                if (modal) win.ShowDialog(); else win.Show();
+                // A modal is SCHEDULED, not shown inline. ShowDialog() blocks until the window closes, and this runs
+                // inside the synchronous Invoke that the calling action is waiting on - so the action would hold the
+                // runspace gate for the modal's whole lifetime, and every button INSIDE the modal (Close-UICanvasWindow
+                // included) would queue behind it forever. Posting it lets the action return and release the gate;
+                // the owner window is still disabled while the dialog is up, so it stays modal to the user.
+                if (modal)
+                {
+                    win.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        try { win.ShowDialog(); }
+                        catch (Exception ex) { Diag("Show-UICanvasWindow (modal) failed: " + ex.Message); }
+                    }));
+                }
+                else win.Show();
             }));
         }
 

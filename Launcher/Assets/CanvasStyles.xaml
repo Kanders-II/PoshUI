@@ -676,4 +676,79 @@
         </Setter>
     </Style>
 
+    <!-- ============================================================= -->
+    <!--  Tabs (TabControl / TabItem) - themed. Without these, Canvas  -->
+    <!--  tabs fell back to the stock light Aero template: a white     -->
+    <!--  content area and pale headers, unreadable in a dark app.     -->
+    <!--  Applied by CanvasControlFactory (the Tabs branch).           -->
+    <!-- ============================================================= -->
+
+    <!-- One header: text over a 2px underline that fills with the accent when selected. -->
+    <Style x:Key="CanvasTabItemStyle" TargetType="TabItem">
+        <Setter Property="Foreground" Value="{DynamicResource SecondaryForegroundBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="14,8,14,8"/>
+        <Setter Property="Margin" Value="0,0,2,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Grid x:Name="Root" Background="Transparent">
+                        <Border x:Name="Bg" Background="Transparent" CornerRadius="6,6,0,0"/>
+                        <ContentPresenter x:Name="Header" ContentSource="Header" Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                        <Border x:Name="Underline" Height="2" VerticalAlignment="Bottom" CornerRadius="1"
+                                Margin="8,0" Background="Transparent"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bg" Property="Background" Value="{DynamicResource IconButtonHoverBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BodyForegroundBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Underline" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource BodyForegroundBrush}"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.4"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- The strip of headers over a hairline, then the selected page on a transparent background,
+         so a tab page sits on whatever surface the tabs were placed on (page, card, panel). -->
+    <Style x:Key="CanvasTabControlStyle" TargetType="TabControl">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0,12,0,0"/>
+        <Setter Property="Foreground" Value="{DynamicResource BodyForegroundBrush}"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource CanvasTabItemStyle}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabControl">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <TabPanel x:Name="HeaderPanel" IsItemsHost="True" Background="Transparent"
+                                      KeyboardNavigation.TabIndex="1"/>
+                        </Border>
+                        <Border Grid.Row="1" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="PART_SelectedContentHost" ContentSource="SelectedContent"/>
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

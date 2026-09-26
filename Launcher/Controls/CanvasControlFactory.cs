@@ -40,6 +40,11 @@ namespace Launcher.Controls
             if (type == "Tabs" || type == "TabControl")
             {
                 var tabs = new TabControl();
+                // Themed strip + transparent page (CanvasStyles.xaml). Without it the stock Aero template drew a white
+                // content area with pale headers - unreadable in a dark app.
+                var tabStyle = System.Windows.Application.Current != null
+                    ? System.Windows.Application.Current.TryFindResource("CanvasTabControlStyle") as Style : null;
+                if (tabStyle != null) tabs.Style = tabStyle;
                 if (c.Children != null)
                 {
                     foreach (var child in c.Children)
