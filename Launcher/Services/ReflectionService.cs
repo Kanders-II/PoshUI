@@ -222,6 +222,9 @@ namespace Launcher.Services
         public Dictionary<string, string> ThemeOverrides { get; set; }  // Flat color override dictionary from Set-UITheme
         public Dictionary<string, string> ThemeOverridesLight { get; set; }  // Light-mode specific overrides (merged with base)
         public Dictionary<string, string> ThemeOverridesDark { get; set; }  // Dark-mode specific overrides (merged with base)
+        public Dictionary<string, string> ThemeColorMap { get; set; }  // Canvas author colour -> colour in ThemeColorMapMode
+        public string ThemeColorMapMode { get; set; }  // Light (default) or Dark: the mode ThemeColorMap translates into
+        public bool ThemeColorMapKeepGlow { get; set; }  // keep glows (recoloured) in the mapped mode instead of hiding them
         public bool DisableAnimations { get; set; }  // Disable all UI animations
         public string OriginalScriptName { get; set; }  // For Module API: original calling script name for log files
         public string OriginalScriptPath { get; set; }  // For Module API: original calling script directory for per-execution logs

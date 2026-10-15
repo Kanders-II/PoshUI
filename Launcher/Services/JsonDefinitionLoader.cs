@@ -66,6 +66,9 @@ namespace Launcher.Services
                 branding.ThemeOverrides = definition.Branding.ThemeOverrides;
                 branding.ThemeOverridesLight = definition.Branding.ThemeOverridesLight;
                 branding.ThemeOverridesDark = definition.Branding.ThemeOverridesDark;
+                branding.ThemeColorMap = definition.Branding.ThemeColorMap;
+                branding.ThemeColorMapMode = definition.Branding.ThemeColorMapMode;
+                branding.ThemeColorMapKeepGlow = definition.Branding.ThemeColorMapKeepGlow;
                 branding.DisableAnimations = definition.Branding.DisableAnimations;
                 branding.OriginalScriptName = definition.Branding.OriginalScriptName;
                 branding.OriginalScriptPath = definition.Branding.OriginalScriptPath;

@@ -74,3 +74,11 @@ function Get-UICanvasState {
     [CmdletBinding()] param([Parameter(Position = 0)][string]$Name)
     Write-Warning "Get-UICanvasState runs only inside a canvas action (in the running app)."
 }
+function Set-UICanvasTheme {
+    [CmdletBinding()] param([Parameter(Mandatory, Position = 0)][ValidateSet('Light', 'Dark', 'Toggle')][string]$Mode)
+    Write-Warning "Set-UICanvasTheme runs only inside a canvas action (in the running app). To choose the starting theme, use New-PoshUICanvas -Theme."
+}
+function Get-UICanvasTheme {
+    [CmdletBinding()] param()
+    Write-Warning "Get-UICanvasTheme runs only inside a canvas action (in the running app)."
+}

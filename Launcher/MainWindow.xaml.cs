@@ -230,6 +230,9 @@ namespace Launcher
             // Insert at the beginning to give it highest precedence
             merged.Insert(0, newDict);
 
+            // Recolour canvas controls already on screen - the toggle path with no custom overrides.
+            Launcher.Controls.CanvasTheme.OnThemeApplied(themePath.EndsWith("/Assets/Fluent.xaml", StringComparison.OrdinalIgnoreCase));
+
             // Notify custom controls to refresh their theme-dependent visuals
             ThemeManager.NotifyThemeChanged();
         }

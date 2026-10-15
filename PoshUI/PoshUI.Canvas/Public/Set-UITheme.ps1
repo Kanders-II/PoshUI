@@ -15,13 +15,38 @@ function Set-UITheme {
         [Parameter(ParameterSetName = 'Overrides')][ValidateSet('Dark', 'Light', 'Midnight', 'Slate')][string]$Preset,
         [Parameter(ParameterSetName = 'Overrides')][ValidateSet('Indigo', 'Emerald', 'Sky', 'Amber', 'Rose', 'Violet', 'Cyan', 'Orange')][string]$Accent,
         [Parameter(ParameterSetName = 'Overrides')][Parameter(ParameterSetName = 'ModeOnly')]
-        [ValidateSet('Light', 'Dark', 'Auto')][string]$Mode
+        [ValidateSet('Light', 'Dark', 'Auto')][string]$Mode,
+        # Colours you set directly on controls (-Background '#0D1420', Set-UICanvasProperty ... '#F87171')
+        # are written for ONE mode. -ColorMap says what each becomes in the other: @{ '#0D1420' = '#FFFFFF' }.
+        # A theme switch (title-bar toggle or Set-UICanvasTheme) then recolours them in place, both ways.
+        # -ColorMapMode is the mode the map translates INTO - Light by default, i.e. a page authored dark.
+        [Parameter(ParameterSetName = 'Overrides')][hashtable]$ColorMap,
+        [Parameter(ParameterSetName = 'Overrides')][ValidateSet('Light', 'Dark')][string]$ColorMapMode = 'Light',
+        # Glows are hidden in the mapped mode by default (they need a dark surface to read). -KeepGlow keeps
+        # them, recoloured through the map - for a mapped palette that is still dark enough to carry them.
+        [Parameter(ParameterSetName = 'Overrides')][switch]$KeepGlow
     )
 
     if (-not $Global:_PoshUICanvas) { throw "No canvas active. Call New-PoshUICanvas first." }
     $branding = $Global:_PoshUICanvas.Definition.Branding
 
     if ($Mode) { $branding.Theme = $Mode }
+
+    if ($ColorMap) {
+        $map = @{}
+        foreach ($k in $ColorMap.Keys) {
+            $from = ([string]$k).Trim(); $to = ([string]$ColorMap[$k]).Trim()
+            if ($from -notmatch '^#?([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$' -or $to -notmatch '^#?([0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$') {
+                Write-Warning "ColorMap entry '$from' = '$to' is not a pair of hex colours - skipped."; continue
+            }
+            if (-not $from.StartsWith('#')) { $from = '#' + $from }
+            if (-not $to.StartsWith('#')) { $to = '#' + $to }
+            $map[$from.ToUpperInvariant()] = $to
+        }
+        $branding.ThemeColorMap = $map
+        $branding.ThemeColorMapMode = $ColorMapMode
+        $branding.ThemeColorMapKeepGlow = [bool]$KeepGlow
+    }
 
     # Curated full palettes (slot -> hex). Each preset is a complete look; -Theme overrides win on top.
     $presets = @{

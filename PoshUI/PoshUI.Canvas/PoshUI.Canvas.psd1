@@ -1,6 +1,6 @@
 @{
     RootModule        = 'PoshUI.Canvas.psm1'
-    ModuleVersion     = '1.4.1'
+    ModuleVersion     = '1.5.0'
     GUID              = 'b2c7d9e0-5a14-4f3b-9c2a-71d8e6a0c4f2'
     Author            = 'Kanders-II'
     CompanyName       = 'Kanders-II'
@@ -23,7 +23,7 @@
         'Add-UICanvasWorkflowStep', 'Add-UICanvasWorkflow', 'Add-UICanvasScriptCard', 'Add-UICanvasWizardNav', 'Add-UICanvasWizardSteps',
         'Add-UICanvasFolderPicker', 'Add-UICanvasFilePicker', 'Select-UICanvasFolder', 'Select-UICanvasFile',
         'Set-UICanvasValue', 'Set-UICanvasProperty', 'Get-UICanvasValue', 'Show-UICanvasPage', 'Submit-UICanvas',
-        'Lock-UICanvasNavigation', 'Unlock-UICanvasNavigation', 'Set-UICanvasState', 'Get-UICanvasState', 'Set-UICanvasAnimate', 'Start-UICanvasAsync', 'Show-UICanvasToast', 'Show-UICanvasDialog', 'Show-UICanvasFlyout', 'Show-UICanvasWindow', 'Close-UICanvasWindow'
+        'Lock-UICanvasNavigation', 'Unlock-UICanvasNavigation', 'Set-UICanvasState', 'Get-UICanvasState', 'Set-UICanvasTheme', 'Get-UICanvasTheme', 'New-PoshUIApp', 'Set-UICanvasAnimate', 'Start-UICanvasAsync', 'Show-UICanvasToast', 'Show-UICanvasDialog', 'Show-UICanvasFlyout', 'Show-UICanvasWindow', 'Close-UICanvasWindow'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()

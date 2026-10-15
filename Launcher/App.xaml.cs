@@ -44,6 +44,10 @@ namespace Launcher
                     return;
                 }
 
+                // App mode: this exe is an app's launcher (settings beside it, or --app). It sets up its own
+                // logging and runs the app's script; every other launch carries on exactly as before.
+                if (Launcher.AppMode.AppLauncher.TryRun(this, e.Args)) return;
+
                 // Parse command line arguments first to configure logging
                 var (scriptPath, debugEnabled, allowUnrestricted) = ParseCommandLineArgs(e.Args);
 
@@ -111,7 +115,7 @@ namespace Launcher
             var ex = e.ExceptionObject as Exception;
             LoggingService.Fatal("Unhandled exception", ex);
             try {
-                File.AppendAllText("logs/GlobalUnhandledException.log", $"[AppDomain] {DateTime.Now}: {ex?.ToString() ?? e.ExceptionObject.ToString()}\n");
+                File.AppendAllText(Path.Combine(LoggingService.LogFolder, "GlobalUnhandledException.log"), $"[AppDomain] {DateTime.Now}: {ex?.ToString() ?? e.ExceptionObject.ToString()}\n");
             } catch {}
         }
 
@@ -119,13 +123,16 @@ namespace Launcher
         {
             LoggingService.Fatal("Dispatcher unhandled exception", e.Exception);
             try {
-                File.AppendAllText("logs/GlobalUnhandledException.log", $"[Dispatcher] {DateTime.Now}: {e.Exception}\n");
+                File.AppendAllText(Path.Combine(LoggingService.LogFolder, "GlobalUnhandledException.log"), $"[Dispatcher] {DateTime.Now}: {e.Exception}\n");
             } catch {}
             MessageBox.Show($"A fatal error occurred:\n{e.Exception}", "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Error);
             e.Handled = true;
         }
 
-        private void ShowMainWindow(string scriptPath = null, bool allowUnrestricted = false)
+        /// <summary>Creates and shows the main window for a script or canvas definition, and returns it (null
+        /// on failure, after telling the user). App mode calls this once per Show-PoshUICanvas, passing the
+        /// app's icon as a fallback for definitions that do not set their own.</summary>
+        internal MainWindow ShowMainWindow(string scriptPath = null, bool allowUnrestricted = false, string fallbackIconPath = null)
         {
             try
             {
@@ -175,22 +182,32 @@ namespace Launcher
                     }
                 };
                 
+                // The app's own icon (app mode) for a definition that names none. Setting Icon locally replaces
+                // the binding, so only when the definition left it empty.
+                if (!string.IsNullOrEmpty(fallbackIconPath) && string.IsNullOrEmpty(viewModel.WindowTitleIconPath) && File.Exists(fallbackIconPath))
+                {
+                    try { mainWindow.Icon = System.Windows.Media.Imaging.BitmapFrame.Create(new Uri(fallbackIconPath, UriKind.Absolute)); }
+                    catch (Exception iconEx) { LoggingService.Warn("App icon could not be loaded: " + iconEx.Message); }
+                }
+
                 // Make sure window is visible
                 mainWindow.WindowState = System.Windows.WindowState.Normal;
                 mainWindow.ShowInTaskbar = true;
                 mainWindow.Topmost = true;
                 mainWindow.Show();
-                
+
                 // Force window to be active and visible
                 mainWindow.Activate();
                 mainWindow.Focus();
 
                 LoggingService.Info("Main window created and shown");
+                return mainWindow;
             }
             catch (Exception ex)
             {
                 LoggingService.Error("Error showing main window", ex);
                 MessageBox.Show($"Error showing main window: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return null;
             }
         }
 

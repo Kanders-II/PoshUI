@@ -252,6 +252,7 @@ namespace Launcher.Controls
                 var col = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(gc);
                 var fx = new System.Windows.Media.Effects.DropShadowEffect { Color = col, BlurRadius = PDbl(c, "GlowRadius", 14), ShadowDepth = 0, Opacity = 0.95 };
                 el.Effect = fx;
+                CanvasTheme.TrackGlow(fx, gc);   // follows the colour map (hidden in the mapped mode unless -KeepGlow)
                 if (AsBool(PStr(c, "GlowPulse")))
                 {
                     var pulse = new System.Windows.Media.Animation.DoubleAnimation(fx.BlurRadius * 0.5, fx.BlurRadius * 1.4, new Duration(TimeSpan.FromSeconds(1.1)))
@@ -646,7 +647,11 @@ namespace Launcher.Controls
                         {
                             Text = Str(c.Default) ?? "", IsReadOnly = true, AcceptsReturn = true,
                             FontFamily = new FontFamily("Cascadia Mono, Consolas"), FontSize = 12,
-                            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(8)
+                            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(8),
+                            // A log reads top-down. The themed TextBox template centres its content, so a console
+                            // given more height than its text (e.g. the fill child of a Dock page) showed its first
+                            // lines floating in the middle.
+                            VerticalContentAlignment = VerticalAlignment.Top
                         };
                         // Theme-driven (was hardcoded near-black): adapts to the active dark/light theme.
                         console.SetResourceReference(Control.BackgroundProperty, "TextBoxBackgroundBrush");
@@ -884,7 +889,10 @@ namespace Launcher.Controls
             {
                 string g1 = PStr(c, "GradientFrom") ?? "#5EA9FF";
                 string g2 = PStr(c, "GradientTo") ?? "#2E7BFF";
-                b.Background = new System.Windows.Media.LinearGradientBrush(ParseColor(g1), ParseColor(g2), new System.Windows.Point(0, 0), new System.Windows.Point(1, 0));
+                var grad = new System.Windows.Media.LinearGradientBrush(ParseColor(g1), ParseColor(g2), new System.Windows.Point(0, 0), new System.Windows.Point(1, 0));
+                CanvasTheme.TrackStop(grad.GradientStops[0], g1);   // follow the colour map, like solid colours
+                CanvasTheme.TrackStop(grad.GradientStops[1], g2);
+                b.Background = grad;
                 b.Foreground = System.Windows.Media.Brushes.White;
             }
 
@@ -2931,25 +2939,15 @@ namespace Launcher.Controls
             return DateTime.TryParse(v.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.None, out p) ? p : (DateTime?)null;
         }
 
-        private static Brush Brush(string hex)
-        {
-            if (string.IsNullOrEmpty(hex)) return null;
-            try { return (Brush)new BrushConverter().ConvertFromString(hex.StartsWith("#") ? hex : "#" + hex); }
-            catch { return null; }
-        }
+        /// <summary>An author colour as a live brush - see <see cref="CanvasTheme"/>. Follows the canvas
+        /// colour map across dark/light switches; without a map it never changes.</summary>
+        private static Brush Brush(string hex) { return CanvasTheme.ForColor(hex); }
 
-        /// <summary>Resolves a themed brush from the app's merged Set-UITheme resources (ThemeBuilder keys),
-        /// falling back to a hex default so the look is unchanged when no theme override is set.</summary>
-        private static Brush ThemeBrush(string resourceKey, string fallbackHex)
-        {
-            try
-            {
-                var app = System.Windows.Application.Current;
-                if (app != null) { var b = app.TryFindResource(resourceKey) as Brush; if (b != null) return b; }
-            }
-            catch { }
-            return Brush(fallbackHex);
-        }
+        /// <summary>A themed default (ThemeBuilder key) as a live brush, with a hex fallback so the look is
+        /// unchanged when no theme override is set. Live, not a snapshot: this used to return the brush in
+        /// force when the control was built, so a theme switch never reached it (a card kept its old
+        /// background until its page was rebuilt).</summary>
+        private static Brush ThemeBrush(string resourceKey, string fallbackHex) { return CanvasTheme.ForKey(resourceKey, fallbackHex); }
 
         // Canvas surface/text defaults — themed, with the original dark hex as fallback.
         private static Brush CardBg(UIControlJson c) { return Brush(PStr(c, "Background")) ?? ThemeBrush("CardBackgroundBrush", "#141A2E"); }

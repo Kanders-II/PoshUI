@@ -409,6 +409,7 @@ namespace Launcher.ViewModels
                 _canvasBridge = new Launcher.Controls.CanvasBridge(System.Windows.Application.Current.Dispatcher, _scriptPath);
                 _canvasBridge.PageNavigator = NavigateToCanvasPage;
                 _canvasBridge.NavLocker = on => _canvasNoBack = on;
+                _canvasBridge.ThemeSetter = SetBaseTheme;
                 _canvasBridge.Submitter = () =>
                 {
                     // Submit-UICanvas is an intentional completion — close without the "Are you sure?" prompt.
@@ -2772,6 +2773,8 @@ namespace Launcher.ViewModels
                         SidebarHeaderIconOrientation = branding.SidebarHeaderIconOrientation;
                         LoggingService.Info($"Applied sidebar icon orientation: {SidebarHeaderIconOrientation}", component: "MainWindowViewModel");
                     }
+                    // Before the theme is applied, so the very first apply already translates author colours.
+                    Launcher.Controls.CanvasTheme.SetColorMap(branding.ThemeColorMap, branding.ThemeColorMapMode, branding.ThemeColorMapKeepGlow);
                     if (!string.IsNullOrWhiteSpace(branding.Theme) || (branding.ThemeOverrides != null && branding.ThemeOverrides.Count > 0)
                         || (branding.ThemeOverridesLight != null && branding.ThemeOverridesLight.Count > 0)
                         || (branding.ThemeOverridesDark != null && branding.ThemeOverridesDark.Count > 0))
@@ -3885,6 +3888,14 @@ namespace Launcher.ViewModels
             ApplyThemeInternal(themePath, effectiveOverrides, isDarkTheme ? "Dark" : "Light");
         }
 
+        /// <summary>Set-UICanvasTheme's entry point. Same result as the title-bar toggle, with or without
+        /// custom overrides; ApplyThemeInternal raises ThemeChanged, which re-syncs the toggle.</summary>
+        public void SetBaseTheme(bool isDarkTheme)
+        {
+            if (HasCustomThemeOverrides) ReapplyThemeOverrides(isDarkTheme);
+            else ApplyThemeInternal(isDarkTheme ? "/Assets/DarkTheme.xaml" : "/Assets/Fluent.xaml", null, isDarkTheme ? "Dark" : "Light");
+        }
+
         /// <summary>
         /// Returns true if any custom theme overrides are stored (single or dual mode).
         /// </summary>
@@ -3974,9 +3985,12 @@ namespace Launcher.ViewModels
                     }
                     catch { }
                     
+                    // Recolour canvas controls already on screen (live theme + author brushes, glows).
+                    Launcher.Controls.CanvasTheme.OnThemeApplied(themePath.EndsWith("/Assets/Fluent.xaml", StringComparison.OrdinalIgnoreCase));
+
                     // Notify custom controls to refresh
                     ThemeManager.NotifyThemeChanged();
-                    
+
                     // Notify UI to sync theme toggle button
                     ThemeChanged?.Invoke(this, EventArgs.Empty);
                 }

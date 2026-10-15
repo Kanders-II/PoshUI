@@ -295,7 +295,7 @@ function Add-UICanvasWorkflow {
         for ($i = 0; $i -lt $n; $i++) {
             $s = $steps[$i]; $k = $i
             $isDone = ($k -lt $done)
-            $iconGlyph = if ($isDone) { [string][char]0x2713 } else { 'circle' }
+            $iconGlyph = if ($isDone) { [string][char]0xE73E } else { 'circle' }   # icon-font CheckMark (U+2713 isn't in it)
             $iconFg = if ($isDone) { '#34D399' } else { '#64748B' }
             $statText = if ($isDone) { 'DONE' } else { 'PENDING' }
             $statFg = if ($isDone) { '#34D399' } else { '#64748B' }
@@ -401,7 +401,7 @@ function Add-UICanvasWorkflow {
         $L.Add($steps[$i].Script)
         $L.Add("  }")
         $L.Add("  Set-UICanvasProperty -Name '${wfName}_icon$i' -Property Spin -Value `$false")
-        $L.Add("  Set-UICanvasValue -Name '${wfName}_icon$i' -Value ([char]0x2713)")
+        $L.Add("  Set-UICanvasValue -Name '${wfName}_icon$i' -Value ([char]0xE73E)")   # icon-font CheckMark
         $L.Add("  Set-UICanvasProperty -Name '${wfName}_icon$i' -Property Foreground -Value '#34D399'")
         $L.Add("  Set-UICanvasValue -Name '${wfName}_stat$i' -Value 'DONE'")
         $L.Add("  Set-UICanvasProperty -Name '${wfName}_stat$i' -Property Foreground -Value '#34D399'")

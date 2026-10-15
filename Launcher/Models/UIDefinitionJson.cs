@@ -73,6 +73,16 @@ namespace Launcher.Models
         [DataMember(Name = "ThemeOverridesDark")]
         public Dictionary<string, string> ThemeOverridesDark { get; set; }
 
+        /// <summary>Set-UITheme -ColorMap: author colour -> its replacement in ThemeColorMapMode.</summary>
+        [DataMember(Name = "ThemeColorMap")]
+        public Dictionary<string, string> ThemeColorMap { get; set; }
+
+        [DataMember(Name = "ThemeColorMapMode")]
+        public string ThemeColorMapMode { get; set; }
+
+        [DataMember(Name = "ThemeColorMapKeepGlow")]
+        public bool ThemeColorMapKeepGlow { get; set; }
+
         [DataMember(Name = "DisableAnimations")]
         public bool DisableAnimations { get; set; }
 

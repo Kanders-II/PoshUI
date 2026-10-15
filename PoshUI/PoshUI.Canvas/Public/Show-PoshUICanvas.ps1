@@ -36,17 +36,25 @@ function Show-PoshUICanvas {
         }
     }
 
+    # App mode: this script is running INSIDE PoshUI.exe (an app launched from its own exe, e.g.
+    # ESSB.exe). Show the window in that process instead of starting a second one. Everything around
+    # the hand-off - the definition file, the .result.json, the cleanup - is the normal path below.
+    $appHost = $Global:__PoshUIAppHost
+    if ($null -ne $appHost) {
+        $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) 'PoshUI'
+        [void][System.IO.Directory]::CreateDirectory($tempDir)
+        $jsonPath = Join-Path $tempDir ("canvas_{0}.json" -f ([guid]::NewGuid().ToString('N')))
+        $ui | ConvertTo-Json -Depth 32 | Set-Content -Path $jsonPath -Encoding UTF8
+        if ($NoWait) {
+            Write-Warning 'Show-PoshUICanvas -NoWait is not available when the app runs from its launcher; showing and waiting instead.'
+        }
+        try { $appHost.ShowCanvas($jsonPath) }
+        catch { Remove-Item $jsonPath -Force -ErrorAction SilentlyContinue; throw }
+        return (Read-UICanvasResult -JsonPath $jsonPath)
+    }
+
     # Resolve PoshUI.exe (same search order as the Wizard module's Initialize-UIContext).
-    $parentRoot    = Split-Path $script:ModuleRoot -Parent      # ...\PoshUI
-    $workspaceRoot = Split-Path $parentRoot -Parent             # repo root
-    $candidates = @(
-        (Join-Path $parentRoot 'bin\PoshUI.exe'),
-        (Join-Path $script:ModuleRoot 'bin\PoshUI.exe'),
-        (Join-Path $workspaceRoot 'Launcher\bin\Release\PoshUI.exe'),
-        (Join-Path $workspaceRoot 'Launcher\bin\Debug\PoshUI.exe')
-    )
-    $exe = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if (-not $exe) { throw "PoshUI.exe not found. Build the Launcher or place it in PoshUI\bin\. Searched:`n$($candidates -join "`n")" }
+    $exe = Get-PoshUIEnginePath
 
     $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) 'PoshUI'
     [void][System.IO.Directory]::CreateDirectory($tempDir)
@@ -78,9 +86,14 @@ function Show-PoshUICanvas {
     # has not necessarily finished reading it yet. Those get collected by the sweep above.
     if ($NoWait) { return $proc }
     $proc.WaitForExit()
+    Read-UICanvasResult -JsonPath $jsonPath
+}
 
-    # The engine writes collected values next to the definition as <name>.result.json (Phase 3).
-    $resultPath = [System.IO.Path]::ChangeExtension($jsonPath, '.result.json')
+# Reads what the window collected - written beside the definition as <name>.result.json - and drops
+# both files. Shared by the normal launch and app mode, so a result reads the same either way.
+function script:Read-UICanvasResult {
+    param([Parameter(Mandatory)][string]$JsonPath)
+    $resultPath = [System.IO.Path]::ChangeExtension($JsonPath, '.result.json')
     try {
         if (Test-Path $resultPath) {
             try {
@@ -95,9 +108,9 @@ function Show-PoshUICanvas {
         return $null
     }
     finally {
-        # The engine has exited, so nothing is reading the definition any more. In a finally
+        # The window has closed, so nothing is reading the definition any more. In a finally
         # block so it is dropped on every path, including the early return above.
-        Remove-Item $jsonPath -Force -ErrorAction SilentlyContinue
+        Remove-Item $JsonPath -Force -ErrorAction SilentlyContinue
     }
 }
 

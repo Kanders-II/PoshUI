@@ -125,6 +125,8 @@ function Show-UICanvasWindow { param([Parameter(Mandatory,Position=0)][string]$N
 function Close-UICanvasWindow { $__PoshUICanvasBridge.CloseWindow() }
 function Set-UICanvasState { param([Parameter(Mandatory,Position=0)][string]$Name,[Parameter(Position=1)]$Value) $__PoshUICanvasBridge.SetState($Name,$Value) }
 function Get-UICanvasState { param([Parameter(Position=0)][string]$Name) $__PoshUICanvasBridge.GetState($Name) }
+function Set-UICanvasTheme { param([Parameter(Mandatory,Position=0)][ValidateSet('Light','Dark','Toggle')][string]$Mode) $__PoshUICanvasBridge.SetTheme($Mode) }
+function Get-UICanvasTheme { $__PoshUICanvasBridge.GetTheme() }
 $InformationPreference = 'Continue'
 ";
 
@@ -299,7 +301,9 @@ $InformationPreference = 'Continue'
             int n = vm.Tasks.Count;
             var cum = new double[n + 1]; double total = 0;
             if (expected != null && expected.Count == n) { for (int i = 0; i < n; i++) cum[i + 1] = cum[i] + Math.Max(0, expected[i]); total = cum[n]; }
-            string SPIN = ((char)0xE72C).ToString(), CHECK = ((char)0x2713).ToString(), CROSS = ((char)0xE711).ToString();
+            // All three from the icon font the step icons render in. U+2713 is not in Segoe Fluent Icons/MDL2 and drew
+            // as an empty box on every finished step; E73E is that font's CheckMark.
+            string SPIN = ((char)0xE72C).ToString(), CHECK = ((char)0xE73E).ToString(), CROSS = ((char)0xE711).ToString();
 
             for (int i = 0; i < n; i++)
             {
@@ -501,8 +505,14 @@ $InformationPreference = 'Continue'
         /// processes. This thread is background, so a clean exit kills it first and it never
         /// fires; it only wins when something genuinely refused to unwind.
         /// </summary>
+        /// <summary>Set by app mode, where the process belongs to the app's script rather than to one
+        /// window: the script may carry on (or show another window) after this one closes, and the
+        /// launcher arms its own watchdog when the script finishes.</summary>
+        internal static bool ProcessOwnedByApp;
+
         private static void ArmExitWatchdog()
         {
+            if (ProcessOwnedByApp) return;
             var t = new Thread(() =>
             {
                 Thread.Sleep(8000);
@@ -1570,6 +1580,32 @@ $InformationPreference = 'Continue'
         /// <summary>Enables/disables the no-backtracking lock and greys out rail buttons (named "nav_*").</summary>
         private bool _navLocked;
 
+        /// <summary>Set by the host: switch the window's base theme (true = dark), through the same path as
+        /// the title-bar toggle so the -Light/-Dark overrides, the colour map and the toggle all follow.</summary>
+        public Action<bool> ThemeSetter;
+
+        /// <summary>Set-UICanvasTheme: 'Light', 'Dark' or 'Toggle'. Switches the open window in place -
+        /// every control already on screen recolours (see CanvasTheme). Returns the mode now in force.</summary>
+        public string SetTheme(string mode)
+        {
+            return (string)_ui.Invoke((Func<string>)(() =>
+            {
+                bool dark;
+                if (string.Equals(mode, "Toggle", StringComparison.OrdinalIgnoreCase)) dark = CanvasTheme.IsLight;
+                else if (string.Equals(mode, "Dark", StringComparison.OrdinalIgnoreCase)) dark = true;
+                else if (string.Equals(mode, "Light", StringComparison.OrdinalIgnoreCase)) dark = false;
+                else { Diag("Set-UICanvasTheme: mode must be Light, Dark or Toggle, not '" + mode + "'."); return CanvasTheme.IsLight ? "Light" : "Dark"; }
+
+                var f = ThemeSetter;
+                if (f != null) f(dark);
+                else Diag("Set-UICanvasTheme: this host cannot switch theme.");
+                return CanvasTheme.IsLight ? "Light" : "Dark";
+            }));
+        }
+
+        /// <summary>Get-UICanvasTheme: the base theme in force, 'Light' or 'Dark'.</summary>
+        public string GetTheme() { return (string)_ui.Invoke((Func<string>)(() => CanvasTheme.IsLight ? "Light" : "Dark")); }
+
         public void SetNavLock(bool on)
         {
             _navLocked = on;
@@ -1754,7 +1790,8 @@ $InformationPreference = 'Continue'
         private static string Str(object v) { return v == null ? "" : v.ToString(); }
         private static bool AsBool(object v) { if (v is bool b) return b; bool r; return v != null && bool.TryParse(v.ToString(), out r) && r; }
         private static double AsDbl(object v, double dflt) { if (v == null) return dflt; if (v is double d) return d; double p; return double.TryParse(v.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out p) ? p : dflt; }
-        private static Brush Brush(string hex) { if (string.IsNullOrEmpty(hex)) return null; try { return (Brush)new BrushConverter().ConvertFromString(hex.StartsWith("#") ? hex : "#" + hex); } catch { return null; } }
+        // Live brush, shared with the factory: a colour an action sets follows a later theme switch too.
+        private static Brush Brush(string hex) { return CanvasTheme.ForColor(hex); }
 
         private static string ToJson(Dictionary<string, object> d)
         {

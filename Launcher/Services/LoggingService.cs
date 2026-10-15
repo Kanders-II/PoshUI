@@ -10,7 +10,18 @@ namespace Launcher.Services
 {
     public class LoggingService
     {
-        private static readonly string LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+        private static string LogDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+
+        /// <summary>Where the logs are written. Defaults to <c>logs</c> beside the exe.</summary>
+        public static string LogFolder { get { return LogDirectory; } }
+
+        /// <summary>Redirects logging (an app's <c>LogDirectory</c> setting). Only effective before
+        /// <see cref="Initialize"/>; a later call is ignored rather than splitting one run across two folders.</summary>
+        public static void SetLogDirectory(string directory)
+        {
+            if (_initialized || string.IsNullOrWhiteSpace(directory)) return;
+            LogDirectory = directory;
+        }
         private static readonly Dictionary<string, StreamWriter> _logWriters = new Dictionary<string, StreamWriter>();
         private static bool _debugEnabled = false;
         private static bool _initialized = false;

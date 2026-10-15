@@ -11,7 +11,7 @@ $script:ModuleRoot = $PSScriptRoot
 
 # This module's renderer features (flow modes, XAML hatch, motion/async/toasts/dialogs, diagnostics) need a
 # matching engine. Warn at import if the PoshUI.exe we'd launch is older than this minimum.
-$script:MinEngineVersion = [version]'1.4.0'
+$script:MinEngineVersion = [version]'1.5.0'
 try {
     $parentRoot = Split-Path $PSScriptRoot -Parent
     $engine = @(
@@ -57,5 +57,5 @@ Export-ModuleMember -Function @(
     'Add-UICanvasWorkflowStep', 'Add-UICanvasWorkflow', 'Add-UICanvasScriptCard', 'Add-UICanvasWizardNav', 'Add-UICanvasWizardSteps',
     'Add-UICanvasFolderPicker', 'Add-UICanvasFilePicker',
     'Set-UICanvasValue', 'Set-UICanvasProperty', 'Get-UICanvasValue', 'Show-UICanvasPage', 'Submit-UICanvas',
-    'Lock-UICanvasNavigation', 'Unlock-UICanvasNavigation', 'Set-UICanvasState', 'Get-UICanvasState', 'Set-UICanvasAnimate', 'Start-UICanvasAsync', 'Show-UICanvasToast', 'Show-UICanvasDialog', 'Show-UICanvasFlyout', 'Show-UICanvasWindow', 'Close-UICanvasWindow', 'Select-UICanvasFolder', 'Select-UICanvasFile'
+    'Lock-UICanvasNavigation', 'Unlock-UICanvasNavigation', 'Set-UICanvasState', 'Get-UICanvasState', 'Set-UICanvasTheme', 'Get-UICanvasTheme', 'New-PoshUIApp', 'Set-UICanvasAnimate', 'Start-UICanvasAsync', 'Show-UICanvasToast', 'Show-UICanvasDialog', 'Show-UICanvasFlyout', 'Show-UICanvasWindow', 'Close-UICanvasWindow', 'Select-UICanvasFolder', 'Select-UICanvasFile'
 )
