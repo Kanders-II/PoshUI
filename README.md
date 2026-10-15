@@ -8,7 +8,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-1.4.1-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
+[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -28,6 +28,11 @@ Turn your PowerShell automation into professional Windows 11-style wizards, dash
 
 **Who It's For:**  
 IT professionals, system administrators, and DevOps engineers who want to make their automation accessible to help desk teams, colleagues, and end users who prefer a GUI over a command line.
+
+> ### 🆕 What's new in v1.5.0
+> - **Ship your script as an app.** `New-PoshUIApp` makes `MyApp.exe` with your icon, an admin prompt if it needs one, and Desktop/Start-menu shortcuts. Users double-click it: no `.ps1`, no console window, no re-signing. → [How to](Docs/agent/11-staging-and-delivery.md#launching)
+> - **Live light/dark switching.** The title-bar toggle and `Set-UICanvasTheme Toggle` switch the whole app in place. Cards now follow the toggle on the open page ([#7](https://github.com/Kanders-II/PoshUI/issues/7)).
+> - **Themed tabs, working modal buttons**, and more. See the [release notes](RELEASE_NOTES_v1.5.0.md) · [download](https://github.com/Kanders-II/PoshUI/releases)
 
 ---
 
