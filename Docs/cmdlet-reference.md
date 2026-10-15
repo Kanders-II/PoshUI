@@ -28,6 +28,7 @@ Full listings live in the Canvas docs:
 Quick orientation by category:
 
 - **App & pages** — `New-PoshUICanvas`, `Add-UICanvasPage`, `Set-UITheme`, `Show-PoshUICanvas`, `Submit-UICanvas`
+- **Delivery** *(v1.5.0)* — `New-PoshUIApp` makes `MyApp.exe` from a `MyApp.app.json` ([guide](./agent/11-staging-and-delivery.md#launching))
 - **Input** — `Add-UICanvasTextBox`, `-MultiLine`, `-Password`, `-Number`, `-Dropdown`, `-ListBox`,
   `-RadioGroup`, `-Checkbox`, `-Toggle`, `-Slider`, `-DatePicker`, `-TimePicker`, `-ColorPicker`, `-Rating`,
   `-AutoSuggest`, `-FilePicker`, `-FolderPicker`
@@ -41,7 +42,7 @@ Quick orientation by category:
   `Add-UICanvasWizardSteps`
 - **Runtime** (inside `-Action`/`-OnChange`/`-Refresh`) — `Get-/Set-UICanvasValue`, `Set-UICanvasProperty`,
   `New-/Watch-/Get-/Set-UICanvasState`, `Show-UICanvasPage`, `Show-UICanvasToast`/`-Dialog`/`-Flyout`,
-  `Start-UICanvasAsync`, `Set-UICanvasAnimate`, `Lock-/Unlock-UICanvasNavigation`
+  `Start-UICanvasAsync`, `Set-UICanvasAnimate`, `Lock-/Unlock-UICanvasNavigation`, `Set-/Get-UICanvasTheme` *(v1.5.0)*
 - **Secondary windows** — `New-UICanvasWindow` (authoring time) + `Show-UICanvasWindow` / `Close-UICanvasWindow` (runtime).
   A template is rebuilt on every open, so a control reading a file re-reads it each time
 - **Escape hatch** — `Add-UICanvasXaml` (splice raw WPF; `x:Name`'d elements stay drivable, and `-Actions` gives them scriptblocks)

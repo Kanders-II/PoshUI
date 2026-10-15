@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [1.5.0] - 2026-10-15
+
+Ship a Canvas script as its own app with `New-PoshUIApp`, and switch light/dark in place. Existing scripts run unchanged.
 
 ### Added
 - **App launcher.** `PoshUI.exe` can now be an app's own launcher. `New-PoshUIApp -Config MyApp.app.json

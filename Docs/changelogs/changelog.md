@@ -2,7 +2,7 @@
 
 All notable changes to the PoshUI project are documented here.
 
-## [1.5.0] - Unreleased
+## [1.5.0] - 2026-10-15
 
 Ship a Canvas script as its own app with `New-PoshUIApp`, and switch light/dark in place. Existing scripts run unchanged.
 

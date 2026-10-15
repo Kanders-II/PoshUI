@@ -6,7 +6,7 @@ PoshUI is a portable module suite. It does not require a traditional installer a
 
 You can download the latest version of PoshUI from the [GitHub Releases](https://github.com/Kanders-II/PoshUI/releases) page.
 
-1. Download the `PoshUI.zip` file.
+1. Download `PoshUI.v1.5.0.zip` (or the latest `PoshUI.v<version>.zip`). `bin\PoshUI.exe` inside it is Authenticode-signed.
 2. Right-click the ZIP file and select **Properties**.
 3. Check the **Unblock** box and click **OK**.
 4. Extract the contents to your desired location (e.g., `C:\Program Files\WindowsPowerShell\Modules\PoshUI`).
@@ -30,7 +30,7 @@ If you prefer to build PoshUI yourself, you can do so using Visual Studio or the
 3. Set the build configuration to **Release**.
 4. Build the solution (**Build > Build Solution**).
 
-The build writes `PoshUIinPoshUI.exe`, which is where the modules look for it - no copying needed.
+The build writes `PoshUI\bin\PoshUI.exe`, which is where the modules look for it - no copying needed.
 
 ## Verification
 

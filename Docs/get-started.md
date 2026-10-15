@@ -30,7 +30,7 @@ git clone https://github.com/Kanders-II/PoshUI.git
 cd PoshUI
 
 # Build the solution
-dotnet build Launcherauncher.csproj -c release   # -> poshuiinposhui.exe
+dotnet build Launcher\Launcher.csproj -c Release   # -> PoshUI\bin\PoshUI.exe
 ```
 
 :::
@@ -63,6 +63,24 @@ Windows PowerShell 5.1 misreads UTF-8 without one and the app breaks.
 
 More: [About Canvas](./canvas/about.md) · [Capability Reference](./Canvas-Reference.md) ·
 runnable demos in `PoshUI\Examples\Canvas-*.ps1`
+
+### Ship it as an app *(v1.5.0)*
+
+Users shouldn't have to run a `.ps1`. Put a `MyApp.app.json` beside the script and let `New-PoshUIApp` make
+`MyApp.exe`, a copy of the signed `PoshUI.exe` that runs your script with no console window:
+
+```json
+{ "Name": "My App", "Script": "MyApp.ps1", "Icon": "myapp.png",
+  "Shortcuts": [ { "Location": "Desktop", "Name": "My App" } ] }
+```
+
+```powershell
+New-PoshUIApp -Config .\MyApp.app.json -Destination .
+.\MyApp.exe --create-shortcuts      # optional: a desktop shortcut with your icon
+```
+
+The release zip has a ready-made one in `Examples\App-Launcher\`. Full guide:
+[Staging & Delivery](./agent/11-staging-and-delivery.md#launching).
 
 ## Create Your First Wizard
 
