@@ -33,6 +33,8 @@ Show-PoshUICanvas
 - [Capability Reference](./Canvas-Reference.md) - every control and runtime cmdlet
 - [Agent Authoring Guide](./agent/README.md) - context pack for building Canvas apps with an AI assistant
 - [Animation & Motion](./agent/16-animation-and-motion.md) - engine motion, XAML-island Storyboards, and how to verify them *(v1.4.1)*
+- [Ship it as an app](./agent/11-staging-and-delivery.md#launching) - `New-PoshUIApp` makes `MyApp.exe` with your icon, admin prompt and shortcuts; users double-click it, no console, no re-signing *(v1.5.0)*
+- [Live light/dark switching](./agent/05-theming.md) - `Set-UICanvasTheme Toggle` and the title-bar button switch the whole app in place *(v1.5.0)*
 - Engine-native workflow runner with retry, timeouts, skip conditions and reboot-resume
 - Tabs, menus, splitters, cascading fields, master/detail grids, charts and reactive state
 - A single `.ps1` is the whole app - no XAML, no MVVM, no build step

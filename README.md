@@ -68,6 +68,11 @@ state, charts, animation, secondary windows, and a raw-XAML escape hatch for any
 Its **engine-native workflow runner** (`-Engine`) runs steps on their own runspace, so progress and elapsed time
 stay live during a long step, with per-step retry, timeouts, skip conditions and reboot-resume.
 
+**Ship it as an app** *(v1.5.0)*: `New-PoshUIApp` turns the script into `MyApp.exe` — a signed copy of
+PoshUI.exe plus a small `MyApp.app.json` naming the script, icon, admin requirement and shortcuts. Users
+double-click it or a Start-menu shortcut; no `powershell.exe`, no console window, no re-signing per app.
+→ **[Staging & Delivery](Docs/agent/11-staging-and-delivery.md#launching)**
+
 Because it's flat, declarative, single-file and build-free, Canvas is also an unusually good target to develop
 for **with an AI assistant** — see the [Agent Authoring Guide](Docs/agent/README.md), a context pack written to
 be handed to a model. → **[About Canvas](Docs/canvas/about.md)**

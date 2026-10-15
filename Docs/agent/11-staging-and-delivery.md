@@ -344,26 +344,111 @@ The stager's gate, in order:
 ## 8. Delivery
 
 ### Launching
-The runner double-clicks a `.cmd`, never a `.ps1` (which opens in Notepad by default):
+The runner double-clicks the app's own exe, never a `.ps1` (which opens in Notepad by default). PoshUI.exe
+is the launcher: a copy named after the app, with its settings beside it, runs the app's script **inside
+PoshUI** - no `powershell.exe`, no console window, and the script's windows open in that same process.
 
+```
+MyApp\
+  MyApp.exe          PoshUI.exe, copied (byte for byte - still signed)
+  MyApp.exe.config
+  MyApp.app.json     the settings below
+  MyApp.ps1
+  lib\  content\  ...
+```
+
+Make it with one command, as part of the app's build:
+
+```powershell
+New-PoshUIApp -Config .\MyApp.app.json -Destination D:\Out\MyApp
+```
+
+#### The settings file - `<ExeName>.app.json`
+```json
+{
+  "Name": "My App",
+  "Script": "MyApp.ps1",
+  "Arguments": ["-Mode", "Standard"],
+  "RequireAdmin": false,
+  "Icon": "assets\\myapp.ico",
+  "LogDirectory": "logs",
+  "Shortcuts": [
+    { "Location": "Desktop",   "Name": "My App" },
+    { "Location": "StartMenu", "Name": "My App", "Folder": "My Company" }
+  ]
+}
+```
+| Key | Meaning |
+|---|---|
+| `Name` | Shown in messages and shortcut descriptions; names the app's log file |
+| `Script` | **Required.** The `.ps1` to run |
+| `Arguments` | Always passed to the script. Anything typed after the exe name is added after them (`MyApp.exe -Live`) |
+| `RequireAdmin` | Ask for administrator rights (UAC) before running |
+| `Icon` | `.ico` or square `.png`. Used for the window/taskbar and for shortcuts - and, with `-StampIcon`, the exe file itself |
+| `LogDirectory` | Where the launcher and the app's script log go. Default: `logs` beside the exe. If that folder cannot be written (a read-only install), the launcher uses `%LOCALAPPDATA%\PoshUI\<Name>\logs` |
+| `Shortcuts` | What `MyApp.exe --create-shortcuts` makes: `Desktop` or `StartMenu` (optional `Folder`, `Arguments`) |
+
+Every path is **relative to the app folder and must stay inside it** - a rooted path, a UNC path or `..` is
+refused, because these settings decide which script runs with the launcher's rights.
+
+#### What happens on a double-click
+1. The exe reads `<its own name>.app.json`. No settings file -> it is plain PoshUI.exe, unchanged.
+2. `RequireAdmin` and not elevated -> it relaunches itself as administrator (UAC); cancelling ends quietly.
+3. The script runs in-process, with `-ExecutionPolicy Bypass` semantics (Group Policy still wins).
+4. `Show-PoshUICanvas` sees it is inside the launcher (`$__PoshUIAppHost`) and opens the window here
+   instead of starting a second PoshUI.exe. Results come back exactly as before.
+5. The script's exit code becomes the process exit code.
+
+There is no console: `Write-Host`, warnings and errors go to `<LogDirectory>\<Name>.log`. If the script fails
+**before any window appears**, the launcher shows that output in a message box - so a fatal startup check is
+visible rather than "nothing happened". `Read-Host` and other prompts throw (there is nothing to type into);
+collect input with canvas controls. `$__PoshUIAppHost.ExePath` is the launcher - relaunch through it (e.g. a
+resume-after-reboot task), not through `powershell.exe`.
+
+Exit codes: the script's own (`exit N`); `1` when it fails with an error; `2` when the settings are unusable.
+`POSHUI_APP_NONINTERACTIVE=1` logs instead of showing message boxes (tests, unattended runs).
+
+#### Shortcuts
+```
+MyApp.exe --create-shortcuts            per-user Desktop / Start menu, as listed in the settings
+MyApp.exe --create-shortcuts --all-users  all users (run elevated)
+MyApp.exe --remove-shortcuts            remove them again (and an emptied Start-menu folder)
+```
+Each shortcut points at the exe, starts in the app folder and carries the app's icon (a `.png` is wrapped as
+an `.ico` under `%LOCALAPPDATA%\PoshUI\icons`). Shortcuts are only ever made on request.
+
+#### Signing and the icon
+`New-PoshUIApp` copies PoshUI.exe **unchanged**: a signature covers a file's contents, not its name, so a
+signed PoshUI.exe gives you a signed `MyApp.exe` and **app builds never need signing**. The app's icon shows
+on its shortcuts and its window; only the exe file, seen by browsing the folder, keeps PoshUI's icon.
+
+`New-PoshUIApp -StampIcon` also writes the icon into the exe (and, for `RequireAdmin`, the UAC shield into its
+manifest). That changes the exe, which voids the signature - pair it with `-Sign` (runs
+`Scripts\Sign-PoshUI.ps1` on the copy), or accept an unsigned exe that SmartScreen and application control may
+block. Sign PoshUI.exe once per PoshUI release, before apps copy it.
+
+#### No build step? The `.cmd` fallback
 ```bat
 @echo off
 rem Start-MyApp.cmd - no console window left behind, STA for WPF.
 start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "%~dp0MyApp.ps1" %*
 ```
+It works, but flashes a console briefly, has the batch-file icon, and runs two processes (PowerShell, then
+PoshUI.exe for the window).
 
 ### Channels
 | Channel | Notes |
 |---|---|
 | Zip / USB | Tell the runner to extract it first and **unblock** it (`Get-ChildItem -Recurse \| Unblock-File`) — downloaded files carry a mark that makes PowerShell refuse them |
 | File share | Works for a handful of users; for many, copy it locally first (the launcher can `robocopy` to `%LOCALAPPDATA%` and start from there) — share hiccups mid-run are hard to diagnose |
-| Intune / ConfigMgr | Install the folder to `%ProgramFiles%\<AppId>` (read-only for users — hence logs in `%LOCALAPPDATA%`) and put a Start-menu shortcut to the `.cmd` |
-| Admin toolkit | Copy the folder; admins run `.\MyApp.ps1` or the `.cmd` elevated |
+| Intune / ConfigMgr | Install the folder to `%ProgramFiles%\<AppId>` (read-only for users — the launcher then logs to `%LOCALAPPDATA%\PoshUI\<Name>\logs`, and the app should keep its own logs in `%LOCALAPPDATA%` too) and run `MyApp.exe --create-shortcuts --all-users` from the install step |
+| Admin toolkit | Copy the folder; admins double-click `MyApp.exe` (or run `.\MyApp.ps1`) |
 
 ### Execution policy and signing
 - `-ExecutionPolicy Bypass` on the command line works **unless Group Policy enforces a policy** — then it is
   ignored. In `AllSigned` environments, **Authenticode-sign** `MyApp.ps1`, `lib\*.ps1` and every content
-  script (`Set-AuthenticodeSignature` with a code-signing certificate). `PoshUI.exe` is already signed.
+  script (`Set-AuthenticodeSignature` with a code-signing certificate). `PoshUI.exe` is already signed, and so is
+  an app exe made from it by `New-PoshUIApp` (unless `-StampIcon` was used without `-Sign`).
 - Re-sign after every change, including the stager's content edits.
 
 ### Versioning and updates

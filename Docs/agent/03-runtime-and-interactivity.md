@@ -208,6 +208,14 @@ Those five properties are the whole runtime animation surface — no rotation, s
 and nothing that **sequences** ("A, then B 300ms later, while C is still moving"). For any of that, use a
 `Storyboard` inside an `Add-UICanvasXaml` island: see [16-animation-and-motion.md](16-animation-and-motion.md).
 
+## Light / dark at runtime
+```powershell
+Set-UICanvasTheme Toggle        # or Light / Dark - switches the open window in place
+Get-UICanvasTheme               # 'Light' or 'Dark'
+```
+Every control recolours, including colours set from actions - see
+[05-theming.md](05-theming.md#switching-lightdark-while-the-app-runs) for colour maps.
+
 ## Keyboard shortcuts
 ```powershell
 Add-UICanvasShortcut 'Ctrl+S' -Action { Submit-UICanvas }   # authoring-time registration

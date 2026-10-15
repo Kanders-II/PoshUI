@@ -282,6 +282,22 @@ The [agent guide](../agent/README.md) has the complete list.
 
 ---
 
+## Handing it to users
+
+Users shouldn't have to run a `.ps1`. `New-PoshUIApp` turns the script into its own exe: a copy of the signed
+PoshUI.exe named after the app, plus a `MyApp.app.json` that names the script, icon, whether it needs admin, and
+the shortcuts to create.
+
+```powershell
+New-PoshUIApp -Config .\MyApp.app.json -Destination D:\Out\MyApp
+D:\Out\MyApp\MyApp.exe --create-shortcuts
+```
+
+Double-clicking `MyApp.exe` (or its shortcut) runs the script inside PoshUI: no console window, one process,
+your icon on the window and taskbar. → **[Staging & Delivery](../agent/11-staging-and-delivery.md#launching)**
+
+---
+
 ## Next steps
 
 - **[Agent Authoring Guide](../agent/README.md)** — the full LLM context pack: architecture, every control,

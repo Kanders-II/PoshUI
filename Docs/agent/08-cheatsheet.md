@@ -10,7 +10,14 @@ Add-UICanvasPage -Title <s> [-Description][-Icon] [-Layout Canvas|Dock|Grid|Stac
                  [-Columns <int>][-ColumnWidths <s>][-Spacing <d>][-Padding <s>]   # avoid -Padding on stacks
 Set-UITheme [-Preset Dark|Light|Midnight|Slate] [-Accent Indigo|Emerald|Sky|Amber|Rose|Violet|Cyan|Orange]
             [-Theme @{slot=hex}] [-Light @{}] [-Dark @{}] [-Mode Light|Dark|Auto]
+            [-ColorMap @{darkHex=lightHex} [-ColorMapMode Light|Dark] [-KeepGlow]]   # recolour author colours per theme
 Show-PoshUICanvas [-NoWait] [-AppDebug] [-Validate]   # returns the result hashtable; -Validate builds without launching
+```
+
+## Delivery
+```
+New-PoshUIApp -Config <MyApp.app.json> -Destination <appFolder> [-Name][-StampIcon [-Sign]]  # MyApp.exe launcher
+MyApp.exe [script args]   MyApp.exe --create-shortcuts [--all-users]   MyApp.exe --remove-shortcuts
 ```
 
 ## Containers
@@ -101,6 +108,7 @@ Show-UICanvasToast  -Message <s> [-Severity info|success|warning|error] [-Durati
 Show-UICanvasDialog -Message <s> [-Title][-Prompt][-DefaultValue][-OkLabel][-CancelLabel]   # ->text/$true/$null
 Show-UICanvasFlyout [-Target <name>] [-Items <s[]>] [-Title][-Message] [-Placement Bottom|Top|Left|Right|Mouse]  # ->item/$null
 Set-UICanvasAnimate -Name <s> -Property Opacity|Width|Height|X|Y -To <d> [-From][-Duration][-Easing]
+Set-UICanvasTheme Light|Dark|Toggle                Get-UICanvasTheme              # switch in place
 Select-UICanvasFolder [-Description]               Select-UICanvasFile [-Title][-Filter]
 Show-UICanvasWindow <name>                         Close-UICanvasWindow            # close = from inside that window
 ```

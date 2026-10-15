@@ -2,6 +2,46 @@
 
 All notable changes to the PoshUI project are documented here.
 
+## [1.5.0] - Unreleased
+
+Ship a Canvas script as its own app with `New-PoshUIApp`, and switch light/dark in place. Existing scripts run unchanged.
+
+### Added
+- **App launcher.** `PoshUI.exe` can now be an app's own launcher. `New-PoshUIApp -Config MyApp.app.json
+  -Destination <folder>` writes `MyApp.exe` (PoshUI.exe copied byte for byte, so a signed engine stays signed and
+  app builds never need signing), `MyApp.exe.config` and `MyApp.app.json`. The settings name the script, its
+  arguments, whether it needs administrator rights (UAC relaunch), its icon (`.ico` or square `.png`, used on the
+  window, taskbar and shortcuts) and its log folder. Double-clicking `MyApp.exe` runs the script inside PoshUI -
+  no `powershell.exe`, no console window - and `Show-PoshUICanvas` opens its window in that same process. The
+  script's exit code becomes the process exit code; output goes to the app's log, and a failure before any window
+  appears is shown in a message box. `MyApp.exe --create-shortcuts [--all-users]` / `--remove-shortcuts` manage
+  Desktop and Start-menu shortcuts with the app's icon. Optional `-StampIcon [-Sign]` writes the icon (and the UAC
+  shield) into the exe itself. Paths in the settings must stay inside the app folder.
+- **Switch light/dark while the app runs.** `Set-UICanvasTheme Light|Dark|Toggle` and `Get-UICanvasTheme`
+  switch the theme in place - nothing restarts, nothing typed is lost. Every theme brush the canvas uses is live,
+  so cards, text, inputs and author colours all follow the switch.
+- **Colour maps.** `Set-UITheme -ColorMap @{ '#0A0E14' = '#8E939E'; ... } [-ColorMapMode Light] [-KeepGlow]`
+  lets an app written in one palette recolour its own hex colours in the other theme, glows and gradients
+  included, without a second copy of the UI.
+
+### Fixed
+- **Cards did not follow a theme toggle** ([#7](https://github.com/Kanders-II/PoshUI/issues/7)).
+  `Add-UICanvasCard` read its background from the theme once, when the page was built, so after toggling light/dark
+  from the title bar the card kept the old colour until you navigated away and back. Cards, text and every other
+  themed brush now update immediately on the page that is open, and pages built later use the current theme.
+- **Tabs are themed.** `Add-UICanvasTabs` drew the stock light Windows tab control - a white page with pale
+  headers, unreadable in a dark app. Tabs now follow `Set-UITheme`: an accent underline on the selected header,
+  a hairline under the strip, and each page on the surface the tabs sit on.
+- **Buttons inside a modal window run.** `Show-UICanvasWindow` on a `-Modal` window held the app's action queue
+  until the window closed, so the modal's own buttons - `Close-UICanvasWindow` included - never ran. The dialog is
+  now scheduled rather than shown inline: the main window is still disabled while it is open, and
+  `Show-UICanvasWindow` returns immediately for modal and non-modal windows alike.
+
+### Documentation
+- The full Canvas guide is on the documentation site: design paradigms, twelve app blueprints, visual design and
+  the app shell, staging and delivery, plus reference for secondary windows, toolbar, footer, menu, tabs,
+  splitter, Viewbox, the elapsed clock, `-NavigateTo` and `-Quiet`.
+
 ## [1.4.1] - 2026-09-22
 
 ![PoshUI Canvas release showcase](/canvas-showcase.gif)

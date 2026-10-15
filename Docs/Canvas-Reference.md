@@ -1,6 +1,6 @@
 # PoshUI Canvas — Capability & Control Reference (.NET 4.8 WPF)
 
-> Module `PoshUI.Canvas` **1.3.0** · requires engine `PoshUI.exe` **≥ 1.4.0** (checked at import).
+> Module `PoshUI.Canvas` **1.5.0** · requires engine `PoshUI.exe` **≥ 1.5.0** (checked at import).
 
 Free-form, responsive, themeable UI apps authored in PowerShell and rendered by the v1 WPF engine
 (`PoshUI.exe`). The WPF engine **software-renders**, so it does not require GPU compositing and runs on
@@ -20,7 +20,8 @@ $result = Show-PoshUICanvas        # launches PoshUI.exe; returns collected valu
 | `New-PoshUICanvas` | `-Title -Theme Light/Dark/Auto -Navigation None/Sidebar/Compact/Top -Width -Height -MinWidth -MinHeight` |
 | `Add-UICanvasPage` | `-Title -Icon -Layout Canvas/Dock/Grid/VStack/HStack/Wrap -Columns -ColumnWidths -Spacing -Padding` |
 | `Set-UITheme` | `@{ slot = '#hex' }` (+ `-Light/-Dark` per-mode), see Theming |
-| `Show-PoshUICanvas` | `-NoWait` (returns process) — otherwise returns the result object |
+| `Show-PoshUICanvas` | `-NoWait` (returns process) — otherwise returns the result object. Inside an app launcher it opens the window in-process |
+| `New-PoshUIApp` | `-Config MyApp.app.json -Destination <folder> [-StampIcon [-Sign]]` — makes `MyApp.exe`, see Delivery |
 
 ### Layout roots (responsive)
 A page's `-Layout` makes it reflow instead of using absolute X/Y:
@@ -121,6 +122,17 @@ Add-UICanvasWizardNav -Next 'Network' -Back $null -Require 'ComputerName','Admin
 `Set-UITheme` slots drive the engine theme (canvas cards follow them; defaults fall back to the dark palette):
 `AccentColor, Background, ContentBackground, CardBackground, BorderColor, TextPrimary, TextSecondary,
 SuccessColor, WarningColor, ErrorColor, SidebarBackground, SidebarText, FontFamily, CornerRadius`.
+
+Switch at runtime, in place (no restart, values kept): `Set-UICanvasTheme Light|Dark|Toggle`, `Get-UICanvasTheme`.
+Every theme brush is live, so cards and text follow the title-bar toggle on the open page. An app written in one
+palette can recolour its own hex colours in the other theme with `Set-UITheme -ColorMap @{ darkHex = lightHex }
+-ColorMapMode Light` (glows hidden there unless `-KeepGlow`).
+
+## Delivery
+`New-PoshUIApp` copies PoshUI.exe (byte for byte, signature intact) to `MyApp.exe` beside a `MyApp.app.json`
+naming the script, arguments, `RequireAdmin`, icon, log folder and shortcuts. Double-clicking it runs the script
+inside PoshUI — no `powershell.exe`, no console. `MyApp.exe --create-shortcuts [--all-users]` /
+`--remove-shortcuts`. Full guide: [Staging & Delivery](./agent/11-staging-and-delivery.md#launching).
 
 ## Result & secrets
 `Show-PoshUICanvas` returns an object of `Name → value` for every visited page (merged). **Password**
