@@ -25,6 +25,13 @@ It isn't a toolkit. The scripts and workflows inside are stand-ins, there to sho
 structure; replace the content with yours.
 :::
 
+::: info This page is the tour
+The full reference ships with the example: `Examples\Launchpad\App\README.md`. It covers every rule for scripts
+(names, icons, admin, results), every workflow step option and route, the settings in `config.psd1`, what
+`Check.ps1` checks, and how to move Launchpad out of the PoshUI folder. Keep it open when you write your first
+script.
+:::
+
 ---
 
 ## 1. The one idea
@@ -60,7 +67,8 @@ everything else.
 1. **The help at the top** becomes the card. `.SYNOPSIS` is the description, and `.COMPONENT` decides which
    group it sits in (Network, Disk, whatever you like).
 2. **The `param()` block** becomes the form. A `[string]` gets a text box, an `[int]` a number, a `[switch]` a
-   toggle. Mark a parameter `Mandatory` and Run waits until it's filled in.
+   toggle, a `[ValidateSet()]` a dropdown, and a path gets a file or folder picker. Mark a parameter `Mandatory`
+   and Run waits until it's filled in. The full list is just below.
 3. **`Write-Host`** lines show up in the output, live, as the script runs.
 4. **The object it returns with a `Status` and a `Message`** is the result. `Status` (Success, Warning, Failed or
    Skipped) colours it, `Message` says what happened, and optional `Data` is for the next step to use. Other
@@ -73,6 +81,28 @@ everything else.
 That's it. Put the script in a folder of the same name, `Content\scripts\Test-Port\Test-Port.ps1`, add a
 `README.md` beside it for the **How it works** window, and it's in the app. The sample `Test-Port` is the one to
 copy: its comments point out every part.
+
+::: details Which parameter becomes which input
+| You write | You get |
+|---|---|
+| `[string]$Name` | a text box |
+| `[int]$Count = 10` (also `[long]`, `[double]`) | a number field, pre-filled with the default |
+| `[switch]$Force` or `[bool]$Force` | a toggle |
+| `[ValidateSet('Csv','Html')]` on any type | a dropdown of those values |
+| `[ValidateScript({ Test-Path $_ -PathType Container })]` | a folder picker (`-PathType Leaf`: a file picker) |
+| `[System.IO.DirectoryInfo]` / `[System.IO.FileInfo]` | a folder / file picker |
+| a `[string]` named `Path`, `Destination`, or ending in `Folder` or `Directory` | a folder picker |
+| a `[string]` ending in `File`, `Zip` or `Csv` | a file picker |
+| `[object[]]$Rows`, `[hashtable]`, anything else | nothing to type: a workflow step hands it in |
+
+The first row that matches wins, so a `[ValidateSet]` beats everything else. `[Parameter(Mandatory)]` on any of
+them makes Run wait until it's filled in, and each `.PARAMETER` help line shows above its field. A default the app
+can't work out without running the script (like `[Environment]::GetFolderPath('MyDocuments')`) shows as a hint,
+`empty: Documents`; leave the field empty and the script uses it.
+
+A script with a **mandatory** parameter of the last kind can only run inside a workflow, so it leaves the Scripts
+page and is reached from its workflows instead.
+:::
 
 A few habits make a script pleasant to use:
 
@@ -136,6 +166,20 @@ run. (It can't check the property after the dot: `{pack.Data.Cuont}` just comes 
 There's no maths in a workflow file, and no loops. When something needs working out, a small script step works it
 out and hands back the answer. That keeps workflows easy to read, and keeps the clever bits in scripts you can
 test on their own.
+
+::: details Every input type a workflow's form can have
+A workflow lists its form in `Inputs`, one entry per field: `@{ Name = 'Servers'; Type = 'List'; Default = 'localhost'; Help = 'One per line' }`.
+
+| `Type` | The field | What `{input.Name}` passes on |
+|---|---|---|
+| `Text` (the default) | a text box | the text |
+| `Number` | a number field | a number |
+| `Toggle` | a toggle | `$true` or `$false` |
+| `Choice` (with `Choices = @(...)`) | a dropdown | the chosen value |
+| `File` / `Folder` | a file / folder picker | the path |
+| `List` | a box, one item per line | an array of the lines |
+| `Csv` | a file picker for a `.csv` | the file's rows, as objects |
+:::
 
 ::: details Every reference you can use
 | Reference | What it gives |
