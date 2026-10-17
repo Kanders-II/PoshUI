@@ -1,10 +1,10 @@
 function Add-UIBanner {
     <#
     .SYNOPSIS
-    Adds a banner control to a wizard step.
+    Adds a banner control to a step.
 
     .DESCRIPTION
-    Creates a visual banner at the top of a wizard step. Banners can display titles,
+    Creates a visual banner at the top of a step. Banners can display titles,
     descriptions, icons, images, buttons, progress indicators, and support many visual styles.
 
     .PARAMETER Step

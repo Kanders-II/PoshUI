@@ -68,12 +68,20 @@ else is blocked and logged.
 
 ### Add-UICanvasMarkdown
 ```
-Add-UICanvasMarkdown [-Text <string>] [-Path <file>]
+Add-UICanvasMarkdown [-Text <string>] [-Path <file>] [-BasePath <folder>]
 ```
 Renders Markdown to a native WPF FlowDocument (no browser needed). Supports headings (`#`/`##`/`###`),
 `**bold**`, `*italic*`, `` `code` ``, fenced ```` ``` ```` code blocks, `> blockquotes`, `---` rules, unordered
-(`-`/`*`) and ordered (`1.`) lists, **links** `[text](url)` (scheme-gated), and **images** `![alt](path)`
-(local paths render inline; alt text is the fallback).
+(`-`/`*`) and ordered (`1.`) lists, **links** `[text](url)` (scheme-gated), and **images** `![alt](path)`:
+
+- **An image on a line of its own** is shown as a figure: as wide as the reading column (shrunk to fit, never
+  enlarged, up to 760 px), with its alt text as a caption underneath. Use it for diagrams and screenshots.
+- **An image inside a sentence** sits on the line like an icon, about the height of the text.
+- **A relative path** is found beside the `-Path` file, so a how-to and its pictures travel together:
+  `![The printer settings page](Reset-Printer.png)` next to `Reset-Printer.md`. For `-Text` there is no file
+  to look beside, so pass `-BasePath <folder>` or relative images won't be found. Absolute paths and
+  `http(s)://` URLs work as they are.
+- **A missing image** shows its alt text with "(image not found)" instead of breaking the page.
 
 ### Add-UICanvasSeparator
 ```
@@ -407,7 +415,8 @@ registered and addressable via `Set-UICanvasProperty`/`Get-UICanvasValue`. Theme
 
 ### Add-UICanvasDataGrid
 ```
-Add-UICanvasDataGrid [-Name <s>] [-Columns <string[]>] [-Items <object[]>] [-BindItems <stateKey>] [-Height <d>]
+Add-UICanvasDataGrid [-Name <s>] [-Columns <string[]>] [-Items <object[]>] [-BindItems <stateKey>]
+  [-OnChange { }] [-Height <d>] [-Properties @{ SelectionMode = 'Multiple' }]
 ```
 A modern data grid. Pass rows as **`-Items`** (array of `[pscustomobject]`/hashtables) — they serialize
 correctly. Columns auto-generate, or pass `-Columns` for explicit ones. **`-BindItems 'key'`** makes the rows
@@ -418,6 +427,19 @@ Add-UICanvasDataGrid -Name grid -Items @(
     [pscustomobject]@{ Host='web-01'; Role='Web';      Status='Online' }
     [pscustomobject]@{ Host='db-01';  Role='Database'; Status='Online' }
 )
+```
+**Selection.** `Get-UICanvasValue -Name grid` returns the selected row; read its columns by name
+(`$row.Host`). `-OnChange` runs whenever the selection changes, which is all a master/detail screen needs.
+By default one row is selected at a time. Add `-Properties @{ SelectionMode = 'Multiple' }` to let users
+Ctrl-click, Shift-click or Ctrl+A several rows; `Get-UICanvasValue` then returns **all** selected rows (in
+the order they are shown), `Set-UICanvasValue grid $null` clears the selection and any other value
+selects every row.
+```powershell
+Add-UICanvasDataGrid -Name servers -Items $rows -Properties @{ SelectionMode = 'Multiple' } -OnChange {
+    $picked = @(Get-UICanvasValue -Name servers)
+    Set-UICanvasValue -Name pickedCount -Value ('{0} selected' -f $picked.Count)
+}
+Add-UICanvasLabel '0 selected' -Name pickedCount
 ```
 
 ### Add-UICanvasTreeView

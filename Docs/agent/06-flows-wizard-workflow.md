@@ -6,7 +6,8 @@ Two higher-level patterns sit on top of pages: a **Wizard** (multi-page form wit
 ---
 
 ## Wizard (multi-page form)
-Use multiple `Add-UICanvasPage`s with `-Navigation Sidebar` (or `Top`), a step indicator, and gated Next/Back.
+Use multiple `Add-UICanvasPage`s, `New-PoshUICanvas -Navigation Sidebar` (or `Top`), a step indicator, and gated
+Next/Back.
 
 ### Step indicator — `Add-UICanvasWizardSteps`
 ```
@@ -100,7 +101,8 @@ additionally available as a plain `$variable` (snapshot taken at run start).
 ### Per-step / overall state the runner publishes
 Inside step scripts (and elsewhere) these named values are available/updated automatically (prefix = workflow `-Name`):
 - `<wf>_status` — current status text · `<wf>_pct` — overall percent · `<wf>_gauge` — overall progress bar.
-- `<wf>_start` / `<wf>_end` — run start/end timestamps; per-step `<step>_elapsed` / `<step>_remaining`.
+- `<wf>_start` / `<wf>_end` — run start/end timestamps · `<wf>_elapsed` / `<wf>_remaining` — run time so far
+  and the estimate left (`mm:ss`), updated as each step runs.
 
 A step script reports progress via `$wf.UpdateProgress` (or just by doing work); throw an error to fail the
 step. Example (`-Engine`, with live sub-progress and a retry):
@@ -128,9 +130,9 @@ the gauge to the prior percent. Use `-LockNavigation`/`-LockOnStart` to prevent 
 For a bespoke final-execution screen, suppress the built-in header/start button and place the pieces yourself:
 - With `-NoHeader`, add your own controls named `<wf>_status`, `<wf>_pct`, `<wf>_gauge` (a progress bar) so the
   runner can drive them.
-- With `-NoStartButton` (legacy path), trigger the run from your own button via
-  `$Global:_PoshUICanvas.WorkflowActions[<name>]`. With `-Engine`, the engine wires the click of the button
-  named `<wf>_run` automatically — or use `-AutoStart`.
+- With `-NoStartButton`, add your own button named `<wf>_run`; with `-Engine`, the engine wires its click to
+  start the run automatically. Without `-Engine`, give your button the run action the module publishes:
+  `-Action $Global:_PoshUICanvas.WorkflowActions['<wf>']`. Or use `-AutoStart`.
 
 ---
 

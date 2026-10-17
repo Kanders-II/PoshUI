@@ -1,6 +1,6 @@
 # 00 — Design Paradigms: How to Think About a PoshUI App
 
-Read this before the API. Files 01–16 say *what each cmdlet does*. This file says *how to shape an app*:
+Read this before the API. Files 01–17 say *what each cmdlet does*. This file says *how to shape an app*:
 which module to reach for, which structural paradigm fits the job, how far an app can reach, and the
 architectures that keep a real tool maintainable. **Canvas is the default choice** for anything new; the
 other three modules are covered here only so you know when they are the better fit.
@@ -30,8 +30,8 @@ Three consequences an author must internalise:
 | Lane | Runs | Use for | Never use for |
 |---|---|---|---|
 | **Gate** (the UI runspace) | `-Action`, `-OnChange`, `-Refresh`, `-OptionsScript` | Reading and writing controls, quick logic, navigation, dialogs | Anything slow: it is serialized, so one slow action freezes every click and every live card |
-| **Async** (a fresh runspace per call) | `Start-UICanvasAsync { }` | API calls, scans, anything over ~100 ms | Relying on variables or `$global:` from the gate: it starts empty |
-| **Engine executor** | `Add-UICanvasWorkflow -Engine` steps, `Add-UICanvasScriptCard` | Multi-step operations with progress, retry, timeouts, reboot-resume | Short interactive logic |
+| **Async** (a fresh runspace per call) | `Start-UICanvasAsync { }`, `Add-UICanvasScriptCard` | API calls, scans, anything over ~100 ms | Relying on variables or `$global:` from the gate: it starts empty |
+| **Engine executor** | `Add-UICanvasWorkflow -Engine` steps | Multi-step operations with progress, retry, timeouts, reboot-resume | Short interactive logic |
 
 ---
 

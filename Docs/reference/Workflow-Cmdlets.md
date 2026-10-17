@@ -2,12 +2,12 @@
 
 Complete reference for every cmdlet exported by the **PoshUI.Workflow** module (sequential task execution with progress, approval gates, and reboot/resume). See [POSHUI_AUTHORING_GUIDE.md](../POSHUI_AUTHORING_GUIDE.md) for concepts and the `$PoshUIWorkflow` task API.
 
-_Auto-generated from the module's runtime metadata and comment-based help (PoshUI 1.3.1). Parameter tables list every non-common parameter._
+_Auto-generated from the module's runtime metadata and comment-based help (module 1.3.1, ships in PoshUI 1.5.1). Parameter tables list every non-common parameter._
 
 ## Cmdlet index
 
-- [`Add-UIBanner`](#add-uibanner) — Adds a banner control to a wizard step.
-- [`Add-UICard`](#add-uicard) — Adds an informational card control to a wizard step.
+- [`Add-UIBanner`](#add-uibanner) — Adds a banner control to a step.
+- [`Add-UICard`](#add-uicard) — Adds an informational card control to a step.
 - [`Add-UICheckbox`](#add-uicheckbox) — Adds a checkbox control to a UI step.
 - [`Add-UIDropdown`](#add-uidropdown) — Adds a dropdown selection control to a UI step.
 - [`Add-UIFilePath`](#add-uifilepath) — Adds a file path selector control to the current UI step.
@@ -32,9 +32,9 @@ _Auto-generated from the module's runtime metadata and comment-based help (PoshU
 
 ## Add-UIBanner
 
-Adds a banner control to a wizard step.
+Adds a banner control to a step.
 
-Creates a visual banner at the top of a wizard step. Banners can display titles,
+Creates a visual banner at the top of a step. Banners can display titles,
 descriptions, icons, images, buttons, progress indicators, and support many visual styles.
 
 ```
@@ -114,7 +114,7 @@ Creates a banner with a progress indicator.
 
 ## Add-UICard
 
-Adds an informational card control to a wizard step.
+Adds an informational card control to a step.
 
 Creates a visual card that can display information, icons, images, and links.
 Cards are useful for displaying contextual help, tips, warnings, or related information.
@@ -350,10 +350,10 @@ Add-UINumeric [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Nul
 | `-Step` | string | Yes |  |  | Name of the step to add this control to. The step must already exist. |
 | `-Name` | string | Yes |  |  | Unique name for the control. This becomes the parameter name in the generated script. |
 | `-Label` | string | Yes |  |  | Display label shown next to the numeric input. |
-| `-Default` | Nullable`1 | No |  |  | Default numeric value. Must respect the specified minimum/maximum if provided. |
-| `-Minimum` | Nullable`1 | No |  |  | Lowest permissible value. Leave unset for no lower bound. |
-| `-Maximum` | Nullable`1 | No |  |  | Highest permissible value. Leave unset for no upper bound. |
-| `-Increment` _(alias: StepSize)_ | Nullable`1 | No |  |  | Increment used by the spinner buttons. Defaults to 1 for integers or 0.1 when -AllowDecimal is specified. |
+| `-Default` | double | No |  |  | Default numeric value. Must respect the specified minimum/maximum if provided. |
+| `-Minimum` | double | No |  |  | Lowest permissible value. Leave unset for no lower bound. |
+| `-Maximum` | double | No |  |  | Highest permissible value. Leave unset for no upper bound. |
+| `-Increment` _(alias: StepSize)_ | double | No |  |  | Increment used by the spinner buttons. Defaults to 1 for integers or 0.1 when -AllowDecimal is specified. |
 | `-AllowDecimal` | switch | No |  |  | Allow non-integer values. When omitted the wizard coerces to whole numbers. |
 | `-Format` | string | No |  |  | Display format string for the number. Examples: "C2" (currency with 2 decimals), "P0" (percentage), "N2" (number with 2 decimals) |
 | `-Mandatory` | switch | No |  |  | Whether a value is required. Users cannot proceed without entering a value. |
@@ -779,7 +779,7 @@ Saves state as plain JSON (for debugging only).
 Configures branding and appearance settings for the UI.
 
 Sets visual customization options including window title, sidebar header, icons, and theme.
-Must be called after New-PoshUI.
+Must be called after New-PoshUIWorkflow.
 
 ```
 Set-UIBranding [[-WindowTitle] <String>] [[-WindowTitleIcon] <String>] [[-SidebarHeaderText] <String>] [[-SidebarHeaderIcon] <String>] [[-SidebarHeaderIconOrientation] <String>] [[-ShowSidebarHeaderIcon] <Boolean>] [[-Theme] <String>] [-DisableAnimations] [[-AllowCancel] <Boolean>] [<CommonParameters>]

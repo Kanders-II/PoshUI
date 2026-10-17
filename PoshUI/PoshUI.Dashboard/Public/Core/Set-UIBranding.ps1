@@ -5,7 +5,7 @@ function Set-UIBranding {
 
     .DESCRIPTION
     Sets visual customization options including window title, sidebar header, icons, and theme.
-    Must be called after New-PoshUI.
+    Must be called after New-PoshUIDashboard.
     
     .PARAMETER WindowTitle
     The title displayed in the window title bar.

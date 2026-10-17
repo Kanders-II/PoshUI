@@ -39,7 +39,7 @@ The `New-PoshUIWizard` cmdlet creates the context for your wizard. It should be 
 When you call `New-PoshUIWizard`, it stores the definition in a module-scoped variable `$script:CurrentWizard`. All subsequent `Add-UI*` calls automatically target this instance.
 
 ::: tip
-If you need to manage multiple wizard definitions in the same session, you can capture the object returned by `New-PoshUIWizard` and pass it to other cmdlets, although this is rarely needed for standard scripts.
+There is only one current wizard per session. The `Add-UI*` cmdlets have no parameter for targeting a different definition, and calling `New-PoshUIWizard` again replaces the current one. To build a second wizard, finish and show the first, then start the next with a new `New-PoshUIWizard` call.
 :::
 
 ## Best Practices

@@ -23,44 +23,10 @@ That is a complete, working, themed desktop application. Save it, run it, ship i
 
 ---
 
-## Developing for Canvas with AI
-
-Canvas contains no AI, and none is required to use it — it is a PowerShell authoring layer and a WPF engine.
-What it *is* is an unusually good **target** to develop for with an AI assistant, because of properties it has
-for entirely unrelated reasons.
-
-Most UI frameworks are hostile to code generation: nested XAML, code-behind files, MVVM plumbing, project
-files, package restore, a compiler. An assistant has to get *all* of it right, and you can't tell whether it
-worked until a build succeeds. Canvas has none of those failure points.
-
-**1. A small, closed vocabulary.** ~75 cmdlets with consistent parameter conventions (`-Name`, `-Value`,
-`-Action`, `-Properties`, `-Refresh`). The entire API fits comfortably in a model's context — so the AI is
-working from the real surface, not guessing.
-
-**2. Flat and declarative.** Controls are emitted in reading order. There is no separation between markup,
-code-behind, and view-model to keep in sync — the class of mistake LLMs make most often simply doesn't exist.
-
-**3. One file, zero scaffolding.** No `dotnet new`, no `npm install`, no folder layout to hallucinate. The
-model emits one script; you run it.
-
-**4. No build step.** Generate → run → look at it → refine. The iteration loop is seconds, which is exactly
-the loop AI-assisted development needs.
-
-**5. It can't get stuck.** If a control doesn't exist as a cmdlet, `Add-UICanvasXaml` splices raw WPF XAML
-into the tree (and any `x:Name`'d element still works with `Get/Set-UICanvasValue`). The AI always has a way
-through.
-
-**6. It produces working tools, not mockups.** The generated app *executes real PowerShell* — query systems,
-run installers, orchestrate multi-step jobs with retry and reboot-resume. You get an internal tool, not a
-picture of one.
-
-**7. There is already an LLM context pack.** [`Docs/agent/`](../agent/README.md) is a self-contained authoring
-guide written explicitly to be fed to a model, including the "golden rules" that prevent the common silent
-failures.
-
-::: tip The workflow
-Paste the [agent guide](../agent/README.md) into your assistant, describe the tool you want in plain English,
-save the `.ps1` it returns, and run it. Iterate by describing changes.
+::: tip Building with an AI assistant
+Canvas needs no AI, but it works well with one: about 90 cmdlets with consistent parameters, one script, and
+no build step. Give your assistant the [agent guide](../agent/README.md), describe the tool you want in plain
+English, save the `.ps1` it returns, and run it. Iterate by describing changes.
 :::
 
 ---
@@ -85,19 +51,18 @@ fall over.
 Inside any `-Action`, `-OnChange`, or refresh script you can read and drive the running app:
 `Get-UICanvasValue`, `Set-UICanvasValue`, `Set-UICanvasProperty`, reactive state, navigation, dialogs.
 
-### The four execution substrates
+### Where your code runs
 
-Understanding these explains the performance characteristics of anything you build:
+Your code runs in one of three places. Picking the right one is what keeps an app responsive:
 
-| Substrate | Runs on | Use it for |
+| Where | What runs there | Use it for |
 |---|---|---|
-| **Event action** (`-Action`, `-OnChange`) | shared runspace, serialized | clicks, form submits, quick work |
-| **Polled refresh** (`-Refresh`) | shared runspace (skips a tick if busy) | live metrics, clocks, status |
-| **Async** (`Start-UICanvasAsync`) | its own runspace, off-gate | long/background work |
-| **Workflow** (`-Engine`) | the engine's workflow executor, off-gate | orchestrated multi-step jobs |
+| **The UI's own PowerShell session** | `-Action`, `-OnChange`, `-Refresh` | clicks, form submits, live labels — anything quick |
+| **A background session** | `Start-UICanvasAsync { }`, `Add-UICanvasScriptCard` | long work: scans, API calls, installs |
+| **The workflow runner** | `Add-UICanvasWorkflow -Engine` steps | multi-step jobs with progress, retry and reboot-resume |
 
-Event actions and refresh share one serialized runspace, so **long work belongs in `Start-UICanvasAsync`, an
-`Add-UICanvasScriptCard`, or a workflow** — all of which run off that gate and keep the UI live.
+The UI's session runs one thing at a time: while a slow action runs, other clicks wait and `-Refresh` ticks
+are skipped. So **put anything slow in the background or in a workflow**, and the window stays live.
 
 ---
 
@@ -108,7 +73,7 @@ boxes, password fields (DPAPI-protected), date/time pickers, color picker, ratin
 pickers, markdown, images, hyperlinks, icons, badges, separators, shapes, consoles, data grids, tree views,
 progress bars/rings, banners, and menu bars.
 
-**Layout** — Grid, VStack, HStack, Wrap, Dock, and absolute X/Y positioning, with Card / Panel / Group /
+**Layout** — Grid, VStack, HStack, Wrap, Dock, and absolute X/Y positioning, with Card / Panel /
 Expander / **Tabs** / **Viewbox** containers, a **GridSplitter** for resizable panes, and scrolling.
 (The full WPF panel set.)
 
@@ -118,7 +83,7 @@ Expander / **Tabs** / **Viewbox** containers, a **GridSplitter** for resizable p
   indicators, navigation locking, and **cascading dropdowns** (`-DependsOn` / `-OptionsScript`) that recompute
   their options when a parent field changes.
 - **Dashboards** — metric, status, table and chart cards that auto-refresh, reactive state binding, data-driven
-  repeaters, and **`Add-UICanvasScriptCard`** — an on-demand runner card that executes off the UI gate and
+  repeaters, and **`Add-UICanvasScriptCard`** — an on-demand runner card that runs its script in the background and
   streams its output live, so a long job never freezes the rest of the dashboard.
 - **Workflows** — declare steps, get an engine-driven runner with live progress, **retry, timeouts, skip
   conditions, and reboot-resume** (state persists across a restart and the run continues where it left off).
@@ -232,7 +197,7 @@ Show-PoshUICanvas
 # Live, polled value
 Add-UICanvasLabel -Name clock -Label { Get-Date -Format 'HH:mm:ss' } -Refresh 1
 
-# On-demand work that runs OFF the UI gate and streams output
+# On-demand work that runs in the background and streams its output
 Add-UICanvasScriptCard 'Collect logs' -Detail 'Zips the last 24h of logs' -Script {
     "starting..."
     # ...real work; every line appears in the card's console as it runs

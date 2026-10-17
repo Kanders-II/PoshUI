@@ -587,6 +587,7 @@ Add-UICanvasMarkdown -Text '# Title'
 
 | Property | Type | Values |
 |---|---|---|
+| `BasePath` | String |  |
 | `Path` | String |  |
 | `Text` | String |  |
 
@@ -1127,6 +1128,7 @@ Add-UICanvasDataGrid -Name grid1 -Columns @('Name','Status') -Items @(@{Name='a'
 |---|---|---|
 | `Columns` | String[] |  |
 | `ItemsJson` | String |  |
+| `SelectionMode` | String |  |
 | `Items` * | Object[] |  |
 | `BindItems` * | String |  |
 

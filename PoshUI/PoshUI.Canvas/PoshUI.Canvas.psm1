@@ -11,7 +11,7 @@ $script:ModuleRoot = $PSScriptRoot
 
 # This module's renderer features (flow modes, XAML hatch, motion/async/toasts/dialogs, diagnostics) need a
 # matching engine. Warn at import if the PoshUI.exe we'd launch is older than this minimum.
-$script:MinEngineVersion = [version]'1.5.0'
+$script:MinEngineVersion = [version]'1.5.1'
 try {
     $parentRoot = Split-Path $PSScriptRoot -Parent
     $engine = @(

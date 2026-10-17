@@ -1,12 +1,29 @@
 # About
 
-Build beautiful PowerShell wizards, dashboards, workflows, and free-form apps—the PowerShell way.
+Build PowerShell wizards, dashboards, workflows and free-form apps, the PowerShell way.
 
-![PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar](/canvas-showcase.gif)
+![Launchpad, the learning example: a splash screen, pages built from plain scripts, a workflow paused for approval and resumed from the history page, and a live switch to the light theme](/launchpad/launchpad.gif)
 
-*The v1.4.1 release showcase — one PowerShell script, included in the [release package](https://github.com/Kanders-II/PoshUI/releases) as `Examples\Showcase-Release.ps1`.*
+*Launchpad, the learning example in 1.5.1: a complete PoshUI app in half a minute. Every page is built from plain
+PowerShell scripts; the scripts inside are stand-ins, and the structure is what you take away.
+[See how it's built](./agent/17-structuring-an-app.md).*
 
 PoshUI enables IT professionals to create professional Windows 11-style interfaces using familiar PowerShell cmdlets—**no WPF, XAML, or C# knowledge required**.
+
+## What's new in 1.5
+
+- **Learn how a whole app is built** *(1.5.1)*: [Structuring an App](./agent/17-structuring-an-app.md) walks
+  through Launchpad, laid out as a real project: content kept apart from the app, scripts that become pages,
+  workflows that can wait for an approval, a front end and a back end, tests.
+- **Ship your script as an app** *(1.5.0)*: `New-PoshUIApp` makes `MyApp.exe` with your icon, an admin prompt and
+  shortcuts. Users double-click it: no console, no re-signing. [How to](./agent/11-staging-and-delivery.md#launching)
+- **Live light and dark** *(1.5.0)*: `Set-UICanvasTheme Toggle` and the title-bar button switch the whole app in
+  place, and every window's title bar follows. [Theming](./agent/05-theming.md)
+- **Pictures in your how-tos** *(1.5.1)*: `Add-UICanvasMarkdown` shows the PNGs a markdown file points to, full
+  width with a caption.
+- **Pick several rows** *(1.5.1)*: `Add-UICanvasDataGrid -Properties @{ SelectionMode = 'Multiple' }`.
+
+See the [changelog](./changelogs/changelog.md) for everything else.
 
 ## Four Independent Modules
 
@@ -15,12 +32,17 @@ PoshUI consists of four independent modules that can be used separately:
 ### PoshUI.Canvas *(new in v1.4.0)*
 
 **Free-form apps** — lay out anything, anywhere, with no fixed shell. Where the other three modules give you an
-opinionated frame, Canvas gives you a blank page and ~85 cmdlets. A single `.ps1` **is** the application: no
+opinionated frame, Canvas gives you a blank page and nearly 90 cmdlets. A single `.ps1` **is** the application: no
 XAML, no MVVM, no project scaffolding, no build step.
+
+![PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar](/canvas-showcase.gif)
+
+*The Canvas showcase: one PowerShell script, included in the [release package](https://github.com/Kanders-II/PoshUI/releases) as `Examples\Showcase-Release.ps1`.*
 
 ```powershell
 Import-Module PoshUI.Canvas
 New-PoshUICanvas -Title 'Hello' -Theme Dark
+Set-UITheme -Preset Slate -Accent Sky | Out-Null
 Add-UICanvasPage -Title 'Home' -Layout VStack
 Add-UICanvasTextBox -Name who -Value 'World'
 Add-UICanvasButton 'Greet' -Style Accent -Action {
@@ -33,8 +55,6 @@ Show-PoshUICanvas
 - [Capability Reference](./Canvas-Reference.md) - every control and runtime cmdlet
 - [Agent Authoring Guide](./agent/README.md) - context pack for building Canvas apps with an AI assistant
 - [Animation & Motion](./agent/16-animation-and-motion.md) - engine motion, XAML-island Storyboards, and how to verify them *(v1.4.1)*
-- [Ship it as an app](./agent/11-staging-and-delivery.md#launching) - `New-PoshUIApp` makes `MyApp.exe` with your icon, admin prompt and shortcuts; users double-click it, no console, no re-signing *(v1.5.0)*
-- [Live light/dark switching](./agent/05-theming.md) - `Set-UICanvasTheme Toggle` and the title-bar button switch the whole app in place *(v1.5.0)*
 - Engine-native workflow runner with retry, timeouts, skip conditions and reboot-resume
 - Tabs, menus, splitters, cascading fields, master/detail grids, charts and reactive state
 - A single `.ps1` is the whole app - no XAML, no MVVM, no build step

@@ -7,7 +7,7 @@
 - The engine hosts a single **in-process Windows PowerShell runspace** (the "bridge"). Your `-Action` /
   `-OnChange` scriptblocks run there, full-privilege, in the same process as the UI. UI mutations they request
   are marshaled onto the WPF dispatcher thread.
-- Module: `PoshUI.Canvas` (ModuleVersion 1.4.1). It checks the engine is **≥ 1.4.0** at import.
+- Module: `PoshUI.Canvas` (ModuleVersion 1.5.1). It checks the engine is **≥ 1.5.1** at import.
 
 ## The authoring lifecycle (always this order)
 ```powershell

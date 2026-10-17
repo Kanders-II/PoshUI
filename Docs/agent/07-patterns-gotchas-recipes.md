@@ -143,12 +143,8 @@ Show-PoshUICanvas | Out-Null
 
 ## Diagnosing "it built fine and looks wrong"
 
-The engine accepts a `-Properties` bag and reads the keys it understands. Anything else used to be
-dropped in silence, which turned author mistakes into wrong-looking screens with a clean log and exit
-code 0. The factory now reports them.
-
-After each page is built it logs, at warning level, every `-Properties` key **nothing in the build
-path ever read**:
+The engine reads the `-Properties` keys it understands. After each page is built it logs, at warning
+level, every key **nothing in the build path ever read**:
 
 ```
 [unused property] Panel > Image: 'ImageWidth' was supplied but nothing read it -
@@ -163,10 +159,8 @@ The module also warns at author time when a `-Properties` value is a nested obje
 do not round-trip into the definition; use the dedicated parameter (`-Nodes`, `-Datasets`, `-Items`,
 `-Choices`) instead.
 
-**This does not catch everything.** A key that IS read but has no effect in that position still passes
-silently. Rules for those were prototyped and withdrawn because they fired on known-good code — for
-example `-Padding` on a `VStack` card is correct and common, so warning about "Padding on a stack"
-produced seven false positives in one small app. A diagnostic that cries wolf is worse than none.
+**This does not catch everything.** A key that IS read but has no effect where you put it still passes
+silently, so a clean log is not proof the screen looks right — look at it.
 
 ## When to reach for a XAML island
 

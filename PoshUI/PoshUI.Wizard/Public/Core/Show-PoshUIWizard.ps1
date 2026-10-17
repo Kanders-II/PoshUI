@@ -37,7 +37,7 @@ function Show-PoshUIWizard {
     Shows the UI with default script body and returns results.
 
     .EXAMPLE
-    $result = Show-PoshUI -ScriptBody {
+    $result = Show-PoshUIWizard -ScriptBody {
         Write-Host "Configuring server: $ServerName"
         # Perform configuration tasks
         return @{ Status = 'Success'; Message = 'Configuration completed' }

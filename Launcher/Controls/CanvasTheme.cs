@@ -32,6 +32,9 @@ namespace Launcher.Controls
             new Dictionary<string, SolidColorBrush>(StringComparer.Ordinal);
         private static readonly Dictionary<string, SolidColorBrush> _authorBrushes =
             new Dictionary<string, SolidColorBrush>(StringComparer.OrdinalIgnoreCase);
+        // "<key>@<alpha>" -> (resource key, live translucent brush). See ForKeyTint.
+        private static readonly Dictionary<string, KeyValuePair<string, SolidColorBrush>> _tints =
+            new Dictionary<string, KeyValuePair<string, SolidColorBrush>>(StringComparer.Ordinal);
         private static readonly List<KeyValuePair<WeakReference<DropShadowEffect>, string>> _glows =
             new List<KeyValuePair<WeakReference<DropShadowEffect>, string>>();
         private static bool _keepGlow;   // -KeepGlow: recolour glows through the map instead of hiding them
@@ -106,6 +109,26 @@ namespace Launcher.Controls
             return live;
         }
 
+        /// <summary>A live, translucent brush derived from a theme key: that key's colour at
+        /// <paramref name="alpha"/> (0-255). For overlays that must read on any surface in either mode -
+        /// a grid stripe tinted with the text colour shows on a dark page, a light card or an author
+        /// background alike, where a fixed hex would vanish on one and drown the text on another.</summary>
+        public static Brush ForKeyTint(string resourceKey, string fallbackHex, byte alpha)
+        {
+            var id = resourceKey + "@" + alpha;
+            KeyValuePair<string, SolidColorBrush> tint;
+            if (_tints.TryGetValue(id, out tint)) return tint.Value;
+
+            Color c;
+            var solid = Find(resourceKey) as SolidColorBrush;
+            if (solid != null) c = solid.Color;
+            else if (!TryParse(fallbackHex, out c)) return null;
+
+            var live = new SolidColorBrush(Color.FromArgb(alpha, c.R, c.G, c.B));
+            _tints[id] = new KeyValuePair<string, SolidColorBrush>(resourceKey, live);
+            return live;
+        }
+
         /// <summary>A live brush for an author colour string ('#0D1420', '#80FFFFFF', 'White').
         /// Returns null for an empty or unparseable value, exactly as the old parser did.</summary>
         public static Brush ForColor(string value)
@@ -161,32 +184,59 @@ namespace Launcher.Controls
         {
             IsLight = isLight;
 
+            // A brush that something froze (a Style setter, an animation) can no longer be recoloured.
+            // Skip it rather than throw - one frozen brush used to abort this loop and leave every control
+            // after it in the old theme - and hand out a fresh live brush from now on.
+            var frozen = new List<string>();
             foreach (var kv in _themeBrushes)
             {
                 var now = Find(kv.Key) as SolidColorBrush;
-                if (now != null) kv.Value.Color = now.Color;
+                if (now == null) continue;
+                if (kv.Value.IsFrozen) frozen.Add(kv.Key); else kv.Value.Color = now.Color;
             }
+            foreach (var k in frozen) _themeBrushes.Remove(k);
 
+            frozen.Clear();
+            foreach (var kv in _tints)
+            {
+                var now = Find(kv.Value.Key) as SolidColorBrush;
+                if (now == null) continue;
+                var b = kv.Value.Value;
+                if (b.IsFrozen) { frozen.Add(kv.Key); continue; }
+                b.Color = Color.FromArgb(b.Color.A, now.Color.R, now.Color.G, now.Color.B);
+            }
+            foreach (var k in frozen) _tints.Remove(k);
+
+            frozen.Clear();
             foreach (var kv in _authorBrushes)
             {
                 Color authored;
+                if (kv.Value.IsFrozen) { frozen.Add(kv.Key); continue; }
                 if (TryParse(kv.Key, out authored)) kv.Value.Color = Resolve(kv.Key, authored);
             }
+            foreach (var k in frozen) _authorBrushes.Remove(k);
 
             for (int i = _glows.Count - 1; i >= 0; i--)
             {
                 DropShadowEffect fx;
-                if (!_glows[i].Key.TryGetTarget(out fx)) { _glows.RemoveAt(i); continue; }
+                if (!_glows[i].Key.TryGetTarget(out fx) || fx.IsFrozen) { _glows.RemoveAt(i); continue; }
                 ApplyGlow(fx, _glows[i].Value);
             }
 
             for (int i = _stops.Count - 1; i >= 0; i--)
             {
                 GradientStop stop;
-                if (!_stops[i].Key.TryGetTarget(out stop)) { _stops.RemoveAt(i); continue; }
+                if (!_stops[i].Key.TryGetTarget(out stop) || stop.IsFrozen) { _stops.RemoveAt(i); continue; }
                 stop.Color = ResolveColor(_stops[i].Value, stop.Color);
             }
+
+            // Things brushes can't reach - an OS-drawn title bar - follow through this.
+            var changed = ThemeChanged;
+            if (changed != null) try { changed(isLight); } catch { }
         }
+
+        /// <summary>Raised after a theme is applied (true = light). For what lives outside WPF's resources.</summary>
+        public static event Action<bool> ThemeChanged;
 
         private static Color Resolve(string normalizedKey, Color authored)
         {

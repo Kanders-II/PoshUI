@@ -168,10 +168,42 @@ namespace Launcher.AppMode
             thread.Start();
         }
 
+        /// <summary>The script runs in Windows PowerShell 5.1, but a launch from PowerShell 7 (a deploy script,
+        /// an installer, a pwsh console) hands this process pwsh's PSModulePath. Module autoloading then finds
+        /// pwsh's copy of a built-in module first - Microsoft.PowerShell.Utility, for one - fails to load it, and
+        /// cmdlets such as Import-PowerShellDataFile are "not recognized". Drop the PowerShell 7 entries and make
+        /// sure Windows PowerShell's own folders are there, for this process (and the runspaces it starts) only.</summary>
+        private static void UseWindowsPowerShellModulePath()
+        {
+            var current = Environment.GetEnvironmentVariable("PSModulePath") ?? string.Empty;
+            var keep = current.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(p =>
+                {
+                    var s = p.Replace('/', '\\').ToLowerInvariant();
+                    return !(s.Contains("\\powershell\\") && !s.Contains("\\windowspowershell\\"));
+                })
+                .ToList();
+            var defaults = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "WindowsPowerShell", "Modules"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "WindowsPowerShell", "Modules"),
+                Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "Modules"),
+            };
+            foreach (var d in defaults)
+                if (!keep.Any(k => string.Equals(k.TrimEnd('\\'), d, StringComparison.OrdinalIgnoreCase))) keep.Add(d);
+            var cleaned = string.Join(";", keep);
+            if (!string.Equals(cleaned, current, StringComparison.Ordinal))
+            {
+                Environment.SetEnvironmentVariable("PSModulePath", cleaned);
+                LoggingService.Info("PSModulePath reset to Windows PowerShell's: " + cleaned, component: "AppLauncher");
+            }
+        }
+
         private static int RunScript(AppConfig config, AppHost host, List<string> args)
         {
             // Same effective policy as the "powershell.exe -ExecutionPolicy Bypass -File" launch this replaces;
             // a policy enforced by Group Policy still takes precedence, as it does there.
+            UseWindowsPowerShellModulePath();
             var iss = InitialSessionState.CreateDefault();
             iss.LanguageMode = PSLanguageMode.FullLanguage;
             iss.ExecutionPolicy = Microsoft.PowerShell.ExecutionPolicy.Bypass;

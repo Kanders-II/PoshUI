@@ -12,7 +12,7 @@ Each card type has its own cmdlet, and each takes the step to add it to, a uniqu
 Add-UIMetricCard -Step 'Overview' -Name 'Cpu'     -Title 'CPU'       -Value 42 -Unit '%'
 Add-UIChartCard  -Step 'Overview' -Name 'Trend'   -Title 'Sales'     -ChartType 'Line' -Data $series
 Add-UITableCard  -Step 'Overview' -Name 'Procs'   -Title 'Processes' -Data (Get-Process | Select-Object -First 10 Name, Id)
-Add-UIStatusCard -Step 'Overview' -Name 'Health'  -Title 'Services'
+Add-UIStatusCard -Step 'Overview' -Name 'Health'  -Title 'Services' -Data $statusItems
 Add-UIScriptCard -Step 'Overview' -Name 'Cleanup' -Title 'Clear temp' -ScriptBlock { Remove-Item "$env:TEMP\*" -Recurse -Force }
 ```
 
@@ -30,24 +30,30 @@ Add-UIMetricCard -Step 'Overview' -Name 'CPU' -Title 'CPU Usage' `
     -IconPath 'C:\Icons\cpu_3d.png'   # Full-color PNG icon (v1.3.0)
 ```
 
-### GraphCard
+### ChartCard (`Add-UIChartCard`)
 Displays data in various chart formats.
 
 - **Use case**: Historical performance, distribution of resources.
-- **Chart Types**: `Bar`, `Line`, `Area`, `Pie`.
+- **Chart Types**: `Line` (default), `Bar`, `Area`, `Pie`, `Donut`.
 - **Key Parameters**: `-ChartType`, `-Data`.
 
-### DataGridCard
+### TableCard (`Add-UITableCard`)
 Displays tabular data in a sortable, filterable grid.
 
 - **Use case**: Process lists, event logs, service status tables.
-- **Key Parameters**: `-Data`, `-AllowSort`, `-AllowExport`.
+- **Key Parameters**: `-Data` (an array of objects, or a ScriptBlock that returns them), `-RefreshScript`.
 
-### InfoCard
+### StatusCard (`Add-UIStatusCard`)
+Shows a list of named items with a status each, such as services or health checks.
+
+- **Use case**: Service health, prerequisite checks.
+- **Key Parameters**: `-Data` (required), `-RefreshScript`.
+
+### Info card (`Add-UICard`)
 A display-only card for providing context or instructions.
 
 - **Use case**: Dashboard descriptions, help information.
-- **Key Parameters**: `-Title`, `-Description`, `-Content`, `-IconPath`.
+- **Key Parameters**: `-Title`, `-Subtitle`, `-Content`, `-IconPath`.
 
 ```powershell
 Add-UICard -Step 'Details' -Name 'ServerInfo' -Title 'Server Info' `
@@ -57,14 +63,14 @@ Add-UICard -Step 'Details' -Name 'ServerInfo' -Title 'Server Info' `
 
 ## Card Customization
 
-All cards support the following common parameters:
+Most cards support the following common parameters:
 
 | Parameter | Description |
 |-----------|-------------|
 | `-Title` | The bold header text at the top of the card. |
-| `-Description` | Smaller text shown below the title. |
+| `-Description` | Smaller text shown below the title. (`Add-UICard` uses `-Subtitle` instead.) |
 | `-Icon` | Segoe MDL2 icon glyph (monochrome). |
-| `-IconPath` | Path to a PNG/ICO image file for full-color icons. *(v1.3.0)* |
+| `-IconPath` | Path to a PNG/ICO image file for full-color icons. Not available on `Add-UIStatusCard`. *(v1.3.0)* |
 | `-Category` | String used for grouping and filtering cards. |
 
 ::: tip
@@ -77,7 +83,7 @@ Cards can be configured to update automatically without reloading the entire das
 
 ```powershell
 Add-UIMetricCard -Step 'Main' -Name 'CPU' `
-    -Title 'Live CPU' `
+    -Title 'Live CPU' -Value 0 -Unit '%' `
     -RefreshScript { (Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average }
 ```
 

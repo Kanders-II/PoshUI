@@ -1,6 +1,6 @@
 export default {
   title: 'PoshUI',
-  description: 'Build beautiful PowerShell wizards and dashboards',
+  description: 'PowerShell wizards, dashboards, workflows and free-form apps',
   base: '/PoshUI/',
   appearance: 'dark',
   // Safety net: VitePress publishes EVERY .md under the docs root, whether or not it is in the sidebar.
@@ -55,7 +55,8 @@ export default {
           { text: 'Design Paradigms', link: '/agent/00-design-paradigms' },
           { text: 'App Blueprints', link: '/agent/09-app-blueprints' },
           { text: 'Visual Design & App Shell', link: '/agent/10-visual-design-and-shell' },
-          { text: 'Staging & Delivery', link: '/agent/11-staging-and-delivery' }
+          { text: 'Staging & Delivery', link: '/agent/11-staging-and-delivery' },
+          { text: 'Structuring an App', link: '/agent/17-structuring-an-app' }
         ]
       },
       {

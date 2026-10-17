@@ -2,7 +2,7 @@
 
 Complete reference for every cmdlet exported by the **PoshUI.Dashboard** module (monitoring dashboards, ScriptCards, and visualization cards). See [POSHUI_AUTHORING_GUIDE.md](../POSHUI_AUTHORING_GUIDE.md) for concepts and the ScriptCard deep-dive.
 
-_Auto-generated from the module's runtime metadata and comment-based help (PoshUI 1.3.1). Parameter tables list every non-common parameter._
+_Auto-generated from the module's runtime metadata and comment-based help (module 1.3.1, ships in PoshUI 1.5.1). Parameter tables list every non-common parameter._
 
 ## Cmdlet index
 
@@ -773,7 +773,7 @@ Registers a daily cleanup at 3:00 AM including log cleanup.
 Configures branding and appearance settings for the UI.
 
 Sets visual customization options including window title, sidebar header, icons, and theme.
-Must be called after New-PoshUI.
+Must be called after New-PoshUIDashboard.
 
 ```
 Set-UIBranding [[-WindowTitle] <String>] [[-WindowTitleIcon] <String>] [[-SidebarHeaderText] <String>] [[-SidebarHeaderIcon] <String>] [[-SidebarHeaderIconOrientation] <String>] [[-ShowSidebarHeaderIcon] <Boolean>] [[-Theme] <String>] [-DisableAnimations] [[-AllowCancel] <Boolean>] [<CommonParameters>]

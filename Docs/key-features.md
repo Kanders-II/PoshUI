@@ -7,7 +7,7 @@ PoshUI enables IT professionals to build professional Windows 11-style interface
 PoshUI provides four independent modules that can be used separately or together:
 
 ### Canvas *(new in v1.4.0)*
-**Free-form apps** — a blank page and ~85 cmdlets instead of a fixed shell. A single `.ps1` is the application:
+**Free-form apps** — a blank page and nearly 90 cmdlets instead of a fixed shell. A single `.ps1` is the application:
 no XAML, no MVVM, no project scaffolding, no build step. Canvas can express the wizard, dashboard and workflow
 patterns below in one page.
 
@@ -20,6 +20,19 @@ patterns below in one page.
 - **Off-gate script cards** — long jobs stream output live without freezing the rest of the app
 - **Declarative cascading fields** (`-DependsOn` / `-OptionsScript`) and **master/detail grids** (`-OnChange`)
 - **Raw XAML escape hatch** for anything the cmdlets don't cover, still drivable from PowerShell
+
+**New in 1.5:**
+- **Ship it as an app** — `New-PoshUIApp` turns your script into `MyApp.exe` with your icon, an admin prompt if
+  it needs one, and Desktop/Start-menu shortcuts. Users double-click it: no `.ps1`, no console window
+  ([how to](./agent/11-staging-and-delivery.md#launching))
+- **Live light/dark switching** — the title-bar toggle and `Set-UICanvasTheme Light|Dark|Toggle` switch the
+  whole app in place, without restarting it or losing what was typed
+- **Markdown with pictures** — `Add-UICanvasMarkdown -Path` finds images beside the `.md` file (or under
+  `-BasePath` for `-Text` markdown) and shows them as captioned figures
+- **Multi-select data grids** — `Add-UICanvasDataGrid -Properties @{ SelectionMode = 'Multiple' }` adds
+  Ctrl/Shift-click selection, and `Get-UICanvasValue` returns the selected rows
+- **Launchpad, a learning example** — a complete app laid out as a project, to study and copy before you build
+  your own ([Structuring an App](./agent/17-structuring-an-app.md))
 
 → [About Canvas](./canvas/about.md) · [Capability Reference](./Canvas-Reference.md) · [Agent Authoring Guide](./agent/README.md)
 

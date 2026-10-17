@@ -1,7 +1,7 @@
 function Add-UICard {
     <#
     .SYNOPSIS
-    Adds an informational card control to a wizard step.
+    Adds an informational card control to a step.
 
     .DESCRIPTION
     Creates a visual card that can display information, icons, images, and links.

@@ -134,6 +134,8 @@ $InformationPreference = 'Continue'
         {
             _ui = new UiGate(ui);
             _definitionPath = definitionPath;
+            // Secondary windows keep the OS title bar; it is not a WPF surface, so a theme switch repaints it here.
+            CanvasTheme.ThemeChanged += isLight => { foreach (var w in _windows.ToArray()) ThemeCaption(w); };
             try
             {
                 _runspace = RunspaceFactory.CreateRunspace();
@@ -862,7 +864,8 @@ $InformationPreference = 'Continue'
                     Background = Res("ContentBackgroundBrush", "#141A2E")
                 };
                 var panel = new StackPanel { Margin = new Thickness(22) };
-                panel.Children.Add(new TextBlock { Text = message ?? "", Foreground = Brush("#E5E7EB"), TextWrapping = TextWrapping.Wrap, FontSize = 13, Margin = new Thickness(0, 0, 0, 16) });
+                // Themed, not a fixed light grey: on a light theme the dialog body is light too.
+                panel.Children.Add(new TextBlock { Text = message ?? "", Foreground = Res("BodyForegroundBrush", "#E5E7EB"), TextWrapping = TextWrapping.Wrap, FontSize = 13, Margin = new Thickness(0, 0, 0, 16) });
                 TextBox input = null;
                 if (prompt)
                 {
@@ -1116,12 +1119,14 @@ $InformationPreference = 'Continue'
                     { CaptionHeight = 36, ResizeBorderThickness = new Thickness(6), GlassFrameThickness = new Thickness(0), CornerRadius = new CornerRadius(0) });
                 }
 
-                // Tint the OS title bar (Win11 DWM) to match the theme, when a colour is given and not chromeless.
-                string tbColor = PropStr(tmpl, "TitleBarColor");
-                if (!string.IsNullOrEmpty(tbColor) && !Truthy(PropStr(tmpl, "HideTitleBar")))
+                // The OS title bar is drawn by Windows, light unless told otherwise - a white strip over a dark
+                // window. Follow the theme: dark title bar in dark, and on Windows 11 the page's own colours, so
+                // the bar and the window read as one. An authored TitleBarColor still wins.
+                if (!Truthy(PropStr(tmpl, "HideTitleBar")))
                 {
-                    string tbText = PropStr(tmpl, "TitleBarText");
-                    win.SourceInitialized += (s, e) => ApplyCaptionColor(win, tbColor, tbText);
+                    string tbColor = PropStr(tmpl, "TitleBarColor"), tbText = PropStr(tmpl, "TitleBarText");
+                    if (!string.IsNullOrEmpty(tbColor)) { win.Tag = "caption:" + tbColor + "|" + (tbText ?? ""); }
+                    win.SourceInitialized += (s, e) => ThemeCaption(win);
                 }
 
                 _windows.Add(win);
@@ -1145,6 +1150,46 @@ $InformationPreference = 'Continue'
 
         [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+        /// <summary>Puts a secondary window's OS title bar in the current theme: Windows' dark title bar when the theme
+        /// is dark (Windows 10 1809+ and 11), and on Windows 11 the theme's background and text colours - or the
+        /// window's authored TitleBarColor/TitleBarText, kept in win.Tag. Safe to call again after a theme switch.</summary>
+        private static void ThemeCaption(Window win)
+        {
+            try
+            {
+                var hwnd = new System.Windows.Interop.WindowInteropHelper(win).Handle;
+                if (hwnd == IntPtr.Zero) return;
+                int dark = CanvasTheme.IsLight ? 0 : 1;
+                if (DwmSetWindowAttribute(hwnd, 20 /*DWMWA_USE_IMMERSIVE_DARK_MODE*/, ref dark, sizeof(int)) != 0)
+                    DwmSetWindowAttribute(hwnd, 19 /*the same, before Windows 10 20H1*/, ref dark, sizeof(int));
+                string cap = null, txt = null;
+                var authored = win.Tag as string;
+                if (authored != null && authored.StartsWith("caption:"))
+                {
+                    var parts = authored.Substring(8).Split('|');
+                    cap = parts[0]; txt = parts.Length > 1 && parts[1].Length > 0 ? parts[1] : null;
+                }
+                else
+                {
+                    cap = HexOf(Res("ContentBackgroundBrush", "#141A2E"));
+                    txt = HexOf(Res("BodyForegroundBrush", "#E5E7EB"));
+                }
+                ApplyCaptionColor(win, cap, txt);
+                // Windows repaints the non-client area lazily; nudge it so a switch shows at once.
+                SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020 /*NOSIZE|NOMOVE|NOZORDER|NOACTIVATE|FRAMECHANGED*/);
+            }
+            catch { }
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
+
+        private static string HexOf(Brush b)
+        {
+            var s = b as SolidColorBrush;
+            return s == null ? null : string.Format("#{0:X2}{1:X2}{2:X2}", s.Color.R, s.Color.G, s.Color.B);
+        }
 
         /// <summary>Sets the OS caption (and optional text) colour on Windows 11 via DWM. No-op on older Windows.</summary>
         private static void ApplyCaptionColor(Window win, string captionHex, string textHex)
@@ -1360,15 +1405,8 @@ $InformationPreference = 'Continue'
             {
                 if (!IsMinimalShellEnvironment())
                 {
-                    try
-                    {
-                        using (var dlg = new System.Windows.Forms.FolderBrowserDialog())
-                        {
-                            dlg.Description = string.IsNullOrEmpty(description) ? "Select a folder" : description;
-                            dlg.ShowNewFolderButton = false;
-                            return dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK ? dlg.SelectedPath : null;
-                        }
-                    }
+                    // The Explorer-style folder dialog (IFileDialog), as the wizard uses - not the old tree browser.
+                    try { return new Launcher.Services.DialogService().ShowFolderBrowserDialog(string.IsNullOrEmpty(description) ? "Select a folder" : description, null); }
                     catch (Exception ex) { LoggingService.Warn("SelectFolder native dialog failed, using WPF picker: " + ex.Message, component: "CanvasBridge"); }
                 }
                 return WpfBrowse(true, description, null);

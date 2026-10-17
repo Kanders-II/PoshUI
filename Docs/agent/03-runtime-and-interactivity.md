@@ -98,9 +98,8 @@ cannot roll them back — so treat the close as a cancellation point:
 - Don't rely on a `finally` block in the async scriptblock for cleanup that must happen. A stopped
   pipeline may not run it.
 
-This is deliberate. Before, async pipelines kept executing after the window was gone: the run continued
-invisibly, and the process never exited — every leaked `PoshUI.exe` also stranded the `powershell.exe`
-host blocked on `WaitForExit()`, and it held a file lock on `PoshUI.exe` that blocked redeploys.
+Stopping them is deliberate: it means closing the window always ends the app cleanly, with no hidden work
+left running and no `PoshUI.exe` left behind.
 
 ### Why the runtime cmdlets can no-op during teardown
 
@@ -130,10 +129,9 @@ Show-UICanvasDialog -Message 'Done.' -OkLabel 'Close' -CancelLabel 'Hide'
 ```
 Blocks until dismissed; returns text (prompt+OK), `$true` (confirm+OK), or `$null` (cancel).
 
-The dialog draws its **own** title bar (accent tick, title, `✕`) and follows the theme. It does not use OS
-window chrome — Windows draws that in the *system* theme, which put a light strip above dark content and
-made the dialog the only light surface in a dark app. Consequences: the `✕` returns `$null`, exactly like
-Cancel, and the dialog is dragged by its title area (the button strip is not a drag handle).
+The dialog draws its **own** title bar (accent tick, title, `✕`) and follows the theme. Two things follow
+from that: the `✕` returns `$null`, exactly like Cancel, and the dialog is dragged by its title area (the
+button strip is not a drag handle).
 
 ### Flyout (lightweight anchored popup, returns the chosen item)
 ```powershell
@@ -185,8 +183,9 @@ Add-UICanvasButton 'Open details' -Action { Show-UICanvasWindow details }
 - On **engine 1.4.1 and earlier**, `Show-UICanvasWindow` on a modal window blocked the action queue until the
   window closed, so buttons inside a modal never ran. If you must support that engine, leave `-Modal` off and use
   `-Topmost` instead.
-- `-TitleBarColor` / `-TitleBarText` tint the Windows 11 caption to match the theme — without them the caption
-  stays in the system (usually light) colours.
+- The window's title bar follows the app theme on its own: dark in a dark theme (Windows 10 1809 and later), and
+  on Windows 11 the page's own background and text colours. It re-colours when the theme switches.
+  `-TitleBarColor` / `-TitleBarText` override those colours when you want a specific caption.
 - Define windows **before** `Show-PoshUICanvas`, like pages; they are not pages and don't appear in navigation.
 
 ## Native file/folder pickers

@@ -1,4 +1,4 @@
-﻿# 16 — Animation & Motion
+# 16 — Animation & Motion
 
 Motion in Canvas comes from two places: a handful of **declarative knobs** on ordinary controls, and a
 **XAML island** when you need a real timeline. This file covers both, the property paths that actually work,
@@ -41,7 +41,7 @@ These limits are the entire reason islands exist. Know them before you reach:
 ## 2. The island contract
 
 ```powershell
-Add-UICanvasXaml [-Name <s>] -Markup <xaml-string> [-Height <d>]
+Add-UICanvasXaml [-Name <s>] (-Markup <xaml-string> | -Path <file.xaml>) [-Height <d>]
                  [-Actions @{ innerName = { ... } }]
 ```
 

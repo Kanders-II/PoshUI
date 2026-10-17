@@ -3,7 +3,7 @@
 One cmdlet, `Add-UICanvasChartCard`, renders all chart types.
 
 ```
-Add-UICanvasChartCard [-Title] <string> [-Name <s>]
+Add-UICanvasChartCard [[-Title] <string>] [-Name <s>]
   [-Type Bar|Line|Area|Donut|Sparkline]      # default Bar
   [-Labels <string[]>]                        # x-axis / segment labels
   [-Values <double[]>]                        # single-series data

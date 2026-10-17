@@ -8,7 +8,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
+[![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)](https://github.com/Kanders-II/PoshUI/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![.NET Framework](https://img.shields.io/badge/.NET%20Framework-4.8-purple.svg)](https://dotnet.microsoft.com/download/dotnet-framework/net48)
 [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
@@ -29,10 +29,37 @@ Turn your PowerShell automation into professional Windows 11-style wizards, dash
 **Who It's For:**  
 IT professionals, system administrators, and DevOps engineers who want to make their automation accessible to help desk teams, colleagues, and end users who prefer a GUI over a command line.
 
-> ### 🆕 What's new in v1.5.0
-> - **Ship your script as an app.** `New-PoshUIApp` makes `MyApp.exe` with your icon, an admin prompt if it needs one, and Desktop/Start-menu shortcuts. Users double-click it: no `.ps1`, no console window, no re-signing. → [How to](Docs/agent/11-staging-and-delivery.md#launching)
-> - **Live light/dark switching.** The title-bar toggle and `Set-UICanvasTheme Toggle` switch the whole app in place. Cards now follow the toggle on the open page ([#7](https://github.com/Kanders-II/PoshUI/issues/7)).
-> - **Themed tabs, working modal buttons**, and more. See the [release notes](RELEASE_NOTES_v1.5.0.md) · [download](https://github.com/Kanders-II/PoshUI/releases)
+## See what you can build
+
+<p align="center">
+  <img src="Images/launchpad.gif" alt="Launchpad, the learning example: a splash screen, pages built from plain scripts, a workflow paused for approval and resumed from the history page, and a live switch to the light theme" width="900">
+</p>
+
+*Launchpad, the learning example in 1.5.1: a complete PoshUI app in half a minute.*
+
+Everything in that clip is PowerShell. Nobody designed a page for each script: each one is built from an ordinary
+script's comment help and `param()` block, and its output streams in as it runs. The workflow stops at an
+approval, waits (it would survive closing the app), and picks up again from the history page. The theme switches
+live. The scripts inside are stand-ins; the structure is what you take away.
+→ [Structuring an App: Building Launchpad](Docs/agent/17-structuring-an-app.md)
+
+## 🆕 What's new in 1.5
+
+- **Learn how a whole app is built.** *(1.5.1)* Launchpad is laid out as a real project, to study and copy: a
+  front end that only draws, a back end with no UI in it, pages built from ordinary scripts, workflows that can
+  wait for an approval, run history, a check script and tests. → [Guide](Docs/agent/17-structuring-an-app.md)
+- **Ship your script as an app.** *(1.5.0)* `New-PoshUIApp` makes `MyApp.exe` with your icon, an admin prompt if
+  it needs one, and Desktop/Start-menu shortcuts. Users double-click it: no `.ps1`, no console window, no
+  re-signing. → [How to](Docs/agent/11-staging-and-delivery.md#launching)
+- **Live light and dark.** *(1.5.0)* The title-bar toggle and `Set-UICanvasTheme Toggle` switch the whole app in
+  place, and since 1.5.1 every window's title bar follows the theme too.
+- **Pictures in your how-tos.** *(1.5.1)* `Add-UICanvasMarkdown` shows the PNGs a markdown file points to, full
+  width with a caption, so a how-to can carry the diagram that explains it.
+- **Pick several rows.** *(1.5.1)* `Add-UICanvasDataGrid -Properties @{ SelectionMode = 'Multiple' }`, and
+  `Get-UICanvasValue` returns every row picked.
+- **Fixes** for data grids, light/dark switching, launchers started from PowerShell 7, the folder dialog and the
+  number field. Release notes: [1.5.1](RELEASE_NOTES_v1.5.1.md) · [1.5.0](RELEASE_NOTES_v1.5.0.md) ·
+  [download](https://github.com/Kanders-II/PoshUI/releases)
 
 ---
 
@@ -42,7 +69,7 @@ PoshUI provides four independent modules, each designed for a specific use case:
 
 ### PoshUI.Canvas *(new in v1.4.0)*
 **Free-form apps** — lay out anything, anywhere, with no fixed shell. Where the other three modules give you an
-opinionated frame, Canvas gives you a blank page and ~85 cmdlets.
+opinionated frame, Canvas gives you a blank page and nearly 90 cmdlets.
 
 <p align="center">
   <img src="Images/canvas-showcase.gif" alt="PoshUI Canvas release showcase: animated splash, overview, live charts, motion demos and the themed calendar" width="900">
@@ -59,6 +86,7 @@ A single `.ps1` **is** the application — no XAML, no MVVM, no project scaffold
 ```powershell
 Import-Module PoshUI.Canvas
 New-PoshUICanvas -Title 'Hello' -Theme Dark
+Set-UITheme -Preset Slate -Accent Sky | Out-Null
 Add-UICanvasPage -Title 'Home' -Layout VStack
 Add-UICanvasTextBox -Name who -Value 'World'
 Add-UICanvasButton 'Greet' -Style Accent -Action {
@@ -173,7 +201,7 @@ Show-PoshUIWizard -ScriptBody {
 - **Live Execution Console** - Real-time output display during script execution
 - **CMTrace Logging** - Enterprise-ready audit trails
 - **Security Hardened** - Injection-safe script generation, DPAPI-encrypted workflow state, ACL-restricted temp files, and optional signed-script enforcement *(v1.3.1)*
-- **Free-Form Canvas** - Build any layout from ~85 cmdlets in a single script, no XAML or build step *(v1.4.0)*
+- **Free-Form Canvas** - Build any layout from nearly 90 cmdlets in a single script, no XAML or build step *(v1.4.0)*
 - **Engine-Native Workflow Runner** - Steps run on their own runspace with live progress, retry, timeouts, skip conditions, and reboot-resume *(v1.4.0)*
 - **Off-Gate Script Cards** - Long-running tasks stream output live without freezing the rest of the app *(v1.4.0)*
 - **Declarative Cascading Fields** - Dropdown/ListBox options recompute from other fields with no event wiring *(v1.4.0)*

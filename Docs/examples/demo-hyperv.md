@@ -12,8 +12,8 @@ This wizard showcases how to build a production-ready interface for infrastructu
 ## Running the Example
 
 ```powershell
-# Navigate to the Wizard examples directory
-cd .\PoshUI\PoshUI.Wizard\Examples
+# Navigate to the examples directory
+cd .\PoshUI\Examples
 
 # Run the script
 .\Wizard-HyperV-CreateVM.ps1
@@ -39,8 +39,8 @@ $result = Show-PoshUIWizard
 
 if ($result) {
     Write-Host "Ready to create VM: $($result.VMName)" -ForegroundColor Green
-    Write-Host "CPU Cores: $($result.CPU)"
-    Write-Host "Memory: $($result.RAM) GB"
+    Write-Host "CPU Cores: $($result.ProcessorCount)"
+    Write-Host "Memory: $($result.MemoryStartupMB) MB"
     # Logic to call New-VM would go here
 }
 ```

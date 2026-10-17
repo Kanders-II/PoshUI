@@ -34,7 +34,7 @@ Add-UICanvasIcon  [-Icon <s>] [-FontSize][-Foreground]
 Add-UICanvasBadge [-Label] [-Value][-Severity Neutral|Info|Success|Warning|Error][-Icon]
 Add-UICanvasBanner [-Label] [-Value][-Severity Informational|Success|Warning|Error][-Icon][-Image]
 Add-UICanvasHyperlink [-Label] [-NavigateUri]        # http/https/mailto/file only
-Add-UICanvasMarkdown [-Text][-Path]
+Add-UICanvasMarkdown [-Text][-Path][-BasePath]        # ![caption](pic.png) on its own line = figure
 Add-UICanvasSeparator
 ```
 
@@ -70,7 +70,7 @@ Add-UICanvasColorPicker[-Value][-Choices][-OnChange {}]
 Add-UICanvasProgressBar [-Bind][-Value][-Minimum][-Maximum][-Fill <hex>][-Glow $true|<hex>][-GlowPulse][-GlowRadius <d>]
 Add-UICanvasProgressRing [-Foreground][-Thickness]
 Add-UICanvasConsole     [-Bind][-Value]
-Add-UICanvasDataGrid    [-Columns][-Items <obj[]>][-BindItems <key>][-Height]
+Add-UICanvasDataGrid    [-Columns][-Items <obj[]>][-BindItems <key>][-OnChange][-Height]   # @{SelectionMode='Multiple'} -> value = all selected rows
 Add-UICanvasTreeView    [-Nodes <obj[]>][-Height]
 Add-UICanvasMetricCard  [-Caption] [-Value][-Trend Up|Down|Stable][-Delta]
 Add-UICanvasStatusCard  [-Title] [-Items <"Label|State"[]>][-Background]

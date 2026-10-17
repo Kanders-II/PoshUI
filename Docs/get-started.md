@@ -45,6 +45,7 @@ lay things out yourself rather than fit an opinionated frame.
 Import-Module .\PoshUI\PoshUI.Canvas\PoshUI.Canvas.psd1 -Force
 
 New-PoshUICanvas -Title 'My First Canvas App' -Theme Dark -Width 640 -Height 420
+Set-UITheme -Preset Slate -Accent Sky | Out-Null    # gives Accent buttons their colour
 Add-UICanvasPage -Title 'Home' -Layout VStack
 
 Add-UICanvasLabel 'What is your name?' -FontSize 18 -FontWeight Bold
@@ -81,6 +82,12 @@ New-PoshUIApp -Config .\MyApp.app.json -Destination .
 
 The release zip has a ready-made one in `Examples\App-Launcher\`. Full guide:
 [Staging & Delivery](./agent/11-staging-and-delivery.md#launching).
+
+### Structure a bigger app *(v1.5.1)*
+
+When the app grows, or other admins add to it, split it into a front end, a back end and content folders.
+`Examples\Launchpad\` in the release zip is a learning example laid out that way, to study and copy:
+[Structuring an App](./agent/17-structuring-an-app.md).
 
 ## Create Your First Wizard
 

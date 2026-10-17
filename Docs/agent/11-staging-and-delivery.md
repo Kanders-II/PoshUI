@@ -1,4 +1,4 @@
-﻿# 11 — Staging & Delivery: Apps That Other People Run
+# 11 — Staging & Delivery: Apps That Other People Run
 
 The context for everything you build with PoshUI: **an administrator builds an app, stages the content it
 works on, and hands it to other people to run** — end users on their own machines, or other admins. The
@@ -33,7 +33,7 @@ logged so it can be supported remotely), and **delivery** (packaging, checking a
 
 ```
 MyApp\
-  Start-MyApp.cmd        # what the runner double-clicks
+  MyApp.exe + .app.json  # what the runner double-clicks (section 8)
   MyApp.ps1              # the front end: pages, bindings, actions          CODE   - author
   lib\Operations.ps1     # the back end: plain functions, no UI cmdlets     CODE   - author
   config.psd1            # this copy's settings: audience, branding, paths  CONFIG - stager
@@ -52,6 +52,10 @@ MyApp\
 - **Config** changes per copy: an end-user edition and an admin edition are the same code and content with
   a different `config.psd1`.
 - **The app discovers its content at start** and builds its UI from it. Nothing in the code names an item.
+
+**Launchpad** (`Examples\Launchpad\` in the release package) is a learning example of structuring an app
+along these lines; its scripts are placeholders. It is walked through in
+[17 - Structuring an App](./17-structuring-an-app.md).
 
 ---
 
@@ -440,7 +444,7 @@ PoshUI.exe for the window).
 | Channel | Notes |
 |---|---|
 | Zip / USB | Tell the runner to extract it first and **unblock** it (`Get-ChildItem -Recurse \| Unblock-File`) — downloaded files carry a mark that makes PowerShell refuse them |
-| File share | Works for a handful of users; for many, copy it locally first (the launcher can `robocopy` to `%LOCALAPPDATA%` and start from there) — share hiccups mid-run are hard to diagnose |
+| File share | Works for a handful of users; for many, copy it locally first (a small `.cmd` can `robocopy` it to `%LOCALAPPDATA%` and start it from there) — share hiccups mid-run are hard to diagnose |
 | Intune / ConfigMgr | Install the folder to `%ProgramFiles%\<AppId>` (read-only for users — the launcher then logs to `%LOCALAPPDATA%\PoshUI\<Name>\logs`, and the app should keep its own logs in `%LOCALAPPDATA%` too) and run `MyApp.exe --create-shortcuts --all-users` from the install step |
 | Admin toolkit | Copy the folder; admins double-click `MyApp.exe` (or run `.\MyApp.ps1`) |
 

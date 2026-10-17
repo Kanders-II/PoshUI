@@ -1,6 +1,6 @@
 # Migration Guide
 
-This guide assists users in migrating their existing scripts from PoshWizard 1.x to PoshUI 2.0.
+This guide assists users in migrating their existing scripts from PoshWizard 1.x to PoshUI.
 
 ## Overview of Changes
 
@@ -8,16 +8,16 @@ PoshWizard has been rebranded to **PoshUI**. While the core engine remains focus
 
 ### Key Changes:
 1.  **Rebranding**: All "Wizard" prefixes in cmdlets have been updated to "UI" (e.g., `Add-WizardTextBox` is now `Add-UITextBox`).
-2.  **Module Separation**: The single module has been split into three specialized modules: `PoshUI.Wizard`, `PoshUI.Dashboard`, and `PoshUI.Workflow`.
+2.  **Module Separation**: The single module has been split into specialized modules: `PoshUI.Wizard`, `PoshUI.Dashboard` and `PoshUI.Workflow` (`PoshUI.Canvas`, for free-form apps, came later in 1.4.0).
 3.  **Namespace Update**: The repository and default branding now reflect "PoshUI".
 
 ---
 
 ## Backward Compatibility
 
-We understand that you have existing automation. PoshUI 2.0 includes a comprehensive set of **aliases** that ensure your 1.x scripts continue to work without modification.
+We understand that you have existing automation. PoshUI includes a comprehensive set of **aliases** that ensure your 1.x scripts continue to work without modification.
 
-| 1.x Cmdlet | 2.0 Equivalent | Alias Provided |
+| PoshWizard 1.x Cmdlet | PoshUI Equivalent | Alias Provided |
 |------------|----------------|----------------|
 | `New-PoshWizard` | `New-PoshUIWizard` | Yes |
 | `Show-PoshWizard`| `Show-PoshUIWizard`| Yes |
@@ -38,7 +38,7 @@ If your scripts explicitly point to the `.psd1` file, update the path to the new
 Import-Module "C:\Path\To\PoshWizard\PoshWizard.psd1"
 ```
 
-**New (2.0):**
+**New (PoshUI):**
 ```powershell
 # For standard wizards
 Import-Module "C:\Path\To\PoshUI\PoshUI.Wizard\PoshUI.Wizard.psd1"
@@ -56,7 +56,7 @@ Add-UITextBox -Name "Server" -Label "Server"
 ```
 
 ### 3. Handle ScriptBody Results
-In PoshUI 2.0, we have clarified the behavior of `-ScriptBody`. In Live Execution mode, the script runs *before* the wizard returns. You no longer need to check the `$result` variable for data if your script body has already performed the work.
+In PoshUI, we have clarified the behavior of `-ScriptBody`. In Live Execution mode, the script runs *before* the wizard returns. You no longer need to check the `$result` variable for data if your script body has already performed the work.
 
 ---
 

@@ -161,7 +161,7 @@ Suggestions:
 
 1. **Check module path:**
    ```powershell
-   $modulePath = 'D:\PoshUI\PoshUI.Dashboard\PoshUI.Dashboard.psd1'
+   $modulePath = 'C:\Tools\PoshUI\PoshUI.Dashboard\PoshUI.Dashboard.psd1'  # wherever you extracted PoshUI
    Test-Path $modulePath  # Should return True
    ```
 
@@ -190,7 +190,7 @@ Import-Module $modulePath -Force
 **Files Blocked:**
 ```powershell
 # After downloading, unblock all files
-Get-ChildItem -Path 'D:\PoshUI' -Recurse | Unblock-File
+Get-ChildItem -Path 'C:\Tools\PoshUI' -Recurse | Unblock-File   # your extracted PoshUI folder
 ```
 
 **Wrong PowerShell Version:**
@@ -436,6 +436,26 @@ Get-PoshUIDashboard  # Now returns dashboard definition
 
 ---
 
+## Canvas Apps
+
+### Script breaks or shows garbled text
+**Cause:** The script has a non-ASCII character (an em dash, a bullet, an emoji, an accented letter) and was saved as UTF-8 *without* a BOM. Windows PowerShell 5.1 reads that as ANSI and the script falls apart, often with confusing parse errors.
+**Solution:** Save the `.ps1` as **UTF-8 with BOM**. In VS Code, click the encoding in the status bar and pick "Save with Encoding" → "UTF-8 with BOM".
+
+### Accent buttons are pale grey with white text
+**Cause:** `-Style Accent` takes its colour from the theme, and without a `Set-UITheme` call the base palette has no proper accent.
+**Solution:** Call `Set-UITheme` right after `New-PoshUICanvas`:
+```powershell
+New-PoshUICanvas -Title 'My App' -Theme Dark
+Set-UITheme -Preset Slate -Accent Sky
+```
+
+### Where are the logs?
+- **A script run with `Show-PoshUICanvas`:** `PoshUI.log` and `CommandLog.txt` in the `logs` folder beside `PoshUI.exe` (normally `PoshUI\bin\logs\`).
+- **An app exe made with `New-PoshUIApp`:** the folder named by `LogDirectory` in `<App>.app.json`, or `logs` beside the exe if it isn't set. If that folder can't be written (an install under Program Files, for example), the logs go to `%LOCALAPPDATA%\PoshUI\<App name>\logs` instead. Besides `PoshUI.log`, you'll find `<App name>.log` there, which holds your script's own output.
+
+---
+
 ## Getting Help
 
 ### Enable Verbose Output
@@ -496,7 +516,7 @@ Show-PoshUIDashboard
 2. **Enable Verbose:** Use `-Verbose` on all cmdlets
 3. **Test Components:** Test ScriptBlocks and data independently
 4. **Simplify:** Create minimal reproduction case
-5. **Check Logs:** Review `$env:LOCALAPPDATA\PoshUI\Logs\PoshUI.log`
+5. **Check Logs:** Review `PoshUI.log` in the `logs` folder beside `PoshUI.exe` (normally `PoshUI\bin\logs\`). For an app exe, see [Where are the logs?](#where-are-the-logs)
 
 For additional help, see:
 - [Dashboard Cards Reference](./dashboard-cards-reference.md)

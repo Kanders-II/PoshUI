@@ -20,8 +20,8 @@ This example is designed to serve as a reference for developers. It organizes co
 ## Running the Example
 
 ```powershell
-# Navigate to the Wizard examples directory
-cd .\PoshUI\PoshUI.Wizard\Examples
+# Navigate to the examples directory
+cd .\PoshUI\Examples
 
 # Run the script
 .\Wizard-AllControls.ps1

@@ -2,6 +2,58 @@
 
 All notable changes to the PoshUI project are documented here.
 
+## [1.5.1] - 2026-10-17
+
+An example-and-fixes release: **Launchpad**, an example app laid out as a project, plus fixes for data grids,
+light/dark switching, the folder dialog, the number field and app launchers. Existing scripts run unchanged; one new parameter, `Add-UICanvasMarkdown -BasePath`.
+
+### Added
+- **Launchpad example** (`Examples\Launchpad\` in the release package). A learning example: a small app built
+  the way a PoshUI project should be: a front end that only draws, a back end in `lib\` with no UI cmdlets, a
+  `Content\` folder other people drop scripts and workflows into, `config.psd1`, a `Check.ps1` gate, 30 Pester
+  tests for the engine, a launcher exe, a live light/dark theme in one file and a launch-sequence splash.
+  Scripts get a form from their `param()` block (text, number, toggle, dropdown, file and folder pickers) and
+  their how-to beside them. Workflows chain scripts with decisions: routing on results, questions, mid-run
+  input, review-and-pick, and approvals that can wait and resume later, even after a restart. Activity keeps
+  every run with each step's output; Settings clears the history and opens the app's folders. Drop-ins are checked (names, required values, `Read-Host`); `RequireSigned`
+  and `TimeoutMinutes` settings and a Cancel button cover safety. Guide: [Structuring an App](../agent/17-structuring-an-app.md).
+- `Add-UICanvasDataGrid -Properties @{ SelectionMode = 'Multiple' }`: Ctrl/Shift-click selection.
+  `Get-UICanvasValue` returns the selected rows; setting `$true` selects all, `$null` clears.
+- The release package ships the example launchers (`Launchpad.exe`, `Hello.exe`) pre-built. They are
+  unchanged copies of the signed `PoshUI.exe`, so they carry its signature.
+
+### Fixed
+- **Light/dark switching stopped part-way on any page with a data grid.** The grid's styles froze the shared
+  theme brushes that 1.5.0 introduced, so the next switch threw ("read-only state") and left cards, text and the
+  grid in the old theme while the page and title bar changed. Theme brushes in styles are now passed by binding
+  and never frozen, and a frozen brush is skipped and replaced rather than stopping the switch.
+- **Data grid rows were unreadable** ([#10](https://github.com/Kanders-II/PoshUI/issues/10)). Every other row
+  was a fixed dark navy, unreadable in light mode and off-theme in dark. Stripes, hover and selection are now
+  tints of the theme's own text and accent colours and follow a light/dark switch;
+  `-Properties @{ AlternatingRowBackground = 'None' }` (or a colour) overrides them.
+- **Data grid columns collapsed** when the page gave the grid no width (a Canvas-layout page, a stack row):
+  headers disappeared and cells clipped to two letters. Columns now size to their content there and still fill
+  the width when the grid has one. Cell text is vertically centred and inset.
+- **An app launched from PowerShell 7 could not find built-in cmdlets.** `MyApp.exe` started from a `pwsh`
+  console, deploy script or installer inherited PowerShell 7's module path, so `Import-PowerShellDataFile` and
+  other built-ins were "not recognized". The launcher now uses Windows PowerShell's module path for the app.
+- **The folder picker opened the legacy "Browse For Folder" tree.** `Add-UICanvasFolderPicker` and
+  `Select-UICanvasFolder` now use the Explorer-style folder dialog (IFileDialog), as the wizard does.
+- **The number field's up/down buttons were unthemed system buttons.** They are now flat chevrons inside the
+  field's right edge, in the theme's colours, with a hover tint.
+- **Markdown images now work for how-tos.** A relative image path was resolved against the app's working folder,
+  so `![diagram](diagram.png)` next to a `.md` never loaded. It is now found beside the `-Path` file (or in the
+  new `-BasePath` for `-Text` markdown). An image on a line of its own is shown as a figure, column-wide with its
+  alt text as a caption; inside a sentence it is icon-sized; a missing one shows its alt text.
+- **Secondary windows had a white Windows title bar on a dark app.** `New-UICanvasWindow` windows that keep the
+  OS title bar now get Windows' dark title bar in dark mode and, on Windows 11, the theme's own colours, and they
+  follow a light/dark switch while open. The markdown viewer's scrollbar is the themed thin one.
+- **`Examples\App-Launcher\Hello.ps1` shipped with two commands joined on one line** in 1.5.0, so `Hello.exe`
+  opened with only its label. Fixed.
+
+### Changed
+- `PoshUI.Canvas` 1.5.0 -> 1.5.1; it requires engine 1.5.1 for the fixes above.
+
 ## [1.5.0] - 2026-10-15
 
 Ship a Canvas script as its own app with `New-PoshUIApp`, and switch light/dark in place. Existing scripts run unchanged.
@@ -117,7 +169,7 @@ showcase shows the pattern.
 ### PoshUI.Canvas — Free-Form Apps
 
 A fourth module joins Wizard, Dashboard and Workflow. Where those give you an opinionated shell, **Canvas gives
-you a blank page and ~75 cmdlets**: lay out anything, anywhere, in a single `.ps1`. No XAML, no MVVM, no project
+you a blank page and ~85 cmdlets**: lay out anything, anywhere, in a single `.ps1`. No XAML, no MVVM, no project
 scaffolding, no build step — the script *is* the application.
 
 ```powershell

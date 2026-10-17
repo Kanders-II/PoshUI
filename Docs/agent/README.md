@@ -26,11 +26,13 @@ files as a reference.
 | [11-staging-and-delivery.md](11-staging-and-delivery.md) | **Who it is for.** An admin builds and stages the app; end users or other admins run it. Code vs content vs config, staged content (a folder per item with a descriptor, discovered and validated at start), the back-end contract (result objects, logging, dry run, elevation), audience editions from config, the stager's `-Check`, packaging, launching, signing and delivery channels — built and run as a real package. |
 | [15-control-catalog.md](15-control-catalog.md) | **Generated.** Every control `Type` the engine builds, the `-Properties` keys it actually reads, its cmdlet and ValidateSets, and a snippet that renders. The ground truth behind the `[unused property]` warning. |
 | [16-animation-and-motion.md](16-animation-and-motion.md) | Motion: the declarative knobs, where they stop, and the XAML-island timeline. Storyboard mechanics, the property paths that work, a technique catalogue (sheen, focus pull, per-glyph cascade, slice, iris, draw-on), easing and timing, the page-load hook, and how to verify motion headlessly. |
+| [17-structuring-an-app.md](17-structuring-an-app.md) | **A learning example: how a complete app is laid out.** Walks through Launchpad layer by layer: content kept apart from the app, ordinary scripts that become pages from their comment help and `param()` block, workflows with decisions and approvals, a front end that only draws and a back end with no UI in it, and the tests and check script around them. Copy the structure, replace the sample content. |
 | `Launcher\Designer\README.md` (in the repo, not on this site) | The **visual designer** (`PoshUI.exe --design App.ps1`): live preview through the real factory, inspector, drag/drop, edits spliced into the script. |
 
 **00 is how to think; 09 is what to build for a given objective; 10 is how it should look; 11 is who stages
 it and who runs it; 01–08 are the API.** Read 00, the matching blueprint in 09 and 11 before designing
-anything, apply 10 for anything people will use daily, then use 01–08 to write it. Reach for **16** only when
+anything, apply 10 for anything people will use daily, then use 01–08 to write it. When the app grows past
+one script, read **17** to see how a whole project is laid out. Reach for **16** only when
 the motion you want is more than `Stagger`, `HoverScale` and `Set-UICanvasAnimate` can express.
 
 ## Golden Rules (read these first)

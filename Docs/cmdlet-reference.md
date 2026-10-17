@@ -6,16 +6,17 @@ Complete reference for all PoshUI cmdlets organized by module.
 
 ## PoshUI.Canvas *(new in v1.4.0)*
 
-Canvas exports **~85 cmdlets** — too many to inline here, and they follow a single consistent shape rather than
+Canvas exports **nearly 90 cmdlets** — too many to inline here, and they follow a single consistent shape rather than
 needing individual write-ups:
 
 ```
 New-PoshUICanvas → [Set-UITheme] → Add-UICanvasPage → Add-UICanvas* … → Show-PoshUICanvas
 ```
 
-Nearly every control cmdlet accepts the same core parameters: `-Name` (addressable at runtime), `-Value` /
-`-Label`, `-X/-Y/-Width/-Height`, `-Tooltip`, `-Visible/-Enabled`, `-Refresh <sec>`, `-Action { }` /
-`-OnChange { }`, and a `-Properties @{ }` bag for styling and layout hints.
+Most control cmdlets share a core set of parameters: `-Name` (addressable at runtime), `-X/-Y/-Width/-Height`,
+`-Tooltip`, `-Visible/-Enabled`, and a `-Properties @{ }` bag for styling and layout hints. Many also take
+`-Value`, `-Refresh <sec>` and `-OnChange { }`; fewer take `-Label`, and `-Action { }` is mainly on buttons and
+other clickable controls. Check the [Capability Reference](./Canvas-Reference.md) for a specific control.
 
 Full listings live in the Canvas docs:
 
@@ -52,6 +53,8 @@ Quick orientation by category:
 ## PoshUI.Wizard
 
 Build step-by-step guided interfaces for configuration, deployment, and setup tasks.
+
+The tables below cover the most-used parameters. For every parameter (including `-IconPath`, `-WindowTitleIcon`, `-AppDebug`, `-Multiline`, `-Editable`) and cmdlets not shown here (`Add-UIMultiLine`, `Get-PoshUIWizard`, `Set-/Get-UIConfiguration`, `Clear-PoshUI*`, `Register-/Unregister-PoshUICleanupTask`), see the generated [Wizard Cmdlets](./reference/Wizard-Cmdlets.md) page.
 
 ### New-PoshUIWizard
 
@@ -115,7 +118,7 @@ Add-UIStep -Name "Config" -Title "Configuration" -IconPath "C:\Icons\gear_3d.png
 | `-Icon` | String | No | Segoe MDL2 icon glyph (e.g., `'&#xE713;'` for Settings). |
 | `-IconPath` | String | No | Path to PNG/ICO image file for full-color sidebar icon. *(v1.3.0)* |
 | `-Order` | Int | No | Display order. Lower numbers appear first. Auto-assigned if omitted. |
-| `-Type` | String | No | Step type: `Wizard` (default), `Dashboard`, `Workflow`. |
+| `-Type` | String | No | Step type: `Wizard` (default) or `Dashboard`. (The Workflow module's `Add-UIStep` also accepts `Workflow`.) |
 | `-Skippable` | Switch | No | Allow users to skip this step. |
 
 ---
@@ -137,7 +140,7 @@ Set-UITheme @{ AccentColor = "#0078D4" }   # accent lives on the theme, not on b
 | `-SidebarHeaderIcon` | String | No | Glyph or PNG/ICO file path for sidebar header icon. *(PNG support v1.3.0)* |
 | `-SidebarHeaderIconOrientation` | String | No | Icon position relative to text: `Left`, `Right`, `Top`, `Bottom`. |
 | `-Theme` | String | No | Theme override: `Auto`, `Light`, `Dark`. |
-| `-ThemeFile` | String | No | Path to custom XAML theme file. |
+| `-ShowSidebarHeaderIcon` | Boolean | No | Show or hide the sidebar header icon. |
 | `-DisableAnimations` | Switch | No | Disable UI transition animations. |
 | `-AllowCancel` | Boolean | No | Enable/disable close button. |
 
@@ -328,7 +331,8 @@ Add-UINumeric -Step "Config" -Name "Memory" -Label "Memory (GB)" -Minimum 1 -Max
 | `-Minimum` | Object | No | Lowest allowed value. |
 | `-Maximum` | Object | No | Highest allowed value. |
 | `-Increment` | Object | No | Step amount for spinner buttons. Default: 1. |
-| `-DecimalPlaces` | Int | No | Decimal precision. Default: 0 (integers). |
+| `-AllowDecimal` | Switch | No | Allow decimal values (spinner increment defaults to 0.1). Integers only when omitted. |
+| `-Format` | String | No | Display format string. |
 | `-Mandatory` | Switch | No | Require value entry. |
 | `-Width` | Int | No | Control width in pixels. |
 | `-HelpText` | String | No | Tooltip text. |
@@ -498,6 +502,8 @@ Add-UIBanner -Step "Welcome" -CarouselItems $slides -AutoRotate $true
 
 Build card-based monitoring interfaces with live data refresh.
 
+For every parameter (including `Add-UIMetricCard -Trend/-TrendValue/-SparklineData/-ShowGauge/-ShowSparkline`) and cmdlets not shown here (`Add-UIStatusCard`, `Add-UICard`, `Add-UIBanner`, `Set-/Get-UIConfiguration`, `Clear-PoshUI*`), see the generated [Dashboard Cmdlets](./reference/Dashboard-Cmdlets.md) page.
+
 ### New-PoshUIDashboard
 
 Initializes a new dashboard definition.
@@ -608,7 +614,7 @@ Add-UIChartCard -Step "Dashboard" -Name "SalesChart" -Title "Sales Trend" `
 | `-Name` | String | **Yes** | Unique card identifier. |
 | `-Title` | String | **Yes** | Card header text. |
 | `-Data` | Object | **Yes** | Array of objects or ScriptBlock returning data. |
-| `-ChartType` | String | No | Chart type: `Line` (default), `Bar`, `Area`, `Pie`. |
+| `-ChartType` | String | No | Chart type: `Line` (default), `Bar`, `Area`, `Pie`, `Donut`. |
 | `-Description` | String | No | Subtitle below title. |
 | `-ShowLegend` | Boolean | No | Display chart legend. Default: `$true`. |
 | `-ShowTooltip` | Boolean | No | Show tooltips on hover. Default: `$true`. |
@@ -689,6 +695,8 @@ Add-UIScriptCard -Step "Tools" -Name "DiskCleanup" -Title "Disk Cleanup" `
 ## PoshUI.Workflow
 
 Orchestrate multi-step automated processes with progress tracking and reboot/resume.
+
+For every parameter (including `Clear-UIWorkflowState -All/-SecureWipe`) and cmdlets not shown here (`Register-/Unregister-UIWorkflowResumeTask`, `Add-UIStep`, the shared input controls), see the generated [Workflow Cmdlets](./reference/Workflow-Cmdlets.md) page.
 
 ### New-PoshUIWorkflow
 

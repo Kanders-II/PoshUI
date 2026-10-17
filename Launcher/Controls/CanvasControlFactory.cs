@@ -1859,11 +1859,73 @@ namespace Launcher.Controls
             return int.TryParse(v.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out r) ? r : dflt;
         }
 
+        /// <summary>A style setter for a live theme brush. A Style freezes its setter values when it is sealed,
+        /// and a frozen brush can no longer be recoloured - a shared CanvasTheme brush handed to a setter
+        /// directly was frozen for every control using it, and the next light/dark switch threw. Binding to
+        /// the brush passes the same instance through without freezing it.</summary>
+        private static Setter LiveSetter(DependencyProperty dp, Brush brush)
+        {
+            if (brush == null || brush.IsFrozen) return new Setter(dp, brush);
+            return new Setter(dp, new System.Windows.Data.Binding { Source = brush, Mode = System.Windows.Data.BindingMode.OneTime });
+        }
+
+        /// <summary>The stripe on every other grid row: -Properties @{ AlternatingRowBackground = '#hex' } wins
+        /// ('None' turns striping off); otherwise a faint tint of the theme text colour.</summary>
+        private static Brush AltRowBrush(UIControlJson c)
+        {
+            var v = PStr(c, "AlternatingRowBackground");
+            if (string.Equals(v, "None", StringComparison.OrdinalIgnoreCase)) return System.Windows.Media.Brushes.Transparent;
+            return Brush(v) ?? CanvasTheme.ForKeyTint("BodyForegroundBrush", "#E5E7EB", 0x0D);
+        }
+
+        /// <summary>A grid cell that honours its Padding and vertical alignment. The stock template is a bare
+        /// border around the content, so text sat in the top corner of a 40px row with no inset.</summary>
+        private static ControlTemplate CellTemplate()
+        {
+            var border = new FrameworkElementFactory(typeof(Border));
+            border.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Control.BackgroundProperty));
+            border.SetValue(Border.BorderBrushProperty, new TemplateBindingExtension(Control.BorderBrushProperty));
+            border.SetValue(Border.BorderThicknessProperty, new TemplateBindingExtension(Control.BorderThicknessProperty));
+            border.SetValue(Border.PaddingProperty, new TemplateBindingExtension(Control.PaddingProperty));
+            border.SetValue(UIElement.SnapsToDevicePixelsProperty, true);
+            var content = new FrameworkElementFactory(typeof(ContentPresenter));
+            content.SetValue(FrameworkElement.VerticalAlignmentProperty, new TemplateBindingExtension(Control.VerticalContentAlignmentProperty));
+            border.AppendChild(content);
+            return new ControlTemplate(typeof(System.Windows.Controls.DataGridCell)) { VisualTree = border };
+        }
+
+        /// <summary>A DataGrid whose -Columns fill the width it is given, and size to their content when it is
+        /// given none. Star columns in an unconstrained parent (a Canvas-layout page, a StackPanel row)
+        /// collapse to their minimum - headers vanished behind their padding and cells clipped to two
+        /// letters (issue #10) - so on an unbounded measure they switch to Auto, and back once bounded.</summary>
+        private sealed class CanvasDataGrid : DataGrid
+        {
+            /// <summary>MinWidth that marks a column as the factory's own, i.e. one this grid may switch.</summary>
+            internal const double StarMin = 72;
+            private bool? _unbounded;
+
+            protected override Size MeasureOverride(Size available)
+            {
+                var unbounded = double.IsInfinity(available.Width);
+                if (_unbounded != unbounded)
+                {
+                    _unbounded = unbounded;
+                    foreach (var col in Columns)
+                    {
+                        if (col.MinWidth != StarMin) continue;
+                        col.Width = unbounded ? new DataGridLength(1, DataGridLengthUnitType.Auto)
+                                              : new DataGridLength(1, DataGridLengthUnitType.Star);
+                    }
+                }
+                return base.MeasureOverride(available);
+            }
+        }
+
         /// <summary>Sortable DataGrid. -Columns sets explicit text columns (else auto-generate); -Items seeds rows.
         /// Populate/refresh live with Set-UICanvasProperty Name ItemsSource $rows. Selection via Get-UICanvasValue.</summary>
         private static FrameworkElement BuildDataGrid(UIControlJson c, CanvasControl cc, Action<string, string> onEvent)
         {
-            var dg = new DataGrid
+            var dg = new CanvasDataGrid
             {
                 IsReadOnly = true,
                 AutoGenerateColumns = true,
@@ -1874,7 +1936,10 @@ namespace Launcher.Controls
                 BorderThickness = new Thickness(0),
                 Background = System.Windows.Media.Brushes.Transparent,
                 RowBackground = System.Windows.Media.Brushes.Transparent,
-                AlternatingRowBackground = Brush("#0F1730"),
+                // Stripes, hover and selection are tints of the theme's own text and accent colours, so they
+                // read on any surface in either mode and follow a light/dark switch (issue #10: a fixed
+                // dark-navy stripe made every other row unreadable in light mode).
+                AlternatingRowBackground = AltRowBrush(c),
                 RowHeight = 40,
                 ColumnHeaderHeight = 42,
                 SelectionMode = DataGridSelectionMode.Single,
@@ -1882,34 +1947,39 @@ namespace Launcher.Controls
                 FontSize = 13
             };
             dg.SetResourceReference(Control.ForegroundProperty, "BodyForegroundBrush");
+            // The canvas's thin themed scrollbar, not the stock light-grey one, inside the grid's own scroller.
+            var thinBar = Application.Current != null ? Application.Current.TryFindResource("CanvasThinScrollBarStyle") as Style : null;
+            if (thinBar != null) dg.Resources[typeof(System.Windows.Controls.Primitives.ScrollBar)] = thinBar;
 
             // Header: flat, uppercase-feel via colour/weight, single bottom rule, no separators.
             var hdr = new Style(typeof(System.Windows.Controls.Primitives.DataGridColumnHeader));
             hdr.Setters.Add(new Setter(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
-            hdr.Setters.Add(new Setter(Control.ForegroundProperty, TextSecondaryBrush()));
+            hdr.Setters.Add(LiveSetter(Control.ForegroundProperty, TextSecondaryBrush()));
             hdr.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
             hdr.Setters.Add(new Setter(Control.FontSizeProperty, 12.0));
             hdr.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(12, 0, 12, 0)));
             hdr.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Center));
             hdr.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0, 0, 0, 1)));
-            hdr.Setters.Add(new Setter(Control.BorderBrushProperty, CardBorder()));
+            hdr.Setters.Add(LiveSetter(Control.BorderBrushProperty, CardBorder()));
             dg.ColumnHeaderStyle = hdr;
 
             // Rows: subtle hover, accent-tinted selection, thin separator, no cell borders.
             var rowStyle = new Style(typeof(System.Windows.Controls.DataGridRow));
             var hov = new Trigger { Property = System.Windows.Controls.DataGridRow.IsMouseOverProperty, Value = true };
-            hov.Setters.Add(new Setter(System.Windows.Controls.DataGridRow.BackgroundProperty, Brush("#16203A")));
+            hov.Setters.Add(LiveSetter(System.Windows.Controls.DataGridRow.BackgroundProperty, CanvasTheme.ForKeyTint("BodyForegroundBrush", "#E5E7EB", 0x1C)));
             rowStyle.Triggers.Add(hov);
             dg.RowStyle = rowStyle;
 
             var cell = new Style(typeof(System.Windows.Controls.DataGridCell));
             cell.Setters.Add(new Setter(System.Windows.Controls.DataGridCell.BorderThicknessProperty, new Thickness(0)));
             cell.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(12, 0, 12, 0)));
-            cell.Setters.Add(new Setter(Control.ForegroundProperty, TextPrimaryBrush()));
+            cell.Setters.Add(LiveSetter(Control.ForegroundProperty, TextPrimaryBrush()));
             cell.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Center));
+            cell.Setters.Add(new Setter(Control.BackgroundProperty, System.Windows.Media.Brushes.Transparent));
+            cell.Setters.Add(new Setter(Control.TemplateProperty, CellTemplate()));
             var selT = new Trigger { Property = System.Windows.Controls.DataGridCell.IsSelectedProperty, Value = true };
-            selT.Setters.Add(new Setter(System.Windows.Controls.DataGridCell.BackgroundProperty, Brush("#2A2F66")));
-            selT.Setters.Add(new Setter(Control.ForegroundProperty, System.Windows.Media.Brushes.White));
+            selT.Setters.Add(LiveSetter(System.Windows.Controls.DataGridCell.BackgroundProperty, CanvasTheme.ForKeyTint("PrimaryBrush", "#6366F1", 0x48)));
+            selT.Setters.Add(LiveSetter(Control.ForegroundProperty, TextPrimaryBrush()));
             selT.Setters.Add(new Setter(System.Windows.Controls.DataGridCell.BorderBrushProperty, System.Windows.Media.Brushes.Transparent));
             cell.Triggers.Add(selT);
             dg.CellStyle = cell;
@@ -1919,12 +1989,23 @@ namespace Launcher.Controls
             {
                 dg.AutoGenerateColumns = false;
                 foreach (var col in cols)
-                    dg.Columns.Add(new DataGridTextColumn { Header = col, Binding = new System.Windows.Data.Binding(col), Width = new DataGridLength(1, DataGridLengthUnitType.Star) });
+                    dg.Columns.Add(new DataGridTextColumn { Header = col, Binding = new System.Windows.Data.Binding(col), Width = new DataGridLength(1, DataGridLengthUnitType.Star), MinWidth = CanvasDataGrid.StarMin });
             }
             var items = ItemsToView(JsonList(c, "ItemsJson")) as System.Collections.IEnumerable;
             if (items != null) dg.ItemsSource = items;
 
-            if (cc != null) { cc.GetValue = () => dg.SelectedItem; cc.SetValue = v => dg.SelectedItem = v; }
+            // -Properties @{ SelectionMode = 'Multiple' }: Ctrl/Shift-click and Ctrl+A pick several rows, and the
+            // value is every selected row (in display order) rather than one. Single-select stays the default.
+            if (string.Equals(PStr(c, "SelectionMode"), "Multiple", StringComparison.OrdinalIgnoreCase))
+            {
+                dg.SelectionMode = DataGridSelectionMode.Extended;
+                if (cc != null)
+                {
+                    cc.GetValue = () => dg.Items.Cast<object>().Where(i => dg.SelectedItems.Contains(i)).ToArray();
+                    cc.SetValue = v => { if (v == null) dg.UnselectAll(); else dg.SelectAll(); };   // $null clears, anything else selects all
+                }
+            }
+            else if (cc != null) { cc.GetValue = () => dg.SelectedItem; cc.SetValue = v => dg.SelectedItem = v; }
 
             // Selecting a row raises ValueChanged, so an -OnChange script can drive a master/detail pane.
             // Read the row with Get-UICanvasValue; its columns are accessible by name (e.g. $row.Task).
@@ -2068,13 +2149,64 @@ namespace Launcher.Controls
             string path = PStr(c, "Path");
             if (string.IsNullOrEmpty(md) && !string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
             { try { md = System.IO.File.ReadAllText(path); } catch { } }
-            var viewer = new FlowDocumentScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Document = MarkdownToFlow(md ?? "") };
+            // Images named relative to the .md (![diagram](diagram.png)) are found beside it, not in the app's folder.
+            // -Text markdown has no file, so its relative images resolve against an optional BasePath.
+            string baseDir = PStr(c, "BasePath");
+            if (string.IsNullOrEmpty(baseDir) && !string.IsNullOrEmpty(path)) { try { baseDir = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(path)); } catch { } }
+            var viewer = new FlowDocumentScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Document = MarkdownToFlow(md ?? "", baseDir) };
             viewer.SetResourceReference(Control.ForegroundProperty, "BodyForegroundBrush");
             viewer.Background = System.Windows.Media.Brushes.Transparent;
+            // The themed thin scrollbar, as the data grid uses - not the system's light grey one.
+            var thinBar = Application.Current?.TryFindResource("CanvasThinScrollBarStyle") as Style;
+            if (thinBar != null) viewer.Resources[typeof(ScrollBar)] = thinBar;
             return viewer;
         }
 
-        private static System.Windows.Documents.FlowDocument MarkdownToFlow(string md)
+        // The folder relative image paths resolve against while one document is being built (UI thread only).
+        [ThreadStatic] private static string _mdBase;
+
+        // A markdown image source -> something MakeImageSource can open: absolute paths and URLs as they are, a
+        // relative path against the document's folder. Returns null for a relative path with nowhere to resolve to.
+        private static string MdResolveImage(string src)
+        {
+            if (string.IsNullOrWhiteSpace(src)) return null;
+            src = src.Trim().Trim('<', '>');
+            if (src.Contains("://") || System.IO.Path.IsPathRooted(src)) return src;
+            if (string.IsNullOrEmpty(_mdBase)) return src;   // as before: relative to the process
+            try { return System.IO.Path.GetFullPath(System.IO.Path.Combine(_mdBase, src.Replace('/', '\\'))); } catch { return null; }
+        }
+
+        // An image on a line of its own: a block, as wide as the reading column allows (never upscaled), with its
+        // alt text as a small caption underneath - the way a diagram in a how-to wants to be shown.
+        private static readonly System.Text.RegularExpressions.Regex MdBlockImageRx = new System.Text.RegularExpressions.Regex(
+            @"^!\[(?<alt>[^\]]*)\]\((?<src>[^)\s]+)(?:\s+""(?<title>[^""]*)"")?\)$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+        private static System.Windows.Documents.Block MdBlockImage(string alt, string src)
+        {
+            var bs = MakeImageSource(MdResolveImage(src));
+            if (bs == null)
+            {
+                var missing = new System.Windows.Documents.Paragraph(new System.Windows.Documents.Run(string.IsNullOrEmpty(alt) ? "(image not found: " + src + ")" : alt + "  (image not found)"))
+                { Foreground = TextSecondaryBrush(), FontStyle = FontStyles.Italic, Margin = new Thickness(0, 4, 0, 8) };
+                return missing;
+            }
+            var panel = new StackPanel { Margin = new Thickness(0, 6, 0, 10), HorizontalAlignment = HorizontalAlignment.Left };
+            var im = new Image { Source = bs, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, MaxWidth = 760, MaxHeight = 520, HorizontalAlignment = HorizontalAlignment.Left };
+            if (!string.IsNullOrEmpty(alt)) im.ToolTip = alt;
+            RenderOptions.SetBitmapScalingMode(im, BitmapScalingMode.HighQuality);
+            panel.Children.Add(new Border { CornerRadius = new CornerRadius(6), ClipToBounds = true, Child = im, HorizontalAlignment = HorizontalAlignment.Left });
+            if (!string.IsNullOrEmpty(alt))
+                panel.Children.Add(new TextBlock { Text = alt, FontSize = 11.5, Margin = new Thickness(2, 6, 0, 0), Foreground = TextSecondaryBrush(), TextWrapping = TextWrapping.Wrap, MaxWidth = 760 });
+            return new System.Windows.Documents.BlockUIContainer(panel);
+        }
+
+        private static System.Windows.Documents.FlowDocument MarkdownToFlow(string md, string baseDir = null)
+        {
+            _mdBase = baseDir;
+            try { return MarkdownToFlowCore(md); } finally { _mdBase = null; }
+        }
+
+        private static System.Windows.Documents.FlowDocument MarkdownToFlowCore(string md)
         {
             var doc = new System.Windows.Documents.FlowDocument { FontFamily = new FontFamily("Segoe UI"), FontSize = 13, PagePadding = new Thickness(4) };
             doc.SetResourceReference(System.Windows.Documents.FlowDocument.ForegroundProperty, "BodyForegroundBrush");
@@ -2115,7 +2247,9 @@ namespace Launcher.Controls
                 bullets = ordered = null;
                 if (string.IsNullOrWhiteSpace(line)) { i++; continue; }
 
-                if (line == "---" || line == "***" || line == "___") { doc.Blocks.Add(MdHr()); }
+                var bim = MdBlockImageRx.Match(line.Trim());
+                if (bim.Success) { doc.Blocks.Add(MdBlockImage(bim.Groups["alt"].Value, bim.Groups["src"].Value)); }
+                else if (line == "---" || line == "***" || line == "___") { doc.Blocks.Add(MdHr()); }
                 else if (line.StartsWith("> ")) { doc.Blocks.Add(MdQuote(line.Substring(2))); }
                 else if (line.StartsWith("### ")) { doc.Blocks.Add(MdHead(line.Substring(4), 15)); }
                 else if (line.StartsWith("## ")) { doc.Blocks.Add(MdHead(line.Substring(3), 18)); }
@@ -2170,11 +2304,13 @@ namespace Launcher.Controls
                 if (m.Index > pos) p.Inlines.Add(new System.Windows.Documents.Run(text.Substring(pos, m.Index - pos)));
                 if (m.Groups["img"].Success)
                 {
-                    var bs = MakeImageSource(m.Groups["src"].Value);
+                    var bs = MakeImageSource(MdResolveImage(m.Groups["src"].Value));
                     if (bs != null)
                     {
-                        // DownOnly: render at natural size, only shrinking images larger than the caps (never upscale).
-                        var im = new Image { Source = bs, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, MaxHeight = 220, MaxWidth = 360, Margin = new Thickness(0, 2, 0, 2) };
+                        // Inside a sentence an image is an icon: about the height of the text, sitting on the line.
+                        // (A picture meant to be seen properly goes on a line of its own - see MdBlockImage.)
+                        var im = new Image { Source = bs, Stretch = Stretch.Uniform, StretchDirection = StretchDirection.DownOnly, MaxHeight = 20, MaxWidth = 120, Margin = new Thickness(1, 0, 1, -4) };
+                        RenderOptions.SetBitmapScalingMode(im, BitmapScalingMode.HighQuality);
                         string alt = m.Groups["alt"].Value; if (!string.IsNullOrEmpty(alt)) im.ToolTip = alt;
                         p.Inlines.Add(new System.Windows.Documents.InlineUIContainer(im));
                     }
@@ -2600,21 +2736,18 @@ namespace Launcher.Controls
             double step = PDbl(c, "Step", 1);
             if (step <= 0) step = 1;
 
+            // The spin buttons sit inside the box's right edge (the box keeps its own themed border and focus look):
+            // flat chevrons in the theme's secondary text colour, with a soft tint on hover - not system buttons.
             var grid = new Grid();
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var box = new TextBox { Text = Str(c.Default) ?? "0", VerticalContentAlignment = VerticalAlignment.Center, MinHeight = 30, Padding = new Thickness(6, 3, 6, 3) };
+            var box = new TextBox { Text = Str(c.Default) ?? "0", VerticalContentAlignment = VerticalAlignment.Center, MinHeight = 30, Padding = new Thickness(6, 3, 30, 3) };
             box.SetResourceReference(Control.BackgroundProperty, "TextBoxBackgroundBrush");
             box.SetResourceReference(Control.ForegroundProperty, "BodyForegroundBrush");
             box.SetResourceReference(Control.BorderBrushProperty, "BorderBrush");
-            Grid.SetColumn(box, 0);
             grid.Children.Add(box);
 
-            var spin = new StackPanel { Orientation = Orientation.Vertical, Width = 20 };
-            Grid.SetColumn(spin, 1);
-            var up = new RepeatButton { Content = "\u25B2", FontSize = 7, Padding = new Thickness(0) };
-            var down = new RepeatButton { Content = "\u25BC", FontSize = 7, Padding = new Thickness(0) };
+            var spin = new StackPanel { Orientation = Orientation.Vertical, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 5, 0) };
+            var up = SpinButton("\uE70E");     // ChevronUp
+            var down = SpinButton("\uE70D");   // ChevronDown
             spin.Children.Add(up);
             spin.Children.Add(down);
             grid.Children.Add(spin);
@@ -2632,6 +2765,30 @@ namespace Launcher.Controls
 
             if (cc != null) { cc.GetValue = () => AsDbl(box.Text, 0); cc.SetValue = v => box.Text = Str(v) ?? "0"; }
             return grid;
+        }
+
+        /// <summary>A number box's up/down button: a flat chevron with a hover tint, both following the live theme.</summary>
+        private static RepeatButton SpinButton(string glyph)
+        {
+            var border = new FrameworkElementFactory(typeof(Border));
+            border.SetValue(Border.BackgroundProperty, new TemplateBindingExtension(Control.BackgroundProperty));
+            border.SetValue(Border.CornerRadiusProperty, new CornerRadius(3));
+            var content = new FrameworkElementFactory(typeof(ContentPresenter));
+            content.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            content.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+            border.AppendChild(content);
+
+            var label = new TextBlock { Text = glyph, FontSize = 9, FontFamily = new FontFamily("Segoe Fluent Icons, Segoe MDL2 Assets") };
+            label.Foreground = TextSecondaryBrush();
+            var rb = new RepeatButton
+            {
+                Width = 22, Height = 13, Padding = new Thickness(0), Focusable = false, Cursor = System.Windows.Input.Cursors.Hand,
+                Background = Brushes.Transparent, BorderThickness = new Thickness(0), Content = label,
+                Template = new ControlTemplate(typeof(RepeatButton)) { VisualTree = border }
+            };
+            rb.MouseEnter += (s, e) => { rb.Background = CanvasTheme.ForKeyTint("BodyForegroundBrush", "#E5E7EB", 0x24); label.Foreground = TextPrimaryBrush(); };
+            rb.MouseLeave += (s, e) => { rb.Background = Brushes.Transparent; label.Foreground = TextSecondaryBrush(); };
+            return rb;
         }
 
         /// <summary>ProgressRing: an indeterminate rotating arc (WinUI has no WPF equivalent).</summary>

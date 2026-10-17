@@ -29,10 +29,12 @@ function Add-UINewControl {
 
 After adding the PowerShell cmdlet, you must update the C# `Launcher` project to render the new control.
 
-1.  **Create a ViewModel**: Add a new class in `Launcher/ViewModels/Controls/` that inherits from `ParameterViewModel`.
-2.  **Create a View**: Add a new XAML `UserControl` in `Launcher/Views/Controls/` to define the visual appearance.
-3.  **Register the Type**: Update the `ReflectionService.cs` (for Wizards) or `JsonDefinitionLoader.cs` (for Dashboards) to map the PowerShell control type string to your new ViewModel.
+1.  **Create a ViewModel**: Add a new class in `Launcher/ViewModels/` that inherits from `ParameterViewModel` (`Launcher/ViewModels/ParameterViewModel.cs`).
+2.  **Create a View**: Add a new XAML `UserControl` in `Launcher/Controls/` to define the visual appearance.
+3.  **Register the Type**: Update `Launcher/Services/ReflectionService.cs` (for Wizards) or `Launcher/Services/JsonDefinitionLoader.cs` (for Dashboards) to map the PowerShell control type string to your new ViewModel.
 4.  **Data Binding**: Ensure your XAML view correctly binds to the properties in your ViewModel.
+
+For **Canvas** controls the path is different: Canvas controls are built in code by `Launcher/Controls/CanvasControlFactory.cs`, so a new Canvas control type is added there rather than through a ViewModel/View pair.
 
 ## Adding Custom Templates
 

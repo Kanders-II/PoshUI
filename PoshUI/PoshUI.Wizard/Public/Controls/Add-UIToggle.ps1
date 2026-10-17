@@ -29,12 +29,12 @@
     Help text or tooltip to display for this control.
     
     .EXAMPLE
-    Add-UIToggle -Step "Config" -Name "EnableDebug" -Label "Enable Debug Mode" -DefaultValue $false
+    Add-UIToggle -Step "Config" -Name "EnableDebug" -Label "Enable Debug Mode" -Default $false
     
     Adds a toggle switch for enabling debug mode, defaulting to off.
     
     .EXAMPLE
-    Add-UIToggle -Step "Features" -Name "AdvancedMode" -Label "Advanced Features" -DefaultValue $true
+    Add-UIToggle -Step "Features" -Name "AdvancedMode" -Label "Advanced Features" -Default $true
     
     Adds a toggle switch that defaults to on.
     

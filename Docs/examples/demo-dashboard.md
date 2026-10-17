@@ -16,8 +16,8 @@ This demonstration illustrates the power of the PoshUI.Dashboard module for IT o
 ## Running the Example
 
 ```powershell
-# Navigate to the Dashboard examples directory
-cd .\PoshUI\PoshUI.Dashboard\Examples
+# Navigate to the examples directory
+cd .\PoshUI\Examples
 
 # Run the script
 .\Dashboard-MultiPageDashboard.ps1
@@ -44,5 +44,5 @@ The "Storage" step demonstrates how to use `DataGridCards` to list drives and th
 The example also showcases how to use `-Category` to group cards and `-Description` to provide context for each visualization.
 
 ::: tip
-Explore the `Dashboard-CardFeatures.ps1` example for a deeper dive into the specific styling options available for each card type.
+Explore `Dashboard-ComputerMaintenance.ps1` and `Dashboard-ScriptCard.ps1` in the same folder for more card styling and ScriptCard examples.
 :::

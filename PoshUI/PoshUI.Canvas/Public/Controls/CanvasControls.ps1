@@ -610,15 +610,22 @@ function Add-UICanvasAutoSuggest {
     _FwdCanvas -Type 'AutoSuggest' -Bound $PSBoundParameters -Props @{}
 }
 
-# Lightweight Markdown viewer (headings, **bold**, *italic*, `code`, - bullets). -Text or -Path.
+# Lightweight Markdown viewer (headings, **bold**, *italic*, `code`, - bullets, images). -Text or -Path.
+# Images: ![caption](diagram.png) on a line of its own is shown full-width with the caption under it; inside a
+# sentence it sits inline. A relative path is found beside the -Path file, or in -BasePath for -Text markdown.
 function Add-UICanvasMarkdown {
     [CmdletBinding()]
-    param([string]$Name, [string]$Text, [string]$Path,
+    param([string]$Name, [string]$Text, [string]$Path, [string]$BasePath,
         [double]$X, [double]$Y, [double]$Width, [double]$Height, [int]$ZIndex,
         [string]$Tooltip, [bool]$Visible, [bool]$Enabled, [hashtable]$Properties)
     $props = @{}
     if ($PSBoundParameters.ContainsKey('Text')) { $props.Text = $Text }
-    if ($PSBoundParameters.ContainsKey('Path')) { $props.Path = $Path }
+    # Full paths: the engine runs in another process, whose current folder is not this script's.
+    foreach ($p in 'Path', 'BasePath') {
+        if (-not $PSBoundParameters.ContainsKey($p)) { continue }
+        $v = $PSBoundParameters[$p]; $full = (Resolve-Path -LiteralPath $v -ErrorAction SilentlyContinue).ProviderPath
+        $props[$p] = if ($full) { $full } else { $v }
+    }
     _FwdCanvas -Type 'Markdown' -Bound $PSBoundParameters -Props $props
 }
 

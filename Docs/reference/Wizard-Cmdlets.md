@@ -2,7 +2,7 @@
 
 Complete reference for every cmdlet exported by the **PoshUI.Wizard** module (step-by-step input forms). See [POSHUI_AUTHORING_GUIDE.md](../POSHUI_AUTHORING_GUIDE.md) for concepts and patterns.
 
-_Auto-generated from the module's runtime metadata and comment-based help (PoshUI 1.3.1). Parameter tables list every non-common parameter._
+_Auto-generated from the module's runtime metadata and comment-based help (module 1.3.1, ships in PoshUI 1.5.1). Parameter tables list every non-common parameter._
 
 ## Cmdlet index
 
@@ -218,7 +218,7 @@ Creates a calendar-based input that supports optional minimum/maximum bounds and
 **Aliases:** Add-WizardDate
 
 ```
-Add-UIDate [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Nullable`1>] [-Minimum <Nullable`1>] [-Maximum <Nullable`1>] [-Format <String>] [-Mandatory] [-Width <Int32>] [-HelpText <String>] [-IconPath <String>] [<CommonParameters>]
+Add-UIDate [-Step] <String> [-Name] <String> [-Label] <String> [-Default <DateTime>] [-Minimum <DateTime>] [-Maximum <DateTime>] [-Format <String>] [-Mandatory] [-Width <Int32>] [-HelpText <String>] [-IconPath <String>] [<CommonParameters>]
 ```
 
 | Parameter | Type | Required | Accepted values | Default | Description |
@@ -226,9 +226,9 @@ Add-UIDate [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Nullab
 | `-Step` | string | Yes |  |  | Name of the step to add this control to. The step must already exist. |
 | `-Name` | string | Yes |  |  | Unique name for the control. This becomes the parameter name in the generated script. |
 | `-Label` | string | Yes |  |  | Display label shown next to the date picker. |
-| `-Default` | Nullable`1 | No |  |  | Default selected date. Must be within the specified range if provided. |
-| `-Minimum` | Nullable`1 | No |  |  | Earliest date allowed. Leave unset to allow any past date. |
-| `-Maximum` | Nullable`1 | No |  |  | Latest date allowed. Leave unset to allow any future date. |
+| `-Default` | datetime | No |  |  | Default selected date. Must be within the specified range if provided. |
+| `-Minimum` | datetime | No |  |  | Earliest date allowed. Leave unset to allow any past date. |
+| `-Maximum` | datetime | No |  |  | Latest date allowed. Leave unset to allow any future date. |
 | `-Format` | string | No |  |  | Optional custom display/export format (e.g. "yyyy-MM-dd"). When omitted the wizard defaults to ISO date. |
 | `-Mandatory` | switch | No |  |  | Whether selecting a date is required before proceeding. |
 | `-Width` | int | No |  | 0 | Preferred width of the control in pixels. |
@@ -495,7 +495,7 @@ Creates a numeric spinner that enforces optional minimum/maximum bounds and step
 **Aliases:** Add-WizardNumeric
 
 ```
-Add-UINumeric [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Nullable`1>] [-Minimum <Nullable`1>] [-Maximum <Nullable`1>] [-Increment <Nullable`1>] [-AllowDecimal] [-Format <String>] [-Mandatory] [-Width <Int32>] [-HelpText <String>] [-IconPath <String>] [<CommonParameters>]
+Add-UINumeric [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Double>] [-Minimum <Double>] [-Maximum <Double>] [-Increment <Double>] [-AllowDecimal] [-Format <String>] [-Mandatory] [-Width <Int32>] [-HelpText <String>] [-IconPath <String>] [<CommonParameters>]
 ```
 
 | Parameter | Type | Required | Accepted values | Default | Description |
@@ -503,10 +503,10 @@ Add-UINumeric [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Nul
 | `-Step` | string | Yes |  |  | Name of the step to add this control to. The step must already exist. |
 | `-Name` | string | Yes |  |  | Unique name for the control. This becomes the parameter name in the generated script. |
 | `-Label` | string | Yes |  |  | Display label shown next to the numeric input. |
-| `-Default` | Nullable`1 | No |  |  | Default numeric value. Must respect the specified minimum/maximum if provided. |
-| `-Minimum` | Nullable`1 | No |  |  | Lowest permissible value. Leave unset for no lower bound. |
-| `-Maximum` | Nullable`1 | No |  |  | Highest permissible value. Leave unset for no upper bound. |
-| `-Increment` _(alias: StepSize)_ | Nullable`1 | No |  |  | Increment used by the spinner buttons. Defaults to 1 for integers or 0.1 when -AllowDecimal is specified. |
+| `-Default` | double | No |  |  | Default numeric value. Must respect the specified minimum/maximum if provided. |
+| `-Minimum` | double | No |  |  | Lowest permissible value. Leave unset for no lower bound. |
+| `-Maximum` | double | No |  |  | Highest permissible value. Leave unset for no upper bound. |
+| `-Increment` _(alias: StepSize)_ | double | No |  |  | Increment used by the spinner buttons. Defaults to 1 for integers or 0.1 when -AllowDecimal is specified. |
 | `-AllowDecimal` | switch | No |  |  | Allow non-integer values. When omitted the wizard coerces to whole numbers. |
 | `-Format` | string | No |  |  | Display format string for the number. Examples: "C2" (currency with 2 decimals), "P0" (percentage), "N2" (number with 2 decimals) |
 | `-Mandatory` | switch | No |  |  | Whether a value is required. Users cannot proceed without entering a value. |
@@ -738,12 +738,12 @@ Add-UIToggle [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Bool
 **Examples**
 
 ```powershell
-Add-UIToggle -Step "Config" -Name "EnableDebug" -Label "Enable Debug Mode" -DefaultValue $false
+Add-UIToggle -Step "Config" -Name "EnableDebug" -Label "Enable Debug Mode" -Default $false
 ```
 Adds a toggle switch for enabling debug mode, defaulting to off.
 
 ```powershell
-Add-UIToggle -Step "Features" -Name "AdvancedMode" -Label "Advanced Features" -DefaultValue $true
+Add-UIToggle -Step "Features" -Name "AdvancedMode" -Label "Advanced Features" -Default $true
 ```
 Adds a toggle switch that defaults to on.
 
@@ -1006,7 +1006,7 @@ Registers a daily cleanup at 3:00 AM including log cleanup.
 Configures branding and appearance settings for the UI.
 
 Sets visual customization options including window title, sidebar header, icons, and theme.
-Must be called after New-PoshUI.
+Must be called after New-PoshUIWizard.
 
 **Aliases:** Set-WizardBranding
 
@@ -1174,12 +1174,12 @@ Show-PoshUIWizard [[-ScriptBody] <ScriptBlock>] [[-DefaultValues] <Hashtable>] [
 **Examples**
 
 ```powershell
-$result = Show-PoshUI
+$result = Show-PoshUIWizard
 ```
 Shows the UI with default script body and returns results.
 
 ```powershell
-$result = Show-PoshUI -ScriptBody {
+$result = Show-PoshUIWizard -ScriptBody {
     Write-Host "Configuring server: $ServerName"
     # Perform configuration tasks
     return @{ Status = 'Success'; Message = 'Configuration completed' }
@@ -1189,7 +1189,7 @@ Shows the UI with custom script logic.
 
 ```powershell
 $defaults = @{ ServerName = 'SQL01'; Environment = 'Production' }
-$result = Show-PoshUI -DefaultValues $defaults -ScriptBody $configScript
+$result = Show-PoshUIWizard -DefaultValues $defaults -ScriptBody $configScript
 ```
 Shows the UI with pre-populated default values.
 

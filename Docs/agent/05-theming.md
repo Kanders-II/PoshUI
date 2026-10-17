@@ -34,14 +34,19 @@ Pass a hashtable of `slot = '#hex'`. Recognized slots:
 | `Background` | app/window background |
 | `ContentBackground` | content area background |
 | `CardBackground` | cards, chart cards |
-| `TitleBarBackground` / `TitleBarText` | custom title bar |
+| `TitleBarBackground` / `TitleBarText` | the main window's title bar |
 | `BorderColor` | borders/dividers |
 | `TextPrimary` | headings/body text |
 | `TextSecondary` | muted/secondary text |
 | `ButtonBackground` / `ButtonForeground` | standard buttons |
 | `InputBackground` / `InputBorder` | text inputs |
 | `SidebarBackground` / `SidebarText` / `SidebarHighlight` | nav rail |
+| `SuccessColor` / `WarningColor` / `ErrorColor` | semantic success / warning / error colours |
 | `FontFamily` | base font (non-color slot) |
+| `CornerRadius` | default corner radius (number, non-color slot) |
+
+Secondary windows (`New-UICanvasWindow`) theme their own title bar: dark in a dark theme, and on Windows 11
+the `ContentBackground` and body text colours. Their `-TitleBarColor` / `-TitleBarText` override that.
 
 ```powershell
 Set-UITheme @{

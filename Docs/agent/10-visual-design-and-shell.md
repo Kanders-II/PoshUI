@@ -2,7 +2,8 @@
 
 Files 00 and 09 decide what an app does and how it is structured. This file decides how it **looks**: the
 visual system, a custom window shell (own top bar, icon-rail navigation), an intro splash, and page
-composition. It is the difference between a tidy tool and one that looks like `Showcase-Release.ps1`.
+composition. It is the difference between a tool that merely works and one that looks as finished as
+`Showcase-Release.ps1`.
 
 Everything here is lifted from that showcase, where it is proven, and was re-verified by rendering it and
 looking at the result. **The code blocks in this file, run in order, are one complete app** — copy them

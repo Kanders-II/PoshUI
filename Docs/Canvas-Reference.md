@@ -1,6 +1,6 @@
 # PoshUI Canvas — Capability & Control Reference (.NET 4.8 WPF)
 
-> Module `PoshUI.Canvas` **1.5.0** · requires engine `PoshUI.exe` **≥ 1.5.0** (checked at import).
+> Module `PoshUI.Canvas` **1.5.1** · requires engine `PoshUI.exe` **≥ 1.5.1** (checked at import).
 
 Free-form, responsive, themeable UI apps authored in PowerShell and rendered by the v1 WPF engine
 (`PoshUI.exe`). The WPF engine **software-renders**, so it does not require GPU compositing and runs on
@@ -35,10 +35,10 @@ Containers (`Add-UICanvasCard`, `Add-UICanvasPanel`) take the same `-Layout/-Col
 ## Controls
 **Input:** `TextBox, MultiLine, Password, Number, NumberBox, Dropdown, ListBox, RadioGroup, Checkbox, Toggle, Slider, DatePicker, TimePicker, Rating, ColorPicker, RichEdit`
 **Display:** `Label, Icon, Badge, Banner, ProgressBar, ProgressRing, Console, Image, Hyperlink, Separator`
-**Buttons:** `Button (-Style Accent/Secondary/Subtle/Gradient, -Icon, -NavigateTo), DropDownButton`
+**Buttons:** `Button (-Style Standard/Primary/Accent/Secondary/Subtle/Gradient, -Icon, -NavigateTo), DropDownButton`
 **Containers:** `Card, Panel, Expander, Tabs/Tab, Viewbox` (+ `GridSplitter` for resizable panes)
 **Chrome:** `Toolbar, Footer, Menu` (nested menu bar — see Layout / chrome controls below)
-**Data:** `DataGrid (-Columns -Items/-BindItems -OnChange), TreeView, Repeater`
+**Data:** `DataGrid (-Columns -Items/-BindItems -OnChange; -Properties @{ SelectionMode='Multiple' }), TreeView, Repeater`
 **Dashboard cards:** `MetricCard (-Caption -Value -Trend Up/Down/Stable -Delta), ChartCard (-Labels -Values), StatusCard (-Items 'Label|State'), TableCard (-Columns -Rows), ScriptCard (off-gate runner)`
 
 Common params: `-Name` (addressable at runtime), `-Value` (initial), `-X/-Y/-Width/-Height`, `-Tooltip`, `-Visible/-Enabled`, `-Refresh <sec>` (re-run a `{ }` value script live), `-Action { }` / `-OnChange { }`.
@@ -120,8 +120,10 @@ Add-UICanvasWizardNav -Next 'Network' -Back $null -Require 'ComputerName','Admin
 
 ## Theming
 `Set-UITheme` slots drive the engine theme (canvas cards follow them; defaults fall back to the dark palette):
-`AccentColor, Background, ContentBackground, CardBackground, BorderColor, TextPrimary, TextSecondary,
-SuccessColor, WarningColor, ErrorColor, SidebarBackground, SidebarText, FontFamily, CornerRadius`.
+`AccentColor` (+ `AccentLight`, `AccentDark`), `Background, ContentBackground, CardBackground, BorderColor,
+TextPrimary, TextSecondary, TitleBarBackground, TitleBarText, ButtonBackground, ButtonForeground, InputBackground,
+InputBorder, SidebarBackground, SidebarText, SidebarHighlight, SuccessColor, WarningColor, ErrorColor, FontFamily,
+CornerRadius`. The full table is in [05 — Theming](./agent/05-theming.md).
 
 Switch at runtime, in place (no restart, values kept): `Set-UICanvasTheme Light|Dark|Toggle`, `Get-UICanvasTheme`.
 Every theme brush is live, so cards and text follow the title-bar toggle on the open page. An app written in one
@@ -141,7 +143,7 @@ the temp `result.json` is deleted after read.
 
 ## Security / trust model
 - **Definition load is gated** — the engine validates the `.json` path before loading: local paths only (no UNC /
-  network shares), no `..` traversal, and a `.ps1`/`.json` extension (`SecurityValidator.ValidateScriptPath`).
+  network shares), no `..` traversal, and a `.ps1`/`.json` extension.
 - **Trust boundary = whoever runs the script.** Canvas `-Action`/`-OnChange`/`Start-UICanvasAsync` blocks and
   `Add-UICanvasXaml` markup run **in-process with full PowerShell/WPF privileges** — the same trust as the `.ps1`
   itself. So: do **not** build actions or XAML markup from untrusted runtime input. `XamlReader.Parse` can
@@ -180,24 +182,27 @@ The engine software-renders, so no DWM/GPU compositing is required. Notes for co
   minimal or stripped-down Windows environments.)
 
 ## Flow cmdlet options (additions)
-- `Add-UICanvasWorkflow`: `-NoStartButton` (publish the run action to `$Global:_PoshUICanvas.WorkflowActions[Name]` and place the button yourself), `-NoHeader` (omit the inline Status/%/gauge — render `<name>_status`/`<name>_pct`/`<name>_gauge` where you want), `-StepsHeight <px>` (scrollable step list), `-AutoStart` (begin ~2s after the page is shown), `-LockOnStart`, `-StateFile` (reboot-resume). The runner also writes `<name>_elapsed`/`<name>_remaining` each step for live timers.
+- `Add-UICanvasWorkflow`: `-NoStartButton` (place the start button yourself: with `-Engine`, a button named `<name>_run` starts the run; without it, give your button the action published at `$Global:_PoshUICanvas.WorkflowActions[<name>]`), `-NoHeader` (omit the inline Status/%/gauge — render `<name>_status`/`<name>_pct`/`<name>_gauge` where you want), `-StepsHeight <px>` (scrollable step list), `-AutoStart` (begin ~2s after the page is shown), `-LockOnStart`, `-StateFile` (reboot-resume). The runner also writes `<name>_elapsed`/`<name>_remaining` each step for live timers.
 - `Add-UICanvasWizardNav`: `-NoBack`, `-Require`, `-Validate {}`.
 
 ## Repeater (data-driven controls)
 `Add-UICanvasRepeater -Items $collection -Template { param($item) ... }` — invokes the template once per item,
 emitting its controls into the current container. One-liner for lists of cards/rows.
 
-## Native data controls (1.1)
-- `Add-UICanvasDataGrid -Name -Columns Host,Role,Cpu [-Items $rows]` — sortable grid (click headers). Seed with
+## Native data controls
+- `Add-UICanvasDataGrid -Name -Columns Host,Role,Cpu [-Items $rows] [-OnChange { }]` — sortable grid (click headers). Seed with
   `-Items` (array of objects) or populate/refresh live with `Set-UICanvasProperty -Name g -Property ItemsSource -Value $rows`
-  (PowerShell objects auto-coerce to a `DataView`). `Get-UICanvasValue` returns the selected row.
+  (PowerShell objects auto-coerce to a `DataView`). `Get-UICanvasValue` returns the selected row; `-OnChange` fires when
+  the selection changes. With `-Properties @{ SelectionMode = 'Multiple' }`, Ctrl/Shift-click and Ctrl+A pick several
+  rows and `Get-UICanvasValue` returns all of them (in display order); `Set-UICanvasValue <grid> $null` clears the
+  selection, any other value selects every row.
 - `Add-UICanvasTreeView -Name -Nodes @(@{ Text='Sites'; Expanded=$true; Children=@(@{Text='HQ'}) })` — nested tree;
   `Get-UICanvasValue` returns the selected node's text.
 - `Add-UICanvasAutoSuggest -Name -Choices @(...) [-Value]` — editable, type-to-filter combo; value is the current text.
-- `Add-UICanvasMarkdown -Name (-Text '# md' | -Path file.md)` — lightweight viewer (headings, `**bold**`, `*italic*`,
-  `` `code` ``, `- bullets`).
+- `Add-UICanvasMarkdown -Name (-Text '# md' | -Path file.md) [-BasePath dir]` — lightweight viewer (headings, `**bold**`,
+  `*italic*`, `` `code` ``, `- bullets`, images; relative images resolve beside the `.md`, or in `-BasePath` for `-Text`).
 
-## Layout / chrome controls (1.4)
+## Layout / chrome controls
 ```powershell
 # Tabbed container. Value = selected index; Set-UICanvasValue also accepts a header string.
 Add-UICanvasTabs -Name t [-SelectedIndex 0] [-OnChange { }] -Children {
@@ -229,14 +234,13 @@ Add-UICanvasFooter [-Name] [-LeftText 'ready'] [-Links @(@{ Text='Docs'; Page='H
 
 ## Raw XAML escape hatch
 `Add-UICanvasXaml -Markup '<DataGrid x:Name="grid" .../>'` (or `-Path file.xaml`) splices arbitrary **WPF** markup
-in — for controls the cmdlet set doesn't cover (DataGrid, TreeView, TabControl, custom templates). Every `x:Name`'d
+in — for things the cmdlet set doesn't cover (MediaElement, custom templates and styles). Every `x:Name`'d
 element (including the root) is registered with the bridge, so `Set/Get-UICanvasValue` and `Set-UICanvasProperty`
 work on it. Setting `ItemsSource` to a PowerShell object collection auto-coerces to a `DataView` so `{Binding Col}`
-binds; selection reads back as a `DataRowView`. Namespaces are auto-injected if omitted. Notes: WPF dialect (not
-portable to the WinUI 3 build); a named control inside the markup runs script only if you pass it in `-Actions` (below); the markup uses explicit colors or `{DynamicResource <key>}` (it doesn't auto-inherit the theme).
+binds; selection reads back as a `DataRowView`. Namespaces are auto-injected if omitted. Notes: a named control inside the markup runs script only if you pass it in `-Actions` (below); the markup uses explicit colors or `{DynamicResource <key>}` (it doesn't auto-inherit the theme).
 
 ```powershell
-# -Actions wires x:Name'd controls inside the markup (1.3.0 of the module)
+# -Actions wires x:Name'd controls inside the markup
 Add-UICanvasXaml -Markup '<StackPanel><Button x:Name="go" Content="Run"/><TextBlock x:Name="out"/></StackPanel>' `
     -Actions @{ go = { Set-UICanvasValue -Name out -Value 'ran' } }
 ```
@@ -286,8 +290,8 @@ sequences**. For a real timeline, put a WPF `Storyboard` inside `Add-UICanvasXam
 - **`-Refresh` fires once immediately at registration**, which makes a hidden refreshing label a page-load hook;
   pair it with `Start-UICanvasAsync { Start-Sleep -Milliseconds N; Show-UICanvasPage '<title>' }` for
   millisecond-precision sequencing (`-Refresh` itself is integer seconds).
-- The definition's `DisableAnimations` flag (Dashboard module's `Set-UIBranding`; **no Canvas equivalent**) gates page
-  and dialog transitions but **does not reach inside an island** — gate island motion yourself if reduced motion matters.
+- An island's storyboards are yours: nothing in the engine turns them off, so if reduced motion matters, gate
+  island motion yourself.
 
 Full treatment, with a technique catalogue and headless verification: `Docs\agent\16-animation-and-motion.md`.
 
@@ -340,7 +344,9 @@ Set-UICanvasState rows $r                                 # grid rebuilds itself
 `Add-UICanvasMarkdown -Text <md>` (or `-Path file.md`) renders to a native WPF FlowDocument (no browser needed):
 - Headings (`#`/`##`/`###`), **bold**, *italic*, `inline code`, fenced ` ``` ` code blocks, `> blockquotes`, `---` rules.
 - Unordered (`-`/`*`) and ordered (`1.`) lists.
-- **Links** `[text](url)` and **images** `![alt](path)` — local image paths load inline (alt text is the fallback).
+- **Links** `[text](url)` and **images** `![alt](path)`. An image on its own line is a figure (column width, alt text as
+  its caption); inside a sentence it is icon-sized. Relative paths resolve beside the `-Path` file, or in `-BasePath`
+  for `-Text`; a missing image shows its alt text.
 - `Add-UICanvasHyperlink -NavigateUri <url>` is a standalone link control.
 - **Security:** links open via the shell only for safe schemes (`http`/`https`/`mailto`/`file`); anything else is blocked and logged, so a crafted link can't launch an executable or custom protocol.
 

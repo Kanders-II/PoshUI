@@ -15,6 +15,7 @@ For concepts, patterns, and the ScriptCard/dot-sourcing deep-dive, start with th
 | **PoshUI.Wizard** | Step-by-step input forms with validation | [Wizard-Cmdlets.md](Wizard-Cmdlets.md) (27 cmdlets) |
 | **PoshUI.Dashboard** | Monitoring dashboards, ScriptCards, visualization cards | [Dashboard-Cmdlets.md](Dashboard-Cmdlets.md) (20 cmdlets) |
 | **PoshUI.Workflow** | Sequential tasks, approval gates, reboot/resume | [Workflow-Cmdlets.md](Workflow-Cmdlets.md) (21 cmdlets) |
+| **PoshUI.Canvas** | Free-form apps, live dashboards, multi-window tools | [Canvas Capability Reference](../Canvas-Reference.md) (hand-written; not generated) |
 
 > **Import exactly one module per script.** All three export overlapping names (`Add-UIStep`,
 > `Set-UIBranding`, `Set-UITheme`, `Add-UICard`, `Add-UIBanner`, `Set-UIConfiguration`,
@@ -73,7 +74,7 @@ ScriptCard treatment, including dot-sourcing external function libraries.
 
 Inside an `Add-UIWorkflowTask -ScriptBlock { ... }`, the `$PoshUIWorkflow` object is available:
 `UpdateProgress(<percent>, '<message>')`, `WriteOutput('<text>', '<INFO|WARN|ERROR>')`,
-`SetData('<key>', <value>)`, `GetData('<key>')`, `RequestReboot()`.
+`SetData('<key>', <value>)`, `GetData('<key>')`, `RequestReboot('<reason>')`.
 
 ## Regenerating these pages
 

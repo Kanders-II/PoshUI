@@ -16,8 +16,8 @@ This demonstration illustrates how to build intelligent forms that guide users t
 ## Running the Example
 
 ```powershell
-# Navigate to the Wizard examples directory
-cd .\PoshUI\PoshUI.Wizard\Examples
+# Navigate to the examples directory
+cd .\PoshUI\Examples
 
 # Run the script
 .\Wizard-DynamicControls.ps1
