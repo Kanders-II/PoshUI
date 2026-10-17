@@ -342,7 +342,7 @@ Adds a numeric input control to a UI step.
 Creates a numeric spinner that enforces optional minimum/maximum bounds and step size.
 
 ```
-Add-UINumeric [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Nullable`1>] [-Minimum <Nullable`1>] [-Maximum <Nullable`1>] [-Increment <Nullable`1>] [-AllowDecimal] [-Format <String>] [-Mandatory] [-Width <Int32>] [-HelpText <String>] [-IconPath <String>] [<CommonParameters>]
+Add-UINumeric [-Step] <String> [-Name] <String> [-Label] <String> [-Default <Double>] [-Minimum <Double>] [-Maximum <Double>] [-Increment <Double>] [-AllowDecimal] [-Format <String>] [-Mandatory] [-Width <Int32>] [-HelpText <String>] [-IconPath <String>] [<CommonParameters>]
 ```
 
 | Parameter | Type | Required | Accepted values | Default | Description |

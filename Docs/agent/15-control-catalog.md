@@ -996,13 +996,19 @@ Add-UICanvasButton 'Button' -Name btn1 -Style Accent -Action { Show-UICanvasToas
 
 ### `Menu` (also `MenuBar`)
 
-Menu bar from nested @{Text; Items; Action} hashtables.
+Menu bar from nested @{Text; Items; Action} hashtables. A leaf's Action runs when it is clicked; Text '-' is a separator.
 
+Cmdlet: `Add-UICanvasMenu`
+
+```powershell
+Add-UICanvasMenu -Items @(@{ Text = 'File'; Items = @(@{ Text = 'Open'; Gesture = 'Ctrl+O'; Action = { Show-UICanvasToast -Message 'Open' } }, @{ Text = '-' }, @{ Text = 'Exit'; Action = { Submit-UICanvas } }) })
+```
 
 | Property | Type | Values |
 |---|---|---|
 | `Background` | String |  |
 | `ItemsJson` | String |  |
+| `Items` * | Object[] |  |
 
 <sub>* = a cmdlet parameter the module folds into the bag; the factory reads it under another path.</sub>
 
@@ -1010,6 +1016,7 @@ Menu bar from nested @{Text; Items; Action} hashtables.
 
 Docked app toolbar with brand, links and actions. Links become hidden Event controls with generated names.
 
+Cmdlet: `Add-UICanvasToolbar`
 
 | Property | Type | Values |
 |---|---|---|
@@ -1021,6 +1028,8 @@ Docked app toolbar with brand, links and actions. Links become hidden Event cont
 | `BrandIcon` | String |  |
 | `LinksJson` | String |  |
 | `Status` | String |  |
+| `Links` * | String[] |  |
+| `Actions` * | Object[] |  |
 
 <sub>* = a cmdlet parameter the module folds into the bag; the factory reads it under another path.</sub>
 
@@ -1028,11 +1037,13 @@ Docked app toolbar with brand, links and actions. Links become hidden Event cont
 
 Docked status/footer strip.
 
+Cmdlet: `Add-UICanvasFooter`
 
 | Property | Type | Values |
 |---|---|---|
 | `LeftText` | String |  |
 | `LinksJson` | String |  |
+| `Links` * | Object[] |  |
 
 <sub>* = a cmdlet parameter the module folds into the bag; the factory reads it under another path.</sub>
 
@@ -1128,7 +1139,7 @@ Add-UICanvasDataGrid -Name grid1 -Columns @('Name','Status') -Items @(@{Name='a'
 |---|---|---|
 | `Columns` | String[] |  |
 | `ItemsJson` | String |  |
-| `SelectionMode` | String |  |
+| `SelectionMode` | String | Single \| Multiple |
 | `Items` * | Object[] |  |
 | `BindItems` * | String |  |
 
@@ -1395,18 +1406,8 @@ _Reads no type-specific properties; the universal keys above still apply._
 
 A named action fired by toolbar/footer/menu links. Synthesised by those cmdlets; not authored directly.
 
-Cmdlet: `Add-UICanvasToolbar` - no visual
 
-| Property | Type | Values |
-|---|---|---|
-| `Brand` * | String |  |
-| `BrandIcon` * | String |  |
-| `Status` * | String |  |
-| `Links` * | String[] |  |
-| `Active` * | String |  |
-| `Actions` * | Object[] |  |
-
-<sub>* = a cmdlet parameter the module folds into the bag; the factory reads it under another path.</sub>
+_Reads no type-specific properties; the universal keys above still apply._
 
 ### `WindowTemplate`
 
@@ -1439,4 +1440,20 @@ New-UICanvasWindow -Name dlg1 -Title 'Dialog' -Content { Add-UICanvasLabel 'Hell
 | `Content` * | ScriptBlock |  |
 
 <sub>* = a cmdlet parameter the module folds into the bag; the factory reads it under another path.</sub>
+
+## Composite cmdlets
+
+These add several of the controls above at once (a label, a box and a button; a step list; a card with
+a Run button), so they have no `Type` of their own. Their parameters are in the
+[Controls Reference](02-controls-reference.md) and [Wizards & Workflows](06-flows-wizard-workflow.md).
+
+| Cmdlet | What it adds |
+|---|---|
+| `Add-UICanvasFilePicker` | A file path field with a Browse button that opens a native open-file dialog and fills the textbox. |
+| `Add-UICanvasFolderPicker` | A folder path field with a Browse button that opens a native folder dialog and fills the textbox. |
+| `Add-UICanvasRepeater` | Data-driven repeater: invokes -Template once per item, emitting its controls into the current container. |
+| `Add-UICanvasScriptCard` | A dashboard card that runs a script in the background (its own runspace via Start-UICanvasAsync): a title, a live status, a Run button, and an output console. |
+| `Add-UICanvasWizardNav` | Renders a wizard footer (Back + Next/Finish). |
+| `Add-UICanvasWizardSteps` | Renders a step indicator (numbered chips) with the current step highlighted. |
+| `Add-UICanvasWorkflowStep` | Declares one workflow step (name + detail + an in-app script). |
 

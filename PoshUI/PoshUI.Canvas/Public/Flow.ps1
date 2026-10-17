@@ -121,7 +121,7 @@ function Add-UICanvasWizardSteps {
 function Add-UICanvasScriptCard {
     <#
     .SYNOPSIS
-    A dashboard card that RUNS a script off the UI gate (its own runspace via Start-UICanvasAsync): a title, a
+    A dashboard card that runs a script in the background (its own runspace via Start-UICanvasAsync): a title, a
     live status, a Run button, and an output console. The script's output + errors stream into the console as it
     runs, so a long-running task never freezes the rest of the dashboard (live cards keep refreshing).
     .DESCRIPTION
