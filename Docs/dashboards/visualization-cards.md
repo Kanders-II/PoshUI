@@ -18,7 +18,7 @@ Add-UIScriptCard -Step 'Overview' -Name 'Cleanup' -Title 'Clear temp' -ScriptBlo
 
 ## Supported Card Types
 
-### MetricCard
+### MetricCard (`Add-UIMetricCard`)
 Designed for Key Performance Indicators (KPIs). It shows a large value, an optional unit, a trend indicator, and an icon.
 
 - **Use case**: CPU usage, memory availability, active user count.

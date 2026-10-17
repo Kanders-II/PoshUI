@@ -38,8 +38,6 @@
         # Configuration
         'Set-UIBranding',
         'Set-UITheme',
-        'Set-UIConfiguration',
-        'Get-UIConfiguration',
 
         # State management
         'Save-UIWorkflowState',
@@ -47,9 +45,6 @@
         'Test-UIWorkflowState',
         'Clear-UIWorkflowState',
         'Resume-UIWorkflow',
-        'Clear-PoshUIState',
-        'Clear-PoshUIRegistryState',
-        'Clear-PoshUIFileState',
 
         # Auto-resume scheduled task
         'Register-UIWorkflowResumeTask',

@@ -32,7 +32,7 @@ function Show-PoshUIWizard {
     Default is 'Object'.
     
     .EXAMPLE
-    $result = Show-PoshUI
+    $result = Show-PoshUIWizard
 
     Shows the UI with default script body and returns results.
 
@@ -47,7 +47,7 @@ function Show-PoshUIWizard {
 
     .EXAMPLE
     $defaults = @{ ServerName = 'SQL01'; Environment = 'Production' }
-    $result = Show-PoshUI -DefaultValues $defaults -ScriptBody $configScript
+    $result = Show-PoshUIWizard -DefaultValues $defaults -ScriptBody $configScript
 
     Shows the UI with pre-populated default values.
 
@@ -88,7 +88,7 @@ function Show-PoshUIWizard {
     )
     
     begin {
-        Write-Verbose "Starting Show-PoshUI"
+        Write-Verbose "Starting Show-PoshUIWizard"
 
         # Ensure UI is initialized
         if (-not $script:CurrentWizard) {
@@ -319,7 +319,7 @@ Script Path: $tempScriptPath
     }
 
     end {
-        Write-Verbose "Show-PoshUI completed"
+        Write-Verbose "Show-PoshUIWizard completed"
     }
 }
 

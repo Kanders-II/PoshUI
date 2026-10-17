@@ -307,8 +307,6 @@ Add-UIToggle -Step "Config" -Name "AutoStart" -Label "Start service automaticall
 | `-Name` | String | Yes | Control identifier. Returns `$true` or `$false`. |
 | `-Label` | String | Yes | Display label. |
 | `-Default` | Boolean | No | Initial state. Default: `$false`. |
-| `-OnLabel` | String | No | Text when ON. Default: "On". |
-| `-OffLabel` | String | No | Text when OFF. Default: "Off". |
 | `-Mandatory` | Switch | No | Toggle must be ON to proceed. |
 | `-HelpText` | String | No | Tooltip text. |
 

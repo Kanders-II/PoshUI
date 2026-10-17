@@ -2,7 +2,7 @@
 
 Complete, per-module reference for **every** exported PoshUI cmdlet, with full parameter
 tables (type, required, accepted values, default, description) and examples. These pages are
-**generated from each module's runtime metadata and comment-based help** (PoshUI 1.3.1), so
+**generated from each module's runtime metadata and comment-based help** (module 1.3.1, ships in PoshUI 1.5.1), so
 they match the shipping code exactly.
 
 For concepts, patterns, and the ScriptCard/dot-sourcing deep-dive, start with the
@@ -18,8 +18,8 @@ For concepts, patterns, and the ScriptCard/dot-sourcing deep-dive, start with th
 | **PoshUI.Canvas** | Free-form apps, live dashboards, multi-window tools | [Canvas Capability Reference](../Canvas-Reference.md) (hand-written; not generated) |
 
 > **Import exactly one module per script.** All three export overlapping names (`Add-UIStep`,
-> `Set-UIBranding`, `Set-UITheme`, `Add-UICard`, `Add-UIBanner`, `Set-UIConfiguration`,
-> `Get-UIConfiguration`, `Clear-PoshUI*`). The cmdlet may differ slightly between modules — for
+> `Set-UIBranding`, `Set-UITheme`, `Add-UICard`, `Add-UIBanner`; Wizard and Dashboard also share
+> `Set-/Get-UIConfiguration` and `Clear-PoshUI*`). The cmdlet may differ slightly between modules — for
 > example **Dashboard `Add-UICard` requires `-Name`; Wizard `Add-UICard` does not** — so always
 > consult the page for the module you imported.
 

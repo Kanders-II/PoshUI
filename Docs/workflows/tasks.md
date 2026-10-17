@@ -19,9 +19,9 @@ A normal task executes a PowerShell script or script block and reports its progr
 ```powershell
 Add-UIWorkflowTask -Step 'Execution' -Name 'InstallApp' -Title 'Installing Application' `
     -ScriptBlock {
-        $PoshUIWorkflow.WriteOutput("Downloading installer...")
+        $PoshUIWorkflow.WriteOutput("Downloading installer...", "INFO")
         # Logic here
-        $PoshUIWorkflow.WriteOutput("Running setup...")
+        $PoshUIWorkflow.WriteOutput("Running setup...", "INFO")
         # Logic here
     }
 ```

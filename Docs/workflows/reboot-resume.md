@@ -12,7 +12,7 @@ One of the most powerful features of PoshUI Workflows is the ability to handle s
 
 ## Requesting a Reboot
 
-From within any workflow task, call `$PoshUIWorkflow.RequestReboot()`:
+From within any workflow task, call `$PoshUIWorkflow.RequestReboot('<reason>')`. The reason is required; it is shown while the workflow waits:
 
 ```powershell
 Add-UIWorkflowTask -Step 'Execution' -Name 'UpdateKernel' -Title 'Updating Kernel' -ScriptBlock {
