@@ -23,9 +23,9 @@ markdown), and `Add-UICanvasDataGrid` takes `-Properties @{ SelectionMode = 'Mul
   <img src="https://raw.githubusercontent.com/Kanders-II/PoshUI/main/Images/launchpad.gif" alt="Launchpad, the learning example: a splash screen, pages built from plain scripts, a workflow paused for approval and resumed from the history page, and a live switch to the light theme" width="900">
 </p>
 
-Everything in that clip is plain PowerShell and PoshUI cmdlets. Nobody designed a page per script: each is built
-from the script's own comment help and `param()`. The scripts and workflows inside are stand-ins, there to show
-the pattern; replace them with your own.
+Everything in that clip is plain PowerShell and PoshUI cmdlets. You don't build a page for each script: Launchpad
+reads a script's comment help and `param()` block and builds its page and form for you. The scripts and workflows
+inside are stand-ins, there to show how that works; replace them with your own.
 
 What it shows you how to build:
 

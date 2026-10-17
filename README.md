@@ -37,8 +37,8 @@ IT professionals, system administrators, and DevOps engineers who want to make t
 
 *Launchpad, the learning example in 1.5.1: a complete PoshUI app in half a minute.*
 
-Everything in that clip is PowerShell. Nobody designed a page for each script: each one is built from an ordinary
-script's comment help and `param()` block, and its output streams in as it runs. The workflow stops at an
+Everything in that clip is PowerShell. You don't build a page for each script: Launchpad reads the script's
+comment help and `param()` block and builds its page and form for you, and the output streams in as it runs. The workflow stops at an
 approval, waits (it would survive closing the app), and picks up again from the history page. The theme switches
 live. The scripts inside are stand-ins; the structure is what you take away.
 → [Structuring an App: Building Launchpad](Docs/agent/17-structuring-an-app.md)

@@ -11,8 +11,8 @@ open while you read. Everything below is something you can click.
 
 ![Launchpad, the learning example: a splash screen, pages built from plain scripts, a workflow paused for approval and resumed from the history page, and a live switch to the light theme](/launchpad/launchpad.gif)
 
-That's half a minute of it. Notice what nobody did: nobody designed a page for each script, and nobody wrote any
-UI for them. The Scripts page is built from the scripts themselves. The workflow stops at an approval, waits (it
+That's half a minute of it. Notice what you don't have to do: build a page or write any UI for each script.
+Launchpad builds each script's page and form from the script itself. The workflow stops at an approval, waits (it
 would survive closing the app), and carries on from the history page. Section 2 shows how a plain script becomes
 a page; section 3 how a workflow asks, waits and decides.
 
